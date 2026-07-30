@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人效分析 - 试制资源数智化管理系统</title>
+<link rel="stylesheet" href="./assets/css/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="./assets/js/mock-data.js"></script>
+<script src="./assets/js/app.js"></script>
+<style>
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-container {
+    width: 100%;
+    height: 280px;
+  }
+
+  .sidebar-section {
+    margin-bottom: 24px;
+  }
+
+  .sidebar-title {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .filter-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .filter-item.active {
+    background: rgba(22, 119, 255, 0.15);
+    color: var(--brand-light);
+  }
+  .filter-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .date-range-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+  }
+  .date-input-group i { width: 14px; height: 14px; color: var(--text-muted); }
+  .date-input-group input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 12px;
+    flex: 1;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .date-input-group input::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+  }
+  .date-quick {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .date-quick .chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .date-quick .chip:hover { border-color: var(--brand-primary); color: var(--brand-light); }
+  .date-quick .chip.active { background: rgba(22, 119, 255, 0.15); border-color: var(--brand-primary); color: var(--brand-light); }
+
+  .efficiency-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .efficiency-table thead th {
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .efficiency-table thead th:hover { color: var(--brand-light); }
+  .efficiency-table thead th.sorted-asc::after { content: ' ▲'; font-size: 10px; }
+  .efficiency-table thead th.sorted-desc::after { content: ' ▼'; font-size: 10px; }
+  .efficiency-table tbody td {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+  }
+  .efficiency-table tbody tr {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .efficiency-table tbody tr:hover { background: var(--bg-hover); }
+  .efficiency-table tbody tr:last-child td { border-bottom: none; }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .score-high { background: rgba(82, 196, 26, 0.15); color: #52C41A; }
+  .score-mid { background: rgba(250, 173, 20, 0.15); color: #FAAD14; }
+  .score-low { background: rgba(255, 77, 79, 0.15); color: #FF4D4F; }
+
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 13px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+  .rank-badge.top1 { background: linear-gradient(135deg, #FAAD14, #D48806); color: #fff; }
+  .rank-badge.top2 { background: linear-gradient(135deg, #BFBFBF, #8C8C8C); color: #fff; }
+  .rank-badge.top3 { background: linear-gradient(135deg, #FA541C, #D4380D); color: #fff; }
+
+  .progress-bar-mini {
+    width: 80px;
+    height: 6px;
+    background: var(--bg-hover);
+    border-radius: 3px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  .progress-bar-mini .fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .team-comparison-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .detail-panel-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 900;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s, visibility 0.25s;
+  }
+  .detail-panel-mask.show { opacity: 1; visibility: visible; }
+  .detail-panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 480px;
+    max-width: 90vw;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border-color);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+  }
+  .detail-panel.show { transform: translateX(0); }
+  .detail-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+  .detail-panel-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .detail-panel-close {
+    background: transparent; border: none; color: var(--text-muted);
+    cursor: pointer; padding: 6px; border-radius: 4px; display: flex; transition: all 0.15s;
+  }
+  .detail-panel-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .detail-panel-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .detail-panel-footer {
+    padding: 14px 20px; border-top: 1px solid var(--border-color);
+    display: flex; gap: 10px; justify-content: flex-end; background: var(--bg-secondary);
+  }
+
+  .eff-metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .eff-metric-item {
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 12px;
+  }
+  .eff-metric-item .label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .eff-metric-item .value { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .eff-metric-item .sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .eff-score-ring {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .eff-score-ring svg { transform: rotate(-90deg); }
+  .eff-score-ring .ring-bg { stroke: var(--bg-hover); }
+  .eff-score-ring .ring-fill { stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .eff-score-ring .score-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .eff-score-ring .score-text .num { font-size: 28px; font-weight: 700; }
+  .eff-score-ring .score-text .lbl { font-size: 12px; color: var(--text-muted); }
+
+  .detail-section { margin-bottom: 20px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .detail-section-title i { width: 16px; height: 16px; color: var(--brand-light); }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--brand-primary); color: #fff; }
+  .btn-primary:hover { background: var(--brand-light); box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3); }
+  .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+  .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  .search-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    min-width: 260px;
+    transition: all 0.2s;
+  }
+  .search-input:focus-within { border-color: var(--brand-primary); box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15); }
+  .search-input i { width: 16px; height: 16px; color: var(--text-muted); }
+  .search-input input {
+    background: transparent; border: none; outline: none;
+    color: var(--text-primary); font-size: 13px; flex: 1; min-width: 0; font-family: inherit;
+  }
+  .search-input input::placeholder { color: var(--text-muted); }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    gap: 12px;
+  }
+  .empty-state i { width: 48px; height: 48px; opacity: 0.4; }
+
+  @media (max-width: 1400px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 1024px) {
+    .app-layout {
+      grid-template-columns: 1fr;
+      grid-template-areas: "header" "main" "statusbar";
+    }
+    .app-sidebar { display: none; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .detail-panel { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-container">
+        <div class="logo-icon"><i data-lucide="factory" style="width:18px;height:18px;"></i></div>
+        <span class="system-title">试制资源数智化管理系统</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item" onclick="location.href='index.html'">仪表盘</li>
+        <li class="nav-item" onclick="location.href='equipment.html'">设备台账</li>
+        <li class="nav-item" onclick="location.href='tasks.html'">任务管理</li>
+        <li class="nav-item" onclick="location.href='personnel.html'">人员看板</li>
+        <li class="nav-item active">人效分析</li>
+        <li class="nav-item" onclick="location.href='alerts.html'">告警管理</li>
+      </ul>
+    </div>
+    <div class="header-right">
+      <div class="header-action">
+        <div class="status-dot"></div>
+        <span>系统运行正常</span>
+      </div>
+      <div class="header-action">
+        <i data-lucide="bell" style="width:16px;height:16px;"></i>
+        <span>通知</span>
+      </div>
+      <div class="header-action">
+        <i data-lucide="user" style="width:16px;height:16px;"></i>
+        <span>管理员</span>
+      </div>
+    </div>
+  </header>
+
+  <aside class="app-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">日期范围</div>
+      <div class="date-range-selector">
+        <div class="date-input-group">
+          <i data-lucide="calendar"></i>
+          <input type="date" id="dateStart">
+        </div>
+        <div class="date-input-group">
+          <i data-lucide="calendar"></i>
+          <input type="date" id="dateEnd">
+        </div>
+        <div class="date-quick" id="dateQuick">
+          <span class="chip active" data-range="7">近7天</span>
+          <span class="chip" data-range="30">近30天</span>
+          <span class="chip" data-range="90">近90天</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">区域筛选</div>
+      <div id="areaFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">团队筛选</div>
+      <div id="teamFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">技能分组</div>
+      <div id="skillFilters"></div>
+    </div>
+  </aside>
+
+  <main class="app-main">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-input">
+          <i data-lucide="search"></i>
+          <input type="text" id="searchInput" placeholder="搜索姓名或工号...">
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-ghost" id="btnExport">
+          <i data-lucide="download" style="width:14px;height:14px;"></i>
+          导出报表
+        </button>
+        <button class="btn btn-ghost" id="btnRefresh">
+          <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+          刷新数据
+        </button>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="trending-up" class="kpi-icon"></i>人均产出</div>
+        </div>
+        <div class="kpi-value" id="kpiOutput">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend up" id="kpiOutputTrend"><i data-lucide="trending-up" style="width:12px;height:12px;"></i>--</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="clock" class="kpi-icon" style="color:#FAAD14;"></i>平均工时</div>
+        </div>
+        <div class="kpi-value" id="kpiHours" style="color:#FAAD14;">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend flat"><i data-lucide="minus" style="width:12px;height:12px;"></i>每日统计</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="check-circle" class="kpi-icon" style="color:#52C41A;"></i>任务完成率</div>
+        </div>
+        <div class="kpi-value" id="kpiCompletion" style="color:#52C41A;">0%</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend up" id="kpiCompletionTrend"><i data-lucide="trending-up" style="width:12px;height:12px;"></i>--</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="alert-triangle" class="kpi-icon" style="color:#FF4D4F;"></i>返工率</div>
+        </div>
+        <div class="kpi-value" id="kpiRework" style="color:#FF4D4F;">0%</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend down" id="kpiReworkTrend"><i data-lucide="trending-down" style="width:12px;height:12px;"></i>--</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="award" class="kpi-icon" style="color:#722ED1;"></i>综合效率指数</div>
+        </div>
+        <div class="kpi-value" id="kpiEfficiency" style="color:#9254DE;">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend up" id="kpiEfficiencyTrend"><i data-lucide="trending-up" style="width:12px;height:12px;"></i>--</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="bar-chart-3" class="card-title-icon"></i>工时分布（按团队/区域）</div>
+        </div>
+        <div id="hoursChart" class="chart-container"></div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="line-chart" class="card-title-icon"></i>任务完成率趋势（近7天）</div>
+        </div>
+        <div id="completionChart" class="chart-container"></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="card-header" style="padding:16px 16px 0;">
+        <div class="card-title"><i data-lucide="table" class="card-title-icon"></i>人效明细</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;color:var(--text-muted);">共 <span id="tableCount">0</span> 条记录</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="efficiency-table" id="efficiencyTable">
+          <thead>
+            <tr>
+              <th data-sort="name">姓名</th>
+              <th data-sort="id">工号</th>
+              <th data-sort="team">团队</th>
+              <th data-sort="area">区域</th>
+              <th data-sort="todayHours">今日工时</th>
+              <th data-sort="completed">完成任务</th>
+              <th data-sort="inProgress">进行中任务</th>
+              <th data-sort="completionRate">完成率</th>
+              <th data-sort="score">效率评分</th>
+              <th data-sort="rank">排名</th>
+            </tr>
+          </thead>
+          <tbody id="efficiencyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="team-comparison-card">
+      <div class="card-header">
+        <div class="card-title"><i data-lucide="users" class="card-title-icon"></i>团队效率对比</div>
+      </div>
+      <div id="teamChart" class="chart-container" style="height:320px;"></div>
+    </div>
+
+  </main>
+
+  <footer class="app-statusbar">
+    <div class="status-group">
+      <div class="status-item"><span class="status-dot"></span><span>人效分析模块</span></div>
+      <div class="status-item"><span>数据实时同步</span></div>
+    </div>
+    <div class="status-group">
+      <div class="status-item" id="currentTime"></div>
+    </div>
+  </footer>
+
+</div>
+
+<div class="detail-panel-mask" id="detailMask"></div>
+<aside class="detail-panel" id="detailPanel">
+  <div class="detail-panel-header">
+    <h3 id="detailPanelTitle">人效详情</h3>
+    <button class="detail-panel-close" id="detailPanelClose"><i data-lucide="x"></i></button>
+  </div>
+  <div class="detail-panel-body" id="detailPanelBody"></div>
+  <div class="detail-panel-footer">
+    <button class="btn btn-ghost" id="detailCloseBtn">关闭</button>
+    <button class="btn btn-primary" id="detailExportBtn">
+      <i data-lucide="download" style="width:14px;height:14px;"></i>
+      导出报表
+    </button>
+  </div>
+</aside>
+
+<script>
+(function () {
+  const SKILL_GROUPS = ['机械加工', '焊接', '喷涂', '装配', '检测', '物流', '电气维修', '机械维修'];
+  const AVATAR_COLORS = ['a1','a2','a3','a4','a5','a6','a7','a8'];
+  const AREAS = ['A区', 'B区', 'C区', 'D区', '总装', '质检'];
+
+  const state = {
+    search: '',
+    area: '',
+    team: '',
+    skill: '',
+    dateRange: 7,
+    sortKey: 'score',
+    sortDir: 'desc'
+  };
+
+  let hoursChart = null;
+  let completionChart = null;
+  let teamChart = null;
+
+  const EFFICIENCY_DATA = (function () {
+    const people = MockData.data.personnel;
+    const tasks = MockData.data.tasks;
+
+    const teamMap = {};
+    people.forEach(function (p) {
+      const team = p.skillGroup + '组';
+      if (!teamMap[team]) teamMap[team] = [];
+      teamMap[team].push(p.id);
+    });
+
+    return people.map(function (p, idx) {
+      const personTasks = tasks.filter(function (t) { return t.assignee === p.name; });
+      const completed = personTasks.filter(function (t) { return t.status === '已完成'; }).length;
+      const inProgress = personTasks.filter(function (t) { return t.status === '执行中' || t.status === '待执行'; }).length;
+      const total = personTasks.length;
+      const completionRate = total > 0 ? Math.round((completed / total) * 100) : 70;
+
+      const todayHours = 4 + Math.floor(Math.random() * 5);
+      const totalHours = todayHours + 160 + Math.floor(Math.random() * 40);
+      const outputPerHour = (5 + Math.random() * 15).toFixed(1);
+      const reworkRate = total > 0 ? Math.round(Math.random() * 8) : Math.floor(Math.random() * 5);
+
+      let score = 60 + Math.floor(Math.random() * 40);
+      score = Math.min(100, score + Math.floor(completionRate / 20));
+      score = Math.max(40, score - reworkRate);
+
+      return {
+        ...p,
+        avatarColor: AVATAR_COLORS[idx % AVATAR_COLORS.length],
+        team: p.skillGroup + '组',
+        todayHours: todayHours,
+        totalHours: totalHours,
+        completed: completed,
+        inProgress: inProgress,
+        totalTasks: total,
+        completionRate: completionRate,
+        outputPerHour: parseFloat(outputPerHour),
+        reworkRate: reworkRate,
+        score: score,
+        efficiencyIndex: (score / 10).toFixed(1),
+        tasksDetail: personTasks
+      };
+    });
+  })();
+
+  function getFilteredData() {
+    return EFFICIENCY_DATA.filter(function (p) {
+      if (state.search) {
+        const s = state.search.toLowerCase();
+        if (p.name.toLowerCase().indexOf(s) === -1 &&
+            p.id.toLowerCase().indexOf(s) === -1) {
+          return false;
+        }
+      }
+      if (state.area && p.position !== state.area) return false;
+      if (state.team && p.team !== state.team) return false;
+      if (state.skill && p.skillGroup !== state.skill) return false;
+      return true;
+    });
+  }
+
+  function getSortedData(data) {
+    const key = state.sortKey;
+    const dir = state.sortDir === 'desc' ? -1 : 1;
+    return data.slice().sort(function (a, b) {
+      let va = a[key], vb = b[key];
+      if (typeof va === 'string') return va.localeCompare(vb, 'zh') * dir;
+      return (va - vb) * dir;
+    });
+  }
+
+  function computeRanks(data) {
+    const sorted = data.slice().sort(function (a, b) { return b.score - a.score; });
+    const rankMap = {};
+    sorted.forEach(function (p, i) { rankMap[p.id] = i + 1; });
+    return data.map(function (p) { return { ...p, rank: rankMap[p.id] }; });
+  }
+
+  function renderKPIs() {
+    const filtered = getFilteredData();
+    const total = filtered.length;
+    const totalOutput = filtered.reduce(function (s, p) { return s + p.completed * p.outputPerHour; }, 0);
+    const avgOutput = total > 0 ? (totalOutput / total).toFixed(1) : '0';
+    const avgHours = total > 0 ? (filtered.reduce(function (s, p) { return s + p.todayHours; }, 0) / total).toFixed(1) : '0';
+    const totalTasks = filtered.reduce(function (s, p) { return s + p.completed + p.inProgress; }, 0);
+    const completedTasks = filtered.reduce(function (s, p) { return s + p.completed; }, 0);
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const avgRework = total > 0 ? (filtered.reduce(function (s, p) { return s + p.reworkRate; }, 0) / total).toFixed(1) : '0';
+    const avgScore = total > 0 ? Math.round(filtered.reduce(function (s, p) { return s + p.score; }, 0) / total) : 0;
+
+    document.getElementById('kpiOutput').innerHTML = avgOutput + ' <span style="font-size:14px;color:var(--text-secondary);">件/人</span>';
+    document.getElementById('kpiHours').innerHTML = avgHours + ' <span style="font-size:14px;color:var(--text-secondary);">h</span>';
+    document.getElementById('kpiCompletion').textContent = completionRate + '%';
+    document.getElementById('kpiRework').textContent = avgRework + '%';
+    document.getElementById('kpiEfficiency').textContent = avgScore;
+
+    document.getElementById('kpiOutputTrend').innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i>+' + (Math.random() * 10 + 1).toFixed(1) + '%';
+    document.getElementById('kpiCompletionTrend').innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i>+' + (Math.random() * 6 + 1).toFixed(1) + '%';
+    document.getElementById('kpiReworkTrend').innerHTML = '<i data-lucide="trending-down" style="width:12px;height:12px;"></i>-' + (Math.random() * 3 + 0.5).toFixed(1) + '%';
+    document.getElementById('kpiEfficiencyTrend').innerHTML = '<i data-lucide="trending-up" style="width:12px;height:12px;"></i>+' + (Math.random() * 5 + 1).toFixed(1) + '%';
+  }
+
+  function renderAreaFilters() {
+    const container = document.getElementById('areaFilters');
+    const counts = {};
+    EFFICIENCY_DATA.forEach(function (p) {
+      counts[p.position] = (counts[p.position] || 0) + 1;
+    });
+
+    let html = '';
+    Object.keys(counts).forEach(function (area) {
+      const active = state.area === area ? 'active' : '';
+      html += '<div class="filter-item ' + active + '" data-area="' + area + '">' +
+        '<span class="filter-dot" style="background:var(--brand-primary);"></span>' +
+        '<span>' + area + '</span>' +
+        '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + counts[area] + '</span>' +
+      '</div>';
+    });
+    html += '<div class="filter-item ' + (state.area === '' ? 'active' : '') + '" data-area="">' +
+      '<span>全部</span>' +
+      '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + EFFICIENCY_DATA.length + '</span>' +
+    '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('.filter-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.area = el.dataset.area;
+        renderAll();
+      });
+    });
+  }
+
+  function renderTeamFilters() {
+    const container = document.getElementById('teamFilters');
+    const counts = {};
+    EFFICIENCY_DATA.forEach(function (p) {
+      counts[p.team] = (counts[p.team] || 0) + 1;
+    });
+
+    let html = '';
+    Object.keys(counts).forEach(function (team) {
+      const active = state.team === team ? 'active' : '';
+      html += '<div class="filter-item ' + active + '" data-team="' + team + '">' +
+        '<span class="filter-dot" style="background:#722ED1;"></span>' +
+        '<span>' + team + '</span>' +
+        '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + counts[team] + '</span>' +
+      '</div>';
+    });
+    html += '<div class="filter-item ' + (state.team === '' ? 'active' : '') + '" data-team="">' +
+      '<span>全部</span>' +
+      '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + EFFICIENCY_DATA.length + '</span>' +
+    '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('.filter-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.team = el.dataset.team;
+        renderAll();
+      });
+    });
+  }
+
+  function renderSkillFilters() {
+    const container = document.getElementById('skillFilters');
+    const counts = {};
+    EFFICIENCY_DATA.forEach(function (p) {
+      counts[p.skillGroup] = (counts[p.skillGroup] || 0) + 1;
+    });
+
+    let html = '';
+    SKILL_GROUPS.forEach(function (skill) {
+      const count = counts[skill] || 0;
+      if (count === 0) return;
+      const active = state.skill === skill ? 'active' : '';
+      html += '<div class="filter-item ' + active + '" data-skill="' + skill + '">' +
+        '<span class="filter-dot" style="background:#13C2C2;"></span>' +
+        '<span>' + skill + '</span>' +
+        '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + count + '</span>' +
+      '</div>';
+    });
+    container.innerHTML = html;
+    container.querySelectorAll('.filter-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.skill = el.dataset.skill;
+        renderAll();
+      });
+    });
+  }
+
+  function renderDateRange() {
+    const start = new Date();
+    start.setDate(start.getDate() - state.dateRange);
+    const pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    document.getElementById('dateStart').value = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate());
+    document.getElementById('dateEnd').value = new Date().getFullYear() + '-' + pad(new Date().getMonth() + 1) + '-' + pad(new Date().getDate());
+
+    document.querySelectorAll('#dateQuick .chip').forEach(function (el) {
+      el.classList.toggle('active', parseInt(el.dataset.range) === state.dateRange);
+    });
+  }
+
+  function getScoreClass(score) {
+    if (score >= 90) return 'score-high';
+    if (score >= 70) return 'score-mid';
+    return 'score-low';
+  }
+
+  function getScoreLabel(score) {
+    if (score >= 90) return '优秀';
+    if (score >= 70) return '良好';
+    return '待提升';
+  }
+
+  function renderTable() {
+    const filtered = getFilteredData();
+    const withRanks = computeRanks(filtered);
+    const sorted = getSortedData(withRanks);
+
+    document.getElementById('tableCount').textContent = sorted.length;
+
+    const tbody = document.getElementById('efficiencyTableBody');
+    if (sorted.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i data-lucide="users"></i><div>暂无符合条件的人员</div></div></td></tr>';
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    let html = '';
+    sorted.forEach(function (p) {
+      const rankCls = p.rank === 1 ? 'top1' : p.rank === 2 ? 'top2' : p.rank === 3 ? 'top3' : '';
+      const scoreCls = getScoreClass(p.score);
+      const rateCls = p.completionRate >= 90 ? 'score-high' : p.completionRate >= 70 ? 'score-mid' : 'score-low';
+      const progressColor = p.completionRate >= 90 ? '#52C41A' : p.completionRate >= 70 ? '#FAAD14' : '#FF4D4F';
+
+      html += '<tr data-id="' + p.id + '">' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<div class="avatar ' + p.avatarColor + '" style="width:32px;height:32px;font-size:13px;background:linear-gradient(135deg,' +
+              ({a1:'#1677FF,#0958D9',a2:'#52C41A,#389E0D',a3:'#FAAD14,#D48806',a4:'#FF4D4F,#CF1322',a5:'#722ED1,#531DAB',a6:'#13C2C2,#08979C',a7:'#EB2F96,#C41D7F',a8:'#FA541C,#D4380D'}[p.avatarColor] || '#1677FF,#0958D9') +
+            ');border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;flex-shrink:0;">' + p.avatar + '</div>' +
+            '<span style="font-weight:500;">' + p.name + '</span>' +
+          '</div>' +
+        '</td>' +
+        '<td style="font-family:monospace;color:var(--brand-light);">' + p.id + '</td>' +
+        '<td>' + p.team + '</td>' +
+        '<td>' + p.position + '</td>' +
+        '<td>' + p.todayHours + 'h</td>' +
+        '<td>' + p.completed + '</td>' +
+        '<td>' + p.inProgress + '</td>' +
+        '<td>' +
+          '<div class="progress-bar-mini"><div class="fill" style="width:' + p.completionRate + '%;background:' + progressColor + ';"></div></div>' +
+          '<span style="font-weight:600;color:' + progressColor + ';">' + p.completionRate + '%</span>' +
+        '</td>' +
+        '<td><span class="score-badge ' + scoreCls + '">' + p.score + '</span></td>' +
+        '<td><span class="rank-badge ' + rankCls + '">' + p.rank + '</span></td>' +
+      '</tr>';
+    });
+
+    tbody.innerHTML = html;
+
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      tr.addEventListener('click', function () {
+        openDetailPanel(tr.dataset.id);
+      });
+    });
+
+    document.querySelectorAll('#efficiencyTable thead th').forEach(function (th) {
+      const key = th.dataset.sort;
+      th.classList.remove('sorted-asc', 'sorted-desc');
+      if (key === state.sortKey) {
+        th.classList.add(state.sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+      }
+      th.onclick = function () {
+        if (state.sortKey === key) {
+          state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.sortKey = key;
+          state.sortDir = 'desc';
+        }
+        renderTable();
+      };
+    });
+  }
+
+  function initCharts() {
+    hoursChart = echarts.init(document.getElementById('hoursChart'), 'dark');
+    completionChart = echarts.init(document.getElementById('completionChart'), 'dark');
+    teamChart = echarts.init(document.getElementById('teamChart'), 'dark');
+
+    window.addEventListener('resize', function () {
+      if (hoursChart) hoursChart.resize();
+      if (completionChart) completionChart.resize();
+      if (teamChart) teamChart.resize();
+    });
+  }
+
+  function renderHoursChart() {
+    const filtered = getFilteredData();
+    const teams = {};
+    filtered.forEach(function (p) {
+      if (!teams[p.team]) teams[p.team] = {};
+      if (!teams[p.team][p.position]) teams[p.team][p.position] = 0;
+      teams[p.team][p.position] += p.todayHours;
+    });
+
+    const teamNames = Object.keys(teams);
+    const areas = new Set();
+    teamNames.forEach(function (t) { Object.keys(teams[t]).forEach(function (a) { areas.add(a); }); });
+    const areaNames = Array.from(areas);
+
+    const series = areaNames.map(function (area, idx) {
+      const colors = ['#1677FF', '#52C41A', '#FAAD14', '#722ED1', '#13C2C2', '#FA541C'];
+      return {
+        name: area,
+        type: 'bar',
+        stack: 'total',
+        data: teamNames.map(function (t) { return teams[t][area] || 0; }),
+        itemStyle: { color: colors[idx % colors.length], borderRadius: idx === areaNames.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0] }
+      };
+    });
+
+    hoursChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        backgroundColor: 'rgba(21, 28, 44, 0.95)',
+        borderColor: '#1E2A3E',
+        textStyle: { color: '#fff', fontSize: 12 }
+      },
+      legend: {
+        orient: 'horizontal',
+        bottom: 0,
+        textStyle: { color: '#8B95A8', fontSize: 11 },
+        itemWidth: 10,
+        itemHeight: 10
+      },
+      grid: { left: 50, right: 20, top: 20, bottom: 40 },
+      xAxis: {
+        type: 'category',
+        data: teamNames,
+        axisLine: { lineStyle: { color: '#1E2A3E' } },
+        axisLabel: { color: '#8B95A8', fontSize: 12 }
+      },
+      yAxis: {
+        type: 'value',
+        name: '工时(h)',
+        nameTextStyle: { color: '#8B95A8', fontSize: 11 },
+        axisLine: { lineStyle: { color: '#1E2A3E' } },
+        axisLabel: { color: '#8B95A8', fontSize: 11 },
+        splitLine: { lineStyle: { color: 'rgba(30, 42, 62, 0.5)' } }
+      },
+      series: series.length ? series : [{
+        type: 'bar', data: [], itemStyle: { color: '#1677FF' }
+      }]
+    });
+  }
+
+  function renderCompletionChart() {
+    const days = [];
+    const completionData = [];
+    const reworkData = [];
+    const today = new Date();
+    const pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      days.push((d.getMonth() + 1) + '/' + d.getDate());
+      completionData.push(Math.round(70 + Math.random() * 25));
+      reworkData.push(Math.round(2 + Math.random() * 8));
+    }
+
+    completionChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(21, 28, 44, 0.95)',
+        borderColor: '#1E2A3E',
+        textStyle: { color: '#fff', fontSize: 12 }
+      },
+      legend: {
+        data: ['完成率', '返工率'],
+        top: 0,
+        right: 0,
+        textStyle: { color: '#8B95A8', fontSize: 12 },
+        itemWidth: 14,
+        itemHeight: 8
+      },
+      grid: { left: 50, right: 50, top: 30, bottom: 30 },
+      xAxis: {
+        type: 'category',
+        data: days,
+        axisLine: { lineStyle: { color: '#1E2A3E' } },
+        axisLabel: { color: '#8B95A8', fontSize: 11 }
+      },
+      yAxis: [
+        {
+          type: 'value',
+          name: '完成率(%)',
+          min: 50,
+          max: 100,
+          axisLine: { lineStyle: { color: '#1E2A3E' } },
+          axisLabel: { color: '#8B95A8', fontSize: 11, formatter: '{value}%' },
+          splitLine: { lineStyle: { color: 'rgba(30, 42, 62, 0.5)' } }
+        },
+        {
+          type: 'value',
+          name: '返工率(%)',
+          min: 0,
+          max: 15,
+          axisLine: { lineStyle: { color: '#1E2A3E' } },
+          axisLabel: { color: '#8B95A8', fontSize: 11, formatter: '{value}%' },
+          splitLine: { show: false }
+        }
+      ],
+      series: [
+        {
+          name: '完成率',
+          type: 'line',
+          data: completionData,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 8,
+          lineStyle: { width: 3, color: '#52C41A' },
+          itemStyle: { color: '#52C41A' },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(82, 196, 26, 0.3)' },
+              { offset: 1, color: 'rgba(82, 196, 26, 0)' }
+            ])
+          }
+        },
+        {
+          name: '返工率',
+          type: 'line',
+          yAxisIndex: 1,
+          data: reworkData,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: 6,
+          lineStyle: { width: 2, color: '#FF4D4F' },
+          itemStyle: { color: '#FF4D4F' }
+        }
+      ]
+    });
+  }
+
+  function renderTeamChart() {
+    const filtered = getFilteredData();
+    const teamStats = {};
+
+    filtered.forEach(function (p) {
+      if (!teamStats[p.team]) {
+        teamStats[p.team] = { hours: 0, completed: 0, inProgress: 0, score: 0, count: 0 };
+      }
+      teamStats[p.team].hours += p.todayHours;
+      teamStats[p.team].completed += p.completed;
+      teamStats[p.team].inProgress += p.inProgress;
+      teamStats[p.team].score += p.score;
+      teamStats[p.team].count += 1;
+    });
+
+    const teamNames = Object.keys(teamStats);
+    const avgScores = teamNames.map(function (t) { return Math.round(teamStats[t].score / teamStats[t].count); });
+    const completionRates = teamNames.map(function (t) {
+      const total = teamStats[t].completed + teamStats[t].inProgress;
+      return total > 0 ? Math.round((teamStats[t].completed / total) * 100) : 0;
+    });
+    const totalHours = teamNames.map(function (t) { return teamStats[t].hours; });
+
+    teamChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        backgroundColor: 'rgba(21, 28, 44, 0.95)',
+        borderColor: '#1E2A3E',
+        textStyle: { color: '#fff', fontSize: 12 }
+      },
+      legend: {
+        data: ['效率评分', '完成率(%)', '今日工时(h)'],
+        top: 0,
+        textStyle: { color: '#8B95A8', fontSize: 12 },
+        itemWidth: 14,
+        itemHeight: 8
+      },
+      grid: { left: 80, right: 60, top: 40, bottom: 20 },
+      xAxis: {
+        type: 'value',
+        axisLine: { lineStyle: { color: '#1E2A3E' } },
+        axisLabel: { color: '#8B95A8', fontSize: 11 },
+        splitLine: { lineStyle: { color: 'rgba(30, 42, 62, 0.5)' } }
+      },
+      yAxis: {
+        type: 'category',
+        data: teamNames,
+        axisLine: { lineStyle: { color: '#1E2A3E' } },
+        axisLabel: { color: '#8B95A8', fontSize: 12 }
+      },
+      series: [
+        {
+          name: '效率评分',
+          type: 'bar',
+          data: avgScores,
+          barWidth: 18,
+          itemStyle: {
+            borderRadius: [0, 4, 4, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#722ED1' },
+              { offset: 1, color: '#9254DE' }
+            ])
+          },
+          label: { show: true, position: 'right', color: '#9254DE', fontSize: 11, fontWeight: 600 }
+        },
+        {
+          name: '完成率(%)',
+          type: 'bar',
+          data: completionRates,
+          barWidth: 18,
+          itemStyle: {
+            borderRadius: [0, 4, 4, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#52C41A' },
+              { offset: 1, color: '#73D13D' }
+            ])
+          },
+          label: { show: true, position: 'right', color: '#73D13D', fontSize: 11, fontWeight: 600 }
+        },
+        {
+          name: '今日工时(h)',
+          type: 'bar',
+          data: totalHours,
+          barWidth: 18,
+          itemStyle: {
+            borderRadius: [0, 4, 4, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#1677FF' },
+              { offset: 1, color: '#4096FF' }
+            ])
+          },
+          label: { show: true, position: 'right', color: '#4096FF', fontSize: 11, fontWeight: 600 }
+        }
+      ]
+    });
+  }
+
+  function openDetailPanel(id) {
+    const p = EFFICIENCY_DATA.find(function (x) { return x.id === id; });
+    if (!p) return;
+
+    const filtered = getFilteredData();
+    const withRanks = computeRanks(filtered);
+    const ranked = withRanks.find(function (x) { return x.id === id; });
+    const rank = ranked ? ranked.rank : 0;
+
+    document.getElementById('detailPanelTitle').textContent = p.name + ' - 人效详情';
+
+    const scoreCls = getScoreClass(p.score);
+    const scoreLabel = getScoreLabel(p.score);
+    const rankCls = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+    const progressColor = p.completionRate >= 90 ? '#52C41A' : p.completionRate >= 70 ? '#FAAD14' : '#FF4D4F';
+
+    const circumference = 2 * Math.PI * 45;
+    const offset = circumference * (1 - p.score / 100);
+    const ringColor = p.score >= 90 ? '#52C41A' : p.score >= 70 ? '#FAAD14' : '#FF4D4F';
+
+    let html = '';
+
+    html += '<div class="detail-section">' +
+      '<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">' +
+        '<div class="eff-score-ring">' +
+          '<svg width="100" height="100">' +
+            '<circle class="ring-bg" cx="50" cy="50" r="45" stroke-width="8" fill="none"/>' +
+            '<circle class="ring-fill" cx="50" cy="50" r="45" stroke-width="8" fill="none"' +
+              'stroke="' + ringColor + '"' +
+              'stroke-dasharray="' + circumference + '"' +
+              'stroke-dashoffset="' + offset + '"/>' +
+          '</svg>' +
+          '<div class="score-text">' +
+            '<div class="num" style="color:' + ringColor + ';">' + p.score + '</div>' +
+            '<div class="lbl">效率评分</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="flex:1;">' +
+          '<div style="font-size:18px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">' + p.name + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">' + p.id + ' · ' + p.team + '</div>' +
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+            '<span class="score-badge ' + scoreCls + '">' + scoreLabel + '</span>' +
+            '<span class="rank-badge ' + rankCls + '">#' + rank + '</span>' +
+            '<span style="font-size:12px;color:var(--text-secondary);">完成率 <span style="color:' + progressColor + ';font-weight:600;">' + p.completionRate + '%</span></span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title"><i data-lucide="gauge"></i>效率指标</div>' +
+      '<div class="eff-metric-row">' +
+        '<div class="eff-metric-item"><div class="label">综合效率指数</div><div class="value" style="color:#9254DE;">' + p.efficiencyIndex + '</div><div class="sub">基准 10.0</div></div>' +
+        '<div class="eff-metric-item"><div class="label">今日工时</div><div class="value" style="color:#FAAD14;">' + p.todayHours + 'h</div><div class="sub">月度 ' + p.totalHours + 'h</div></div>' +
+        '<div class="eff-metric-item"><div class="label">完成任务</div><div class="value" style="color:#52C41A;">' + p.completed + '</div><div class="sub">共 ' + p.totalTasks + ' 项</div></div>' +
+        '<div class="eff-metric-item"><div class="label">进行中</div><div class="value" style="color:#1677FF;">' + p.inProgress + '</div><div class="sub">待处理</div></div>' +
+        '<div class="eff-metric-item"><div class="label">返工率</div><div class="value" style="color:#FF4D4F;">' + p.reworkRate + '%</div><div class="sub">行业均值 5%</div></div>' +
+        '<div class="eff-metric-item"><div class="label">人均产出</div><div class="value" style="color:#4096FF;">' + p.outputPerHour + '/h</div><div class="sub">件/小时</div></div>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title"><i data-lucide="list-checks"></i>任务明细</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;">';
+
+    if (p.tasksDetail && p.tasksDetail.length > 0) {
+      p.tasksDetail.slice(0, 5).forEach(function (t) {
+        const statusColor = t.status === '已完成' ? '#52C41A' : t.status === '执行中' ? '#1677FF' : t.status === '已延期' ? '#FF4D4F' : '#8B95A8';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);border-left:3px solid ' + statusColor + ';">' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:13px;color:var(--text-primary);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.title + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">' + t.id + ' · ' + t.type + '</div>' +
+          '</div>' +
+          '<span style="font-size:11px;color:' + statusColor + ';font-weight:600;white-space:nowrap;margin-left:8px;">' + t.status + '</span>' +
+        '</div>';
+      });
+    } else {
+      html += '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">暂无任务记录</div>';
+    }
+
+    html += '</div></div>';
+
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title"><i data-lucide="user"></i>基本信息</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">工号</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.id + '</div></div>' +
+        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">所属团队</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.team + '</div></div>' +
+        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">所在区域</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.position + '</div></div>' +
+        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">技能分组</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.skillGroup + '</div></div>' +
+      '</div>' +
+    '</div>';
+
+    document.getElementById('detailPanelBody').innerHTML = html;
+    document.getElementById('detailMask').classList.add('show');
+    document.getElementById('detailPanel').classList.add('show');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function closeDetailPanel() {
+    document.getElementById('detailMask').classList.remove('show');
+    document.getElementById('detailPanel').classList.remove('show');
+  }
+
+  function renderAll() {
+    renderAreaFilters();
+    renderTeamFilters();
+    renderSkillFilters();
+    renderDateRange();
+    renderKPIs();
+    renderHoursChart();
+    renderCompletionChart();
+    renderTable();
+    renderTeamChart();
+  }
+
+  function updateTime() {
+    const now = new Date();
+    const pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    const str = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' +
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    document.getElementById('currentTime').textContent = str;
+  }
+
+  document.getElementById('searchInput').addEventListener('input', function (e) {
+    state.search = e.target.value;
+    renderKPIs();
+    renderHoursChart();
+    renderCompletionChart();
+    renderTable();
+    renderTeamChart();
+  });
+
+  document.getElementById('dateStart').addEventListener('change', function (e) {
+    const diff = Math.floor((new Date() - new Date(e.target.value)) / (1000 * 60 * 60 * 24));
+    state.dateRange = Math.max(1, diff);
+    renderDateRange();
+    renderAll();
+  });
+
+  document.getElementById('dateEnd').addEventListener('change', function (e) {
+    state.dateRange = Math.floor((new Date(e.target.value) - new Date()) / (1000 * 60 * 60 * 24)) + 1;
+    renderDateRange();
+    renderAll();
+  });
+
+  document.querySelectorAll('#dateQuick .chip').forEach(function (el) {
+    el.addEventListener('click', function () {
+      state.dateRange = parseInt(el.dataset.range);
+      renderDateRange();
+      renderAll();
+    });
+  });
+
+  document.getElementById('detailPanelClose').addEventListener('click', closeDetailPanel);
+  document.getElementById('detailCloseBtn').addEventListener('click', closeDetailPanel);
+  document.getElementById('detailMask').addEventListener('click', closeDetailPanel);
+
+  document.getElementById('detailExportBtn').addEventListener('click', function () {
+    App.toast('报表导出功能开发中...', 'info');
+  });
+
+  document.getElementById('btnExport').addEventListener('click', function () {
+    App.toast('报表导出功能开发中...', 'info');
+  });
+
+  document.getElementById('btnRefresh').addEventListener('click', function () {
+    MockData.refresh();
+    App.toast('数据已刷新');
+    renderAll();
+  });
+
+  initCharts();
+  renderAll();
+  updateTime();
+  setInterval(updateTime, 1000);
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+
+</body>
+</html>
+

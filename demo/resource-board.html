@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资源占用看板 - 试制资源数智化管理系统</title>
+  <link rel="stylesheet" href="./assets/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    .util-matrix {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .matrix-cell {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .matrix-cell:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .matrix-cell .area-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .matrix-cell .area-name-text {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    .matrix-cell .area-util-pct {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .matrix-cell .area-util-unit {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-left: 2px;
+    }
+    .matrix-cell .sparkline-container {
+      width: 100%;
+      height: 40px;
+      margin-top: 8px;
+    }
+    .matrix-cell .area-count-info {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .matrix-cell .capacity-warning {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: none;
+    }
+    .matrix-cell.warning-red {
+      border-color: rgba(255, 77, 79, 0.4);
+    }
+    .matrix-cell.warning-red .area-util-pct { color: var(--danger); }
+    .matrix-cell.warning-red .capacity-warning { display: flex; }
+    .matrix-cell.warning-yellow {
+      border-color: rgba(250, 173, 20, 0.4);
+    }
+    .matrix-cell.warning-yellow .area-util-pct { color: var(--warning); }
+    .matrix-cell.warning-green .area-util-pct { color: var(--success); }
+
+    .area-detail-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .area-detail-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      scroll-margin-top: 80px;
+    }
+    .area-detail-card .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .area-detail-card .detail-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+    .area-detail-card .detail-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .area-detail-card .stat-mini {
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      text-align: center;
+    }
+    .area-detail-card .stat-mini .stat-num {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .area-detail-card .stat-mini .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .area-detail-card .util-section {
+      margin-bottom: 14px;
+    }
+    .area-detail-card .util-section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .area-detail-card .util-section-title .util-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .area-detail-card .devices-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .area-detail-card .devices-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .area-detail-card .devices-list .dev-name {
+      color: var(--text-primary);
+      flex: 1;
+    }
+    .area-detail-card .devices-list .dev-util {
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    .time-range-group {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      padding: 3px;
+    }
+    .time-range-btn {
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+    }
+    .time-range-btn:hover {
+      color: var(--text-primary);
+    }
+    .time-range-btn.active {
+      background: var(--brand-primary);
+      color: #fff;
+    }
+
+    .filter-group-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    .capacity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .capacity-badge.normal {
+      background: rgba(82, 196, 26, 0.15);
+      color: var(--success);
+    }
+    .capacity-badge.warning {
+      background: rgba(250, 173, 20, 0.15);
+      color: var(--warning);
+    }
+    .capacity-badge.overload {
+      background: rgba(255, 77, 79, 0.15);
+      color: var(--danger);
+    }
+
+    @media (max-width: 1024px) {
+      .util-matrix { grid-template-columns: repeat(2, 1fr); }
+      .area-detail-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i data-lucide="factory" style="width:18px;height:18px;"></i>
+          </div>
+          <span class="system-title">试制资源数智化管理系统</span>
+        </div>
+        <nav>
+          <ul class="nav-menu">
+            <li class="nav-item" data-page="dashboard">综合驾驶舱</li>
+            <li class="nav-item" data-page="devices">设备台账</li>
+            <li class="nav-item" data-page="resource" style="background:rgba(22,119,255,0.15);color:#4096FF;">资源占用看板</li>
+            <li class="nav-item" data-page="tasks">任务管理</li>
+            <li class="nav-item" data-page="alerts">异常预警中心</li>
+          </ul>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="header-action" id="syncBtn">
+          <span class="status-dot sync"></span>
+          <span>同步中</span>
+        </div>
+        <div class="header-action">
+          <span class="status-dot"></span>
+          <span>系统正常</span>
+        </div>
+        <div class="header-action">
+          <i data-lucide="clock" style="width:14px;height:14px;"></i>
+          <span id="currentTime">--:--:--</span>
+        </div>
+        <div class="header-action" id="userBtn">
+          <i data-lucide="user" style="width:14px;height:14px;"></i>
+          <span>管理员</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="app-sidebar">
+      <div class="sidebar-section">
+        <div class="filter-group-title">车间区域</div>
+        <div id="areaFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="filter-group-title">资源类型</div>
+        <div id="resourceTypeFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="filter-group-title">时间范围</div>
+        <div class="time-range-group" id="timeRangeGroup">
+          <button class="time-range-btn active" data-range="today">今日</button>
+          <button class="time-range-btn" data-range="week">本周</button>
+          <button class="time-range-btn" data-range="month">本月</button>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="filter-group-title">容量阈值</div>
+        <div class="stat-item" style="cursor:default;">
+          <span class="stat-label">绿色 (正常)</span>
+          <span style="color:var(--success);font-weight:600;">≤ 60%</span>
+        </div>
+        <div class="stat-item" style="cursor:default;">
+          <span class="stat-label">黄色 (注意)</span>
+          <span style="color:var(--warning);font-weight:600;">60% - 80%</span>
+        </div>
+        <div class="stat-item" style="cursor:default;">
+          <span class="stat-label">红色 (过载)</span>
+          <span style="color:var(--danger);font-weight:600;">> 80%</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="util-matrix" id="utilMatrix"></div>
+
+      <div class="charts-row" style="grid-template-columns:1fr 1fr;">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="trending-up" class="card-title-icon"></i>
+              利用率趋势
+            </div>
+            <div id="chartRangeLabel" style="font-size:12px;color:var(--text-muted);">近7日</div>
+          </div>
+          <div id="trendChart" class="chart-container"></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="bar-chart-3" class="card-title-icon"></i>
+              设备利用率排名
+            </div>
+            <div style="display:flex;gap:4px;">
+              <span class="chip active" data-rank-filter="top">TOP 5</span>
+              <span class="chip" data-rank-filter="bottom">末 5</span>
+            </div>
+          </div>
+          <div id="rankingChart" class="chart-container"></div>
+        </div>
+      </div>
+
+      <div class="area-detail-cards" id="areaDetailCards"></div>
+    </main>
+
+    <footer class="app-statusbar">
+      <div class="status-group">
+        <div class="status-item">
+          <span class="status-dot"></span>
+          <span id="systemStatus">系统运行正常</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i>
+          <span id="syncStatus">数据同步完成</span>
+        </div>
+      </div>
+      <div class="status-group">
+        <div class="status-item">
+          <i data-lucide="database" style="width:12px;height:12px;"></i>
+          <span>数据库: 已连接</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="hard-drive" style="width:12px;height:12px;"></i>
+          <span>存储: 正常</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="clock" style="width:12px;height:12px;"></i>
+          <span id="lastUpdateTime">最后更新: --:--:--</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./assets/js/mock-data.js"></script>
+  <script src="./assets/js/app.js"></script>
+  <script>
+    (function () {
+      const d = MockData.data;
+      let currentAreaFilter = 'all';
+      let currentResourceFilter = 'all';
+      let currentTimeRange = 'today';
+      let currentRankFilter = 'top';
+      let charts = {};
+
+      function fmtTime(d) {
+        const pad = n => String(n).padStart(2, '0');
+        return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      }
+
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent =
+          now.getFullYear() + '-' +
+          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+          String(now.getDate()).padStart(2, '0') + ' ' + fmtTime(now);
+      }
+
+      function updateLastTime() {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        document.getElementById('lastUpdateTime').textContent =
+          '最后更新: ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      }
+
+      function getAreaDevices(areaId) {
+        let devices = d.devices;
+        if (areaId !== 'all') {
+          devices = devices.filter(dev => dev.area === areaId);
+        }
+        if (currentResourceFilter !== 'all') {
+          devices = devices.filter(dev => dev.status === currentResourceFilter);
+        }
+        return devices;
+      }
+
+      function getUtilizationColor(util) {
+        if (util < 60) return 'var(--success)';
+        if (util <= 80) return 'var(--warning)';
+        return 'var(--danger)';
+      }
+
+      function getUtilizationClass(util) {
+        if (util < 60) return 'warning-green';
+        if (util <= 80) return 'warning-yellow';
+        return 'warning-red';
+      }
+
+      function getCapacityLabel(util) {
+        if (util < 60) return { text: '正常', cls: 'normal' };
+        if (util <= 80) return { text: '注意', cls: 'warning' };
+        return { text: '过载', cls: 'overload' };
+      }
+
+      function calcUtilization(devices) {
+        if (!devices.length) return 0;
+        const total = devices.reduce((s, d) => s + d.utilization, 0);
+        return Math.round(total / devices.length * 10) / 10;
+      }
+
+      function calcTurnoverTime(devices) {
+        if (!devices.length) return 0;
+        const avgRuntime = devices.reduce((s, d) => s + d.runtime, 0) / devices.length;
+        return Math.round(avgRuntime / 10) / 10;
+      }
+
+      function getTrendData(days) {
+        const labels = [];
+        const values = [];
+        const now = new Date();
+        for (let i = days - 1; i >= 0; i--) {
+          const date = new Date(now.getTime() - i * 86400000);
+          labels.push((date.getMonth() + 1) + '/' + date.getDate());
+          let base = 65 + Math.sin(i * 0.7) * 10 + (Math.random() - 0.5) * 8;
+          base = Math.max(30, Math.min(95, base));
+          values.push(Math.round(base * 10) / 10);
+        }
+        return { labels, values };
+      }
+
+      function getRankingData() {
+        let devices = getAreaDevices('all');
+        const sorted = [...devices].sort((a, b) =>
+          currentRankFilter === 'top' ? b.utilization - a.utilization : a.utilization - b.utilization
+        );
+        const top = sorted.slice(0, 5);
+        return top.map(d => ({ name: d.name, value: d.utilization, id: d.id }));
+      }
+
+      function renderKPI() {
+        const allDevices = getAreaDevices('all');
+        const onlineDevices = allDevices.filter(d => d.status === 'online');
+        const idleDevices = allDevices.filter(d => d.status === 'idle');
+        const avgUtil = calcUtilization(allDevices);
+        const turnover = calcTurnoverTime(allDevices);
+
+        const items = [
+          {
+            title: '综合利用率',
+            value: avgUtil,
+            unit: '%',
+            icon: 'gauge',
+            trend: avgUtil >= 70 ? 'up' : avgUtil >= 50 ? 'flat' : 'down',
+            trendVal: avgUtil >= 70 ? '+2.3%' : avgUtil >= 50 ? '0.0%' : '-1.5%',
+            sub: '全部设备均值',
+            color: getUtilizationColor(avgUtil)
+          },
+          {
+            title: '在用设备数',
+            value: onlineDevices.length,
+            unit: '台',
+            icon: 'activity',
+            trend: 'up',
+            trendVal: '+3',
+            sub: '在线率 ' + Math.round(onlineDevices.length / (allDevices.length || 1) * 100) + '%',
+            color: 'var(--brand-light)'
+          },
+          {
+            title: '空闲设备数',
+            value: idleDevices.length,
+            unit: '台',
+            icon: 'pause-circle',
+            trend: idleDevices.length > 10 ? 'down' : 'up',
+            trendVal: idleDevices.length > 10 ? '-2' : '+1',
+            sub: '可调度资源',
+            color: 'var(--success)'
+          },
+          {
+            title: '平均周转时间',
+            value: turnover,
+            unit: '天',
+            icon: 'refresh-cw',
+            trend: turnover > 15 ? 'down' : 'up',
+            trendVal: turnover > 15 ? '-0.5' : '+0.3',
+            sub: '设备周转周期',
+            color: 'var(--warning)'
+          }
+        ];
+
+        const html = items.map(it => `
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-title">
+                <i data-lucide="${it.icon}" class="kpi-icon" style="color:${it.color};"></i>
+                ${it.title}
+              </div>
+              <span class="kpi-trend ${it.trend}">
+                <i data-lucide="${it.trend === 'up' ? 'trending-up' : it.trend === 'down' ? 'trending-down' : 'minus'}" style="width:12px;height:12px;"></i>
+                ${it.trendVal}
+              </span>
+            </div>
+            <div>
+              <span class="kpi-value" style="color:${it.color};">${it.value}</span>
+              <span class="kpi-unit">${it.unit}</span>
+            </div>
+            <div class="kpi-sub">${it.sub}</div>
+          </div>
+        `).join('');
+        document.getElementById('kpiGrid').innerHTML = html;
+      }
+
+      function renderSidebar() {
+        const areaHtml = d.areas.map(a => {
+          const devices = getAreaDevices(a.id);
+          const util = calcUtilization(devices);
+          const cap = getCapacityLabel(util);
+          return `
+            <div class="stat-item ${currentAreaFilter === a.id ? 'active' : ''}" data-area="${a.id}">
+              <span class="stat-label">${a.name}</span>
+              <span style="font-size:12px;font-weight:600;color:${getUtilizationColor(util)};">${util}%</span>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('areaFilters').innerHTML = areaHtml;
+
+        const resourceTypes = [
+          { key: 'all', label: '全部状态', count: getAreaDevices('all').length },
+          { key: 'online', label: '运行中', count: d.devices.filter(d => d.status === 'online').length },
+          { key: 'idle', label: '空闲', count: d.devices.filter(d => d.status === 'idle').length },
+          { key: 'warning', label: '预警', count: d.devices.filter(d => d.status === 'warning').length },
+          { key: 'fault', label: '故障', count: d.devices.filter(d => d.status === 'fault').length },
+          { key: 'maintenance', label: '维护中', count: d.devices.filter(d => d.status === 'maintenance').length }
+        ];
+        const resHtml = resourceTypes.map(r => `
+          <div class="stat-item ${currentResourceFilter === r.key ? 'active' : ''}" data-resource="${r.key}">
+            <span class="stat-label">${r.label}</span>
+            <span class="stat-value">${r.count}</span>
+          </div>
+        `).join('');
+        document.getElementById('resourceTypeFilters').innerHTML = resHtml;
+
+        document.querySelectorAll('#areaFilters .stat-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const area = el.dataset.area;
+            currentAreaFilter = currentAreaFilter === area ? 'all' : area;
+            renderSidebar();
+            renderAll();
+          });
+        });
+
+        document.querySelectorAll('#resourceTypeFilters .stat-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const res = el.dataset.resource;
+            currentResourceFilter = currentResourceFilter === res ? 'all' : res;
+            renderSidebar();
+            renderAll();
+          });
+        });
+
+        document.querySelectorAll('#timeRangeGroup .time-range-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('#timeRangeGroup .time-range-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTimeRange = btn.dataset.range;
+            document.getElementById('chartRangeLabel').textContent =
+              currentTimeRange === 'today' ? '今日' :
+              currentTimeRange === 'week' ? '近7日' : '近30日';
+            updateTrendChart();
+          });
+        });
+      }
+
+      function renderMatrix() {
+        const container = document.getElementById('utilMatrix');
+        const areas = d.areas;
+
+        const html = areas.map(area => {
+          const devices = getAreaDevices(area.id);
+          const util = calcUtilization(devices);
+          const cap = getCapacityLabel(util);
+          const totalCount = devices.length;
+          const onlineCount = devices.filter(d => d.status === 'online').length;
+          const idleCount = devices.filter(d => d.status === 'idle').length;
+          const cls = getUtilizationClass(util);
+
+          return `
+            <div class="matrix-cell ${cls}" data-area="${area.id}">
+              <div class="area-header-row">
+                <span class="area-name-text">${area.name}</span>
+                <span class="capacity-badge ${cap.cls}">
+                  <i data-lucide="${cap.cls === 'overload' ? 'alert-octagon' : cap.cls === 'warning' ? 'alert-triangle' : 'check-circle'}" style="width:11px;height:11px;"></i>
+                  ${cap.text}
+                </span>
+              </div>
+              <div>
+                <span class="area-util-pct">${util}</span>
+                <span class="area-util-unit">%</span>
+              </div>
+              <div class="sparkline-container" id="spark-${area.id}"></div>
+              <div class="area-count-info">
+                <span>在用 ${onlineCount}</span>
+                <span>空闲 ${idleCount}</span>
+                <span>共 ${totalCount}</span>
+              </div>
+              <i data-lucide="alert-circle" class="capacity-warning" style="width:16px;height:16px;color:var(--danger);"></i>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = html;
+
+        areas.forEach(area => {
+          const devices = getAreaDevices(area.id);
+          const sparkEl = document.getElementById('spark-' + area.id);
+          if (sparkEl) {
+            const sparkChart = echarts.init(sparkEl);
+            const sparkData = [];
+            const now = new Date();
+            for (let i = 6; i >= 0; i--) {
+              const base = 50 + Math.sin(i * 0.8 + area.id.charCodeAt(0)) * 15 + (Math.random() - 0.5) * 10;
+              sparkData.push(Math.max(20, Math.min(95, Math.round(base * 10) / 10)));
+            }
+            sparkChart.setOption({
+              grid: { left: 0, right: 0, top: 2, bottom: 2 },
+              xAxis: { type: 'category', show: false, data: sparkData.map((_, i) => i) },
+              yAxis: { type: 'value', show: false, min: 0, max: 100 },
+              tooltip: {
+                trigger: 'axis',
+                backgroundColor: '#151C2C',
+                borderColor: '#1E2A3E',
+                textStyle: { color: '#FFFFFF', fontSize: 11 },
+                formatter: (params) => params[0].value + '%'
+              },
+              series: [{
+                type: 'line',
+                data: sparkData,
+                smooth: true,
+                symbol: 'none',
+                lineStyle: { color: getUtilizationColor(calcUtilization(devices)), width: 2 },
+                areaStyle: {
+                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: getUtilizationColor(calcUtilization(devices)) },
+                    { offset: 1, color: 'transparent' }
+                  ])
+                }
+              }]
+            });
+            charts['spark-' + area.id] = sparkChart;
+          }
+        });
+
+        container.querySelectorAll('.matrix-cell').forEach(cell => {
+          cell.addEventListener('click', () => {
+            const areaId = cell.dataset.area;
+            const target = document.getElementById('detail-' + areaId);
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              target.style.transition = 'box-shadow 0.3s';
+              target.style.boxShadow = '0 0 0 2px var(--brand-primary)';
+              setTimeout(() => { target.style.boxShadow = ''; }, 1500);
+            }
+          });
+        });
+      }
+
+      function renderAreaDetailCards() {
+        const container = document.getElementById('areaDetailCards');
+        const areas = currentAreaFilter === 'all' ? d.areas : d.areas.filter(a => a.id === currentAreaFilter);
+
+        const html = areas.map(area => {
+          const devices = getAreaDevices(area.id);
+          const util = calcUtilization(devices);
+          const cap = getCapacityLabel(util);
+          const totalCount = devices.length;
+          const onlineCount = devices.filter(d => d.status === 'online').length;
+          const idleCount = devices.filter(d => d.status === 'idle').length;
+          const sorted = [...devices].sort((a, b) => b.utilization - a.utilization);
+          const top3 = sorted.slice(0, 3);
+
+          const top3Html = top3.map(dev => {
+            const devCap = getCapacityLabel(dev.utilization);
+            return `
+              <li>
+                <span class="dev-name">${dev.name}</span>
+                <span class="dev-util" style="color:${getUtilizationColor(dev.utilization)};">${dev.utilization}%</span>
+                <span class="capacity-badge ${devCap.cls}" style="font-size:10px;padding:2px 6px;">${devCap.text}</span>
+              </li>
+            `;
+          }).join('');
+
+          return `
+            <div class="area-detail-card" id="detail-${area.id}">
+              <div class="detail-header">
+                <div class="detail-title">
+                  <span style="width:8px;height:8px;border-radius:50%;background:${getUtilizationColor(util)};display:inline-block;"></span>
+                  ${area.name}
+                  <span class="capacity-badge ${cap.cls}" style="font-size:11px;">${cap.text}</span>
+                </div>
+                <span style="font-size:12px;color:var(--text-muted);">负责人: ${area.manager}</span>
+              </div>
+              <div class="detail-stats-row">
+                <div class="stat-mini">
+                  <div class="stat-num">${totalCount}</div>
+                  <div class="stat-label">设备总数</div>
+                </div>
+                <div class="stat-mini">
+                  <div class="stat-num" style="color:var(--brand-light);">${onlineCount}</div>
+                  <div class="stat-label">在用</div>
+                </div>
+                <div class="stat-mini">
+                  <div class="stat-num" style="color:var(--success);">${idleCount}</div>
+                  <div class="stat-label">空闲</div>
+                </div>
+              </div>
+              <div class="util-section">
+                <div class="util-section-title">
+                  <span>区域利用率</span>
+                  <span class="util-value" style="color:${getUtilizationColor(util)};">${util}%</span>
+                </div>
+                <div class="util-bar" style="width:100%;height:10px;background:var(--bg-hover);border-radius:5px;overflow:hidden;">
+                  <div class="util-fill ${getUtilizationClass(util) === 'warning-green' ? 'high' : getUtilizationClass(util) === 'warning-yellow' ? 'mid' : 'low'}" style="width:${util}%;height:100%;border-radius:5px;transition:width 0.5s;"></div>
+                </div>
+              </div>
+              <div class="util-section">
+                <div class="util-section-title">
+                  <span>TOP 3 高利用率设备</span>
+                </div>
+                <ul class="devices-list">
+                  ${top3Html || '<li style="justify-content:center;color:var(--text-muted);">暂无数据</li>'}
+                </ul>
+              </div>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = html;
+      }
+
+      function initTrendChart() {
+        const el = document.getElementById('trendChart');
+        charts.trend = echarts.init(el);
+        updateTrendChart();
+      }
+
+      function updateTrendChart() {
+        const days = currentTimeRange === 'today' ? 7 : currentTimeRange === 'week' ? 7 : 30;
+        const data = getTrendData(days);
+
+        const option = {
+          tooltip: {
+            trigger: 'axis',
+            backgroundColor: '#151C2C',
+            borderColor: '#1E2A3E',
+            textStyle: { color: '#FFFFFF', fontSize: 12 },
+            formatter: (params) => {
+              const p = params[0];
+              return `<div style="font-weight:600;margin-bottom:4px;">${p.axisValue}</div>
+                      <div style="color:${p.color};">利用率: <b>${p.value}%</b></div>`;
+            }
+          },
+          grid: { left: 40, right: 20, top: 20, bottom: 30, containLabel: true },
+          xAxis: {
+            type: 'category',
+            data: data.labels,
+            axisLine: { lineStyle: { color: '#1E2A3E' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11, interval: days > 10 ? 3 : 0 },
+            axisTick: { show: false }
+          },
+          yAxis: {
+            type: 'value',
+            min: 0,
+            max: 100,
+            splitLine: { lineStyle: { color: '#1E2A3E', type: 'dashed' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11, formatter: '{value}%' }
+          },
+          series: [{
+            type: 'line',
+            data: data.values,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: { color: '#1677FF', width: 2.5 },
+            itemStyle: { color: '#1677FF' },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(22, 119, 255, 0.35)' },
+                { offset: 1, color: 'rgba(22, 119, 255, 0.02)' }
+              ])
+            },
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              lineStyle: { color: '#FAAD14', type: 'dashed', width: 1 },
+              data: [{ yAxis: 80, label: { formatter: '警戒线 80%', color: '#FAAD14', fontSize: 10 } }]
+            }
+          }]
+        };
+        charts.trend.setOption(option, true);
+      }
+
+      function initRankingChart() {
+        const el = document.getElementById('rankingChart');
+        charts.ranking = echarts.init(el);
+        updateRankingChart();
+
+        document.querySelectorAll('[data-rank-filter]').forEach(chip => {
+          chip.addEventListener('click', () => {
+            document.querySelectorAll('[data-rank-filter]').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            currentRankFilter = chip.dataset.rankFilter;
+            updateRankingChart();
+          });
+        });
+      }
+
+      function updateRankingChart() {
+        const data = getRankingData();
+        const option = {
+          tooltip: {
+            trigger: 'axis',
+            backgroundColor: '#151C2C',
+            borderColor: '#1E2A3E',
+            textStyle: { color: '#FFFFFF', fontSize: 12 },
+            formatter: (params) => {
+              const p = params[0];
+              return `<div style="font-weight:600;margin-bottom:4px;">${p.name}</div>
+                      <div>利用率: <b style="color:${p.color};">${p.value}%</b></div>`;
+            }
+          },
+          grid: { left: 100, right: 30, top: 10, bottom: 20 },
+          xAxis: {
+            type: 'value',
+            min: 0,
+            max: 100,
+            splitLine: { lineStyle: { color: '#1E2A3E', type: 'dashed' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11, formatter: '{value}%' }
+          },
+          yAxis: {
+            type: 'category',
+            data: data.map(d => d.name).reverse(),
+            axisLine: { lineStyle: { color: '#1E2A3E' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11 },
+            axisTick: { show: false }
+          },
+          series: [{
+            type: 'bar',
+            data: data.map(d => ({
+              value: d.utilization,
+              itemStyle: {
+                borderRadius: [0, 4, 4, 0],
+                color: d.utilization > 80 ? '#FF4D4F' :
+                       d.utilization >= 60 ? '#FAAD14' : '#52C41A'
+              }
+            })).reverse(),
+            barWidth: 18,
+            label: {
+              show: true,
+              position: 'right',
+              color: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 600,
+              formatter: '{c}%'
+            }
+          }]
+        };
+        charts.ranking.setOption(option, true);
+      }
+
+      function bindNav() {
+        document.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', () => {
+            if (item.dataset.page === 'resource') return;
+            const name = item.textContent;
+            App.toast(`跳转到 ${name} 页面`, 'info');
+          });
+        });
+
+        document.getElementById('syncBtn').addEventListener('click', () => {
+          App.toast('正在同步数据...', 'info');
+          setTimeout(() => {
+            MockData.refresh();
+            renderAll();
+            updateLastTime();
+            App.toast('数据同步完成', 'success');
+          }, 800);
+        });
+
+        document.getElementById('userBtn').addEventListener('click', () => {
+          App.toast('管理员账户信息', 'info');
+        });
+      }
+
+      function renderAll() {
+        renderKPI();
+        renderSidebar();
+        renderMatrix();
+        renderAreaDetailCards();
+        updateTrendChart();
+        updateRankingChart();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function initCharts() {
+        initTrendChart();
+        initRankingChart();
+      }
+
+      window.addEventListener('resize', () => {
+        Object.values(charts).forEach(c => c && c.resize());
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        updateClock();
+        setInterval(updateClock, 1000);
+        updateLastTime();
+        renderAll();
+        initCharts();
+        if (window.lucide) lucide.createIcons();
+      });
+    })();
+  </script>
+</body>
+</html>

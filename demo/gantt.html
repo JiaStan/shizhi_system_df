@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>甘特图排程 - 试制资源数智化管理系统</title>
+  <link rel="stylesheet" href="./assets/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <style>
+    .gantt-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .gantt-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .gantt-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .scale-toggle {
+      display: flex;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .scale-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .scale-btn:hover { color: var(--text-primary); }
+    .scale-btn.active {
+      background: var(--brand-primary);
+      color: #fff;
+    }
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+    .date-range i { width: 14px; height: 14px; color: var(--text-muted); }
+    .date-range input {
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      width: 110px;
+    }
+    .date-range input::-webkit-calendar-picker-indicator {
+      filter: invert(0.7);
+      cursor: pointer;
+    }
+    .gantt-filter {
+      padding: 7px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+    .gantt-filter option { background: var(--bg-card); }
+
+    .gantt-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      height: calc(100vh - 220px);
+      min-height: 500px;
+    }
+    .gantt-header {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .gantt-header-left {
+      width: 220px;
+      flex-shrink: 0;
+      padding: 10px 16px;
+      border-right: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .gantt-header-right {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .gantt-timeline-header {
+      display: flex;
+      background: var(--bg-secondary);
+    }
+    .gantt-timeline-months {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .gantt-timeline-month {
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-align: center;
+      border-right: 1px solid var(--border-color);
+    }
+    .gantt-timeline-days {
+      display: flex;
+    }
+    .gantt-timeline-day {
+      padding: 4px 0;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      border-right: 1px solid var(--border-color);
+      min-width: 36px;
+    }
+    .gantt-timeline-day.weekend { color: var(--text-muted); opacity: 0.5; }
+    .gantt-timeline-day.today {
+      background: rgba(22, 119, 255, 0.15);
+      color: var(--brand-light);
+      font-weight: 600;
+    }
+
+    .gantt-body {
+      display: flex;
+      height: calc(100% - 60px);
+      overflow: hidden;
+    }
+    .gantt-body-left {
+      width: 220px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      border-right: 1px solid var(--border-color);
+    }
+    .gantt-body-right {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+    }
+    .gantt-body-right-inner {
+      position: relative;
+    }
+    .gantt-grid-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    .gantt-today-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--danger);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .gantt-today-line::before {
+      content: '今天';
+      position: absolute;
+      top: 0;
+      left: -18px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+    .gantt-today-line::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -5px;
+      border: 4px solid transparent;
+      border-bottom-color: var(--danger);
+    }
+
+    .gantt-task-row {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      min-height: 44px;
+      transition: background 0.15s;
+    }
+    .gantt-task-row:hover { background: var(--bg-hover); }
+    .gantt-task-info {
+      width: 220px;
+      flex-shrink: 0;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-right: 1px solid var(--border-color);
+    }
+    .gantt-task-color {
+      width: 4px;
+      height: 28px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .gantt-task-info-text {
+      overflow: hidden;
+    }
+    .gantt-task-name {
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+    .gantt-task-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .gantt-task-bar-area {
+      position: relative;
+      height: 44px;
+      flex: 1;
+    }
+    .gantt-task-bar {
+      position: absolute;
+      height: 22px;
+      top: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .gantt-task-bar:hover {
+      filter: brightness(1.15);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+      z-index: 3;
+    }
+    .gantt-task-bar.delayed {
+      box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.6);
+    }
+    .gantt-task-bar-inner {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      border-radius: 4px;
+      opacity: 0.35;
+    }
+    .gantt-task-bar-progress {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      border-radius: 4px 0 0 4px;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+    }
+    .gantt-task-bar-label {
+      font-size: 10px;
+      color: #fff;
+      font-weight: 600;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    .gantt-task-bar-conflict {
+      position: absolute;
+      right: -8px;
+      top: -6px;
+      width: 16px;
+      height: 16px;
+      background: var(--danger);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      z-index: 4;
+    }
+
+    .tooltip {
+      position: fixed;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      z-index: 2000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      min-width: 220px;
+      max-width: 300px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .tooltip.show { opacity: 1; }
+    .tooltip-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .tooltip-label { color: var(--text-secondary); }
+    .tooltip-value { color: var(--text-primary); font-weight: 500; }
+    .tooltip-progress {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .legend-bar {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .legend-bar .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-bar .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--brand-primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--brand-light);
+      box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-ghost:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #FF7875; }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+    }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .detail-section { margin-bottom: 20px; }
+    .detail-section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .detail-section-title i { width: 16px; height: 16px; color: var(--brand-light); }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+    }
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+    .detail-item .label { color: var(--text-muted); }
+    .detail-item .value { color: var(--text-primary); font-weight: 500; }
+
+    .sidebar-filter-group { margin-bottom: 24px; }
+    .sidebar-filter-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .filter-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    .filter-item.active {
+      background: rgba(22, 119, 255, 0.15);
+      color: var(--brand-light);
+    }
+    .filter-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .filter-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-hover);
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+    .filter-item.active .filter-count {
+      background: rgba(22, 119, 255, 0.2);
+      color: var(--brand-light);
+    }
+
+    .priority-critical { background: rgba(255, 77, 79, 0.15); color: #FF4D4F; }
+    .priority-high { background: rgba(250, 173, 20, 0.15); color: #FAAD14; }
+    .priority-medium { background: rgba(22, 119, 255, 0.15); color: #1677FF; }
+    .priority-low { background: rgba(139, 149, 168, 0.15); color: #8B95A8; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .status-pending { background: rgba(139, 149, 168, 0.15); color: #8B95A8; }
+    .status-running { background: rgba(22, 119, 255, 0.15); color: #1677FF; }
+    .status-completed { background: rgba(82, 196, 26, 0.15); color: #52C41A; }
+    .status-delayed { background: rgba(255, 77, 79, 0.15); color: #FF4D4F; }
+    .status-cancelled { background: rgba(90, 100, 120, 0.15); color: #5A6478; }
+
+    .progress-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .progress-bar-large {
+      width: 100%;
+      height: 10px;
+      background: var(--bg-hover);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .progress-fill-large {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.3s;
+    }
+    .progress-text-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .chip-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--brand-primary); color: var(--brand-light); }
+    .chip.active {
+      background: rgba(22, 119, 255, 0.15);
+      border-color: var(--brand-primary);
+      color: var(--brand-light);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i data-lucide="factory" style="width:18px;height:18px;"></i>
+          </div>
+          <span class="system-title">试制资源数智化管理系统</span>
+        </div>
+        <nav>
+          <ul class="nav-menu">
+            <li class="nav-item" data-page="dashboard">综合驾驶舱</li>
+            <li class="nav-item" data-page="devices">设备台账</li>
+            <li class="nav-item" data-page="tasks">任务管理</li>
+            <li class="nav-item active" data-page="gantt">甘特图排程</li>
+            <li class="nav-item" data-page="alerts">异常预警中心</li>
+          </ul>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="header-action">
+          <span class="status-dot"></span>
+          <span>系统正常</span>
+        </div>
+        <div class="header-action">
+          <i data-lucide="clock" style="width:14px;height:14px;"></i>
+          <span id="currentTime">--:--:--</span>
+        </div>
+        <div class="header-action">
+          <i data-lucide="user" style="width:14px;height:14px;"></i>
+          <span>管理员</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="app-sidebar">
+      <div class="sidebar-filter-group">
+        <div class="sidebar-filter-title">任务类型</div>
+        <div id="typeFilter"></div>
+      </div>
+      <div class="sidebar-filter-group">
+        <div class="sidebar-filter-title">任务状态</div>
+        <div id="statusFilter"></div>
+      </div>
+      <div class="sidebar-filter-group">
+        <div class="sidebar-filter-title">优先级</div>
+        <div id="priorityFilter"></div>
+      </div>
+      <div class="sidebar-filter-group">
+        <div class="sidebar-filter-title">图例</div>
+        <div class="legend-bar" style="flex-direction:column; gap:10px; align-items:flex-start;">
+          <div class="legend-item"><span class="legend-color" style="background:#8B5CF6;"></span>零星任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#06B6D4;"></span>ABC类任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#1677FF;"></span>试制岛任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#FF4D4F;"></span>延期任务</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="gantt-toolbar">
+        <div class="gantt-toolbar-left">
+          <div class="scale-toggle" id="scaleToggle">
+            <button class="scale-btn active" data-scale="day">日</button>
+            <button class="scale-btn" data-scale="week">周</button>
+            <button class="scale-btn" data-scale="month">月</button>
+          </div>
+          <div class="date-range">
+            <i data-lucide="calendar"></i>
+            <input type="date" id="startDate">
+            <span style="color:var(--text-muted);">—</span>
+            <input type="date" id="endDate">
+          </div>
+          <select class="gantt-filter" id="toolbarTypeFilter">
+            <option value="">全部类型</option>
+            <option value="零星任务">零星任务</option>
+            <option value="ABC类任务">ABC类任务</option>
+            <option value="试制岛任务">试制岛任务</option>
+          </select>
+        </div>
+        <div class="gantt-toolbar-right">
+          <button class="btn btn-ghost" id="btnToday">
+            <i data-lucide="crosshair" style="width:14px;height:14px;"></i>
+            今天
+          </button>
+          <button class="btn btn-primary" id="btnAddTask">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i>
+            新增任务
+          </button>
+        </div>
+      </div>
+
+      <div class="gantt-container" id="ganttContainer">
+        <div class="gantt-header">
+          <div class="gantt-header-left">任务名称</div>
+          <div class="gantt-header-right">
+            <div class="gantt-timeline-header" id="timelineHeader"></div>
+          </div>
+        </div>
+        <div class="gantt-body">
+          <div class="gantt-body-left" id="ganttBodyLeft"></div>
+          <div class="gantt-body-right" id="ganttBodyRight">
+            <div class="gantt-body-right-inner" id="ganttBodyRightInner"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <div class="modal-mask" id="taskDetailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">任务详情</h3>
+        <button class="modal-close" id="modalClose">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modalCancel">关闭</button>
+        <button class="btn btn-primary" id="modalEdit">编辑任务</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="addTaskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>新增任务</h3>
+        <button class="modal-close" id="addModalClose">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-item">
+            <label class="form-label">任务名称</label>
+            <input class="form-input" id="newTitle" placeholder="请输入任务名称">
+          </div>
+          <div class="form-item">
+            <label class="form-label">任务类型</label>
+            <select class="form-select" id="newType">
+              <option value="零星任务">零星任务</option>
+              <option value="ABC类任务">ABC类任务</option>
+              <option value="试制岛任务">试制岛任务</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">优先级</label>
+            <select class="form-select" id="newPriority">
+              <option value="低">低</option>
+              <option value="中" selected>中</option>
+              <option value="高">高</option>
+              <option value="紧急">紧急</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label class="form-label">负责人</label>
+            <input class="form-input" id="newAssignee" placeholder="负责人姓名">
+          </div>
+          <div class="form-item">
+            <label class="form-label">开始日期</label>
+            <input class="form-input" type="date" id="newStart">
+          </div>
+          <div class="form-item">
+            <label class="form-label">结束日期</label>
+            <input class="form-input" type="date" id="newEnd">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="addModalCancel">取消</button>
+        <button class="btn btn-primary" id="addModalConfirm">确认新增</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/js/mock-data.js"></script>
+  <script src="./assets/js/app.js"></script>
+  <script>
+  (function () {
+    const TYPE_COLORS = {
+      '零星任务': '#8B5CF6',
+      'ABC类任务': '#06B6D4',
+      '试制岛任务': '#1677FF'
+    };
+    const PRIORITY_MAP = {
+      '低': 'priority-low',
+      '中': 'priority-medium',
+      '高': 'priority-high',
+      '紧急': 'priority-critical'
+    };
+    const STATUS_MAP = {
+      '待执行': 'status-pending',
+      '执行中': 'status-running',
+      '已完成': 'status-completed',
+      '已延期': 'status-delayed',
+      '已取消': 'status-cancelled'
+    };
+
+    let currentScale = 'day';
+    let currentFilters = { type: null, status: null, priority: null };
+    let dateRangeStart = null;
+    let dateRangeEnd = null;
+    let allTasks = [];
+    let dayWidth = 40;
+
+    function parseDate(str) {
+      if (!str) return null;
+      const d = new Date(str.replace(' ', 'T'));
+      return d;
+    }
+
+    function formatDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getToday() {
+      const t = new Date();
+      t.setHours(0, 0, 0, 0);
+      return t;
+    }
+
+    function diffDays(a, b) {
+      return Math.round((b - a) / 86400000);
+    }
+
+    function getTaskColor(task) {
+      return TYPE_COLORS[task.type] || '#8B95A8';
+    }
+
+    function isTaskDelayed(task) {
+      return task.status === '已延期';
+    }
+
+    function getFilteredTasks() {
+      return allTasks.filter(t => {
+        if (currentFilters.type && t.type !== currentFilters.type) return false;
+        if (currentFilters.status && t.status !== currentFilters.status) return false;
+        if (currentFilters.priority && t.priority !== currentFilters.priority) return false;
+        return true;
+      });
+    }
+
+    function getDateRange() {
+      if (dateRangeStart && dateRangeEnd) {
+        return { start: dateRangeStart, end: dateRangeEnd };
+      }
+      let minDate = getToday();
+      let maxDate = getToday();
+      allTasks.forEach(t => {
+        const s = parseDate(t.startDate);
+        const e = parseDate(t.endDate);
+        if (s < minDate) minDate = s;
+        if (e > maxDate) maxDate = e;
+      });
+      minDate = new Date(minDate.getFullYear(), minDate.getMonth() - 1, 1);
+      maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth() + 2, 0);
+      return { start: minDate, end: maxDate };
+    }
+
+    function getScaleConfig() {
+      switch (currentScale) {
+        case 'day': return { dayWidth: 40, headerMonths: true, headerDays: true, label: '日' };
+        case 'week': return { dayWidth: 18, headerMonths: true, headerDays: true, label: '周' };
+        case 'month': return { dayWidth: 6, headerMonths: true, headerDays: true, label: '月' };
+        default: return { dayWidth: 40, headerMonths: true, headerDays: true, label: '日' };
+      }
+    }
+
+    function renderTimelineHeader() {
+      const header = document.getElementById('timelineHeader');
+      const range = getDateRange();
+      const config = getScaleConfig();
+      dayWidth = config.dayWidth;
+
+      const totalDays = diffDays(range.start, range.end) + 1;
+      const totalWidth = totalDays * dayWidth;
+
+      let monthsHTML = '';
+      let daysHTML = '';
+      let currentMonth = range.start.getMonth();
+      let currentYear = range.start.getFullYear();
+      let monthStartDay = 1;
+
+      for (let i = 0; i < totalDays; i++) {
+        const date = new Date(range.start);
+        date.setDate(date.getDate() + i);
+        if (date.getMonth() !== currentMonth || i === totalDays - 1) {
+          const monthEnd = i;
+          const monthWidth = (monthEnd - monthStartDay + (i === totalDays - 1 ? 1 : 0)) * dayWidth;
+          monthsHTML += `<div class="gantt-timeline-month" style="width:${monthWidth}px; min-width:${monthWidth}px;">${currentYear}年${currentMonth + 1}月</div>`;
+          currentMonth = date.getMonth();
+          currentYear = date.getFullYear();
+          monthStartDay = i;
+        }
+
+        const dayOfWeek = date.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const isToday = date.getTime() === getToday().getTime();
+        let dayClass = 'gantt-timeline-day';
+        if (isWeekend) dayClass += ' weekend';
+        if (isToday) dayClass += ' today';
+        const displayDate = currentScale === 'month' ? date.getDate() : (date.getMonth() + 1) + '/' + date.getDate();
+        daysHTML += `<div class="${dayClass}" style="width:${dayWidth}px; min-width:${dayWidth}px;">${displayDate}</div>`;
+      }
+
+      if (monthStartDay === 0 || (monthsHTML === '' && totalDays > 0)) {
+        const firstMonthWidth = totalDays * dayWidth;
+        monthsHTML = `<div class="gantt-timeline-month" style="width:${firstMonthWidth}px; min-width:${firstMonthWidth}px;">${range.start.getFullYear()}年${range.start.getMonth() + 1}月</div>`;
+      }
+
+      header.innerHTML = `
+        <div style="display:flex; flex-direction:column; width:${totalWidth}px; min-width:${totalWidth}px;">
+          <div class="gantt-timeline-months">${monthsHTML}</div>
+          <div class="gantt-timeline-days">${daysHTML}</div>
+        </div>
+      `;
+
+      return { totalDays, totalWidth };
+    }
+
+    function renderGantt() {
+      const range = getDateRange();
+      const config = getScaleConfig();
+      dayWidth = config.dayWidth;
+      const { totalDays, totalWidth } = renderTimelineHeader();
+
+      const filtered = getFilteredTasks();
+      const leftBody = document.getElementById('ganttBodyLeft');
+      const rightInner = document.getElementById('ganttBodyRightInner');
+
+      leftBody.innerHTML = '';
+      rightInner.innerHTML = '';
+
+      const rowHeight = 44;
+
+      let gridLinesHTML = '';
+      for (let i = 0; i <= totalDays; i++) {
+        const x = i * dayWidth;
+        gridLinesHTML += `<div style="position:absolute; left:${x}px; top:0; bottom:0; width:1px; background:var(--border-color); opacity:0.5;"></div>`;
+      }
+
+      const todayIndex = diffDays(range.start, getToday());
+      let todayLineHTML = '';
+      if (todayIndex >= 0 && todayIndex <= totalDays) {
+        todayLineHTML = `<div class="gantt-today-line" style="left:${todayIndex * dayWidth + dayWidth / 2}px;"></div>`;
+      }
+
+      const gridSvg = document.createElement('div');
+      gridSvg.className = 'gantt-grid-lines';
+      gridSvg.style.width = totalWidth + 'px';
+      gridSvg.style.height = filtered.length * rowHeight + 'px';
+      gridSvg.innerHTML = gridLinesHTML + todayLineHTML;
+      rightInner.appendChild(gridSvg);
+
+      filtered.forEach((task, idx) => {
+        const s = parseDate(task.startDate);
+        const e = parseDate(task.endDate);
+        const taskStart = diffDays(range.start, s);
+        const taskEnd = diffDays(range.start, e);
+
+        if (taskEnd < 0 || taskStart > totalDays) return;
+
+        const clampedStart = Math.max(0, taskStart);
+        const clampedEnd = Math.min(totalDays, taskEnd);
+        const leftPx = clampedStart * dayWidth;
+        const widthPx = Math.max(dayWidth * 0.8, (clampedEnd - clampedStart + 1) * dayWidth);
+        const progressWidth = widthPx * (task.progress / 100);
+
+        const color = getTaskColor(task);
+        const delayed = isTaskDelayed(task);
+
+        const leftRow = document.createElement('div');
+        leftRow.className = 'gantt-task-row';
+        leftRow.style.height = rowHeight + 'px';
+        leftRow.innerHTML = `
+          <div class="gantt-task-info">
+            <div class="gantt-task-color" style="background:${color};"></div>
+            <div class="gantt-task-info-text">
+              <div class="gantt-task-name" title="${task.title}">${task.title}</div>
+              <div class="gantt-task-meta">
+                <span class="status-badge ${STATUS_MAP[task.status]}">${task.status}</span>
+                <span>${task.assignee}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        leftRow.addEventListener('click', () => openTaskDetail(task));
+        leftBody.appendChild(leftRow);
+
+        const barArea = document.createElement('div');
+        barArea.className = 'gantt-task-bar-area';
+        barArea.style.height = rowHeight + 'px';
+        barArea.style.width = totalWidth + 'px';
+        barArea.style.position = 'relative';
+
+        const bar = document.createElement('div');
+        bar.className = 'gantt-task-bar' + (delayed ? ' delayed' : '');
+        bar.style.left = leftPx + 'px';
+        bar.style.width = widthPx + 'px';
+        bar.style.top = ((rowHeight - 22) / 2) + 'px';
+        bar.style.height = '22px';
+        bar.style.background = color;
+
+        const barInner = document.createElement('div');
+        barInner.className = 'gantt-task-bar-inner';
+        barInner.style.width = '100%';
+        barInner.style.background = color;
+
+        const barProgress = document.createElement('div');
+        barProgress.className = 'gantt-task-bar-progress';
+        barProgress.style.width = progressWidth + 'px';
+        barProgress.style.background = color;
+
+        const barLabel = document.createElement('span');
+        barLabel.className = 'gantt-task-bar-label';
+        barLabel.textContent = task.progress + '%';
+        barProgress.appendChild(barLabel);
+
+        bar.appendChild(barInner);
+        bar.appendChild(barProgress);
+
+        if (delayed) {
+          const conflict = document.createElement('div');
+          conflict.className = 'gantt-task-bar-conflict';
+          conflict.textContent = '!';
+          conflict.title = '任务已延期';
+          bar.appendChild(conflict);
+        }
+
+        bar.addEventListener('mouseenter', (ev) => showTooltip(ev, task));
+        bar.addEventListener('mousemove', (ev) => moveTooltip(ev));
+        bar.addEventListener('mouseleave', hideTooltip);
+        bar.addEventListener('click', () => openTaskDetail(task));
+
+        barArea.appendChild(bar);
+
+        const rowWrapper = document.createElement('div');
+        rowWrapper.style.position = 'absolute';
+        rowWrapper.style.top = (idx * rowHeight) + 'px';
+        rowWrapper.style.left = '0';
+        rowWrapper.appendChild(barArea);
+        rightInner.appendChild(rowWrapper);
+      });
+
+      const totalHeight = Math.max(filtered.length * rowHeight, rowHeight * 3);
+      rightInner.style.width = totalWidth + 'px';
+      rightInner.style.height = totalHeight + 'px';
+      leftBody.style.height = totalHeight + 'px';
+
+      const container = document.getElementById('ganttContainer');
+      const rightBody = document.getElementById('ganttBodyRight');
+      const leftBodyEl = document.getElementById('ganttBodyLeft');
+
+      const syncScroll = () => {
+        leftBodyEl.scrollTop = rightBody.scrollTop;
+      };
+      rightBody.onscroll = syncScroll;
+
+      const maxScrollLeft = Math.max(0, totalWidth - rightBody.clientWidth);
+      if (maxScrollLeft > 0) {
+        const todayScroll = todayIndex * dayWidth - rightBody.clientWidth / 2;
+        rightBody.scrollLeft = Math.max(0, Math.min(todayScroll, maxScrollLeft));
+      }
+    }
+
+    function showTooltip(ev, task) {
+      const tooltip = document.getElementById('tooltip');
+      const color = getTaskColor(task);
+      const priorityClass = PRIORITY_MAP[task.priority];
+      const statusClass = STATUS_MAP[task.status];
+
+      tooltip.innerHTML = `
+        <div class="tooltip-title">
+          <span style="width:10px;height:10px;border-radius:2px;background:${color};display:inline-block;"></span>
+          ${task.title}
+        </div>
+        <div class="tooltip-row"><span class="tooltip-label">类型</span><span class="tooltip-value">${task.type}</span></div>
+        <div class="tooltip-row"><span class="tooltip-label">状态</span><span class="tooltip-value"><span class="status-badge ${statusClass}">${task.status}</span></span></div>
+        <div class="tooltip-row"><span class="tooltip-label">优先级</span><span class="tooltip-value"><span class="priority-badge ${priorityClass}">${task.priority}</span></span></div>
+        <div class="tooltip-row"><span class="tooltip-label">负责人</span><span class="tooltip-value">${task.assignee}</span></div>
+        <div class="tooltip-row"><span class="tooltip-label">设备</span><span class="tooltip-value">${task.device}</span></div>
+        <div class="tooltip-row"><span class="tooltip-label">车间</span><span class="tooltip-value">${task.area}区</span></div>
+        <div class="tooltip-row"><span class="tooltip-label">开始</span><span class="tooltip-value">${task.startDate.split(' ')[0]}</span></div>
+        <div class="tooltip-row"><span class="tooltip-label">结束</span><span class="tooltip-value">${task.endDate.split(' ')[0]}</span></div>
+        <div class="tooltip-progress">
+          <div class="tooltip-row"><span class="tooltip-label">完成度</span><span class="tooltip-value">${task.progress}%</span></div>
+          <div class="progress-bar-large" style="margin-top:6px;">
+            <div class="progress-fill-large" style="width:${task.progress}%; background:${color};"></div>
+          </div>
+        </div>
+      `;
+      tooltip.classList.add('show');
+      moveTooltip(ev);
+    }
+
+    function moveTooltip(ev) {
+      const tooltip = document.getElementById('tooltip');
+      const x = Math.min(ev.clientX + 15, window.innerWidth - 280);
+      const y = Math.min(ev.clientY + 15, window.innerHeight - 300);
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }
+
+    function hideTooltip() {
+      document.getElementById('tooltip').classList.remove('show');
+    }
+
+    function openTaskDetail(task) {
+      const modal = document.getElementById('taskDetailModal');
+      const color = getTaskColor(task);
+      const priorityClass = PRIORITY_MAP[task.priority];
+      const statusClass = STATUS_MAP[task.status];
+
+      document.getElementById('modalTitle').textContent = task.title;
+
+      const s = parseDate(task.startDate);
+      const e = parseDate(task.endDate);
+      const duration = diffDays(s, e);
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="detail-section">
+          <div class="detail-section-title"><i data-lucide="info"></i>基本信息</div>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="label">任务编号</span><span class="value" style="font-family:monospace;color:var(--brand-light);">${task.id}</span></div>
+            <div class="detail-item"><span class="label">任务类型</span><span class="value" style="color:${color};font-weight:600;">${task.type}</span></div>
+            <div class="detail-item"><span class="label">优先级</span><span class="value"><span class="priority-badge ${priorityClass}">${task.priority}</span></span></div>
+            <div class="detail-item"><span class="label">状态</span><span class="value"><span class="status-badge ${statusClass}">${task.status}</span></span></div>
+            <div class="detail-item"><span class="label">负责人</span><span class="value">${task.assignee}</span></div>
+            <div class="detail-item"><span class="label">车间</span><span class="value">${task.area}区</span></div>
+            <div class="detail-item"><span class="label">设备</span><span class="value" style="font-family:monospace;">${task.device}</span></div>
+            <div class="detail-item"><span class="label">创建时间</span><span class="value">${task.createdAt.split(' ')[0]}</span></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title"><i data-lucide="calendar"></i>时间安排</div>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="label">开始日期</span><span class="value">${task.startDate.split(' ')[0]}</span></div>
+            <div class="detail-item"><span class="label">结束日期</span><span class="value">${task.endDate.split(' ')[0]}</span></div>
+            <div class="detail-item"><span class="label">计划工期</span><span class="value">${duration} 天</span></div>
+            <div class="detail-item"><span class="label">已用时</span><span class="value">${diffDays(getToday(), s)} 天</span></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title"><i data-lucide="trending-up"></i>进度</div>
+          <div class="progress-section">
+            <div class="progress-bar-large">
+              <div class="progress-fill-large" style="width:${task.progress}%; background:${color};"></div>
+            </div>
+            <div class="progress-text-row">
+              <span>已完成 ${task.progress}%</span>
+              <span>${100 - task.progress}% 待完成</span>
+            </div>
+          </div>
+        </div>
+        ${isTaskDelayed(task) ? `
+        <div class="detail-section">
+          <div class="detail-section-title"><i data-lucide="alert-triangle" style="color:var(--danger);"></i>风险提示</div>
+          <div style="padding:12px;background:rgba(255,77,79,0.1);border:1px solid rgba(255,77,79,0.3);border-radius:8px;color:var(--danger);font-size:13px;">
+            该任务已延期，请尽快处理以避免影响后续排程。
+          </div>
+        </div>` : ''}
+      `;
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      if (window.lucide) window.lucide.createIcons({ attrs: { class: ['lucide'] } });
+    }
+
+    function closeTaskDetail() {
+      document.getElementById('taskDetailModal').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    function buildSidebarFilters() {
+      const tasks = allTasks;
+      const types = [...new Set(tasks.map(t => t.type))];
+      const statuses = [...new Set(tasks.map(t => t.status))];
+      const priorities = ['低', '中', '高', '紧急'];
+
+      const typeContainer = document.getElementById('typeFilter');
+      typeContainer.innerHTML = `<div class="filter-item active" data-type="">
+        <span class="filter-dot" style="background:linear-gradient(135deg,#8B5CF6,#06B6D4,#1677FF);"></span>
+        <span>全部类型</span>
+        <span class="filter-count">${tasks.length}</span>
+      </div>`;
+      types.forEach(type => {
+        const color = TYPE_COLORS[type] || '#8B95A8';
+        const count = tasks.filter(t => t.type === type).length;
+        typeContainer.innerHTML += `<div class="filter-item" data-type="${type}">
+          <span class="filter-dot" style="background:${color};"></span>
+          <span>${type}</span>
+          <span class="filter-count">${count}</span>
+        </div>`;
+      });
+
+      const statusContainer = document.getElementById('statusFilter');
+      statusContainer.innerHTML = `<div class="filter-item active" data-status="">
+        <span>全部状态</span>
+        <span class="filter-count">${tasks.length}</span>
+      </div>`;
+      statuses.forEach(status => {
+        const count = tasks.filter(t => t.status === status).length;
+        statusContainer.innerHTML += `<div class="filter-item" data-status="${status}">
+          <span>${status}</span>
+          <span class="filter-count">${count}</span>
+        </div>`;
+      });
+
+      const priorityContainer = document.getElementById('priorityFilter');
+      priorityContainer.innerHTML = `<div class="filter-item active" data-priority="">
+        <span>全部优先级</span>
+        <span class="filter-count">${tasks.length}</span>
+      </div>`;
+      priorities.forEach(p => {
+        const count = tasks.filter(t => t.priority === p).length;
+        priorityContainer.innerHTML += `<div class="filter-item" data-priority="${p}">
+          <span>${p}</span>
+          <span class="filter-count">${count}</span>
+        </div>`;
+      });
+
+      typeContainer.querySelectorAll('.filter-item').forEach(item => {
+        item.addEventListener('click', () => {
+          typeContainer.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          currentFilters.type = item.dataset.type || null;
+          renderGantt();
+        });
+      });
+      statusContainer.querySelectorAll('.filter-item').forEach(item => {
+        item.addEventListener('click', () => {
+          statusContainer.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          currentFilters.status = item.dataset.status || null;
+          renderGantt();
+        });
+      });
+      priorityContainer.querySelectorAll('.filter-item').forEach(item => {
+        item.addEventListener('click', () => {
+          priorityContainer.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          currentFilters.priority = item.dataset.priority || null;
+          renderGantt();
+        });
+      });
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('currentTime').textContent = `${hh}:${mm}:${ss}`;
+    }
+
+    function initNav() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const page = item.dataset.page;
+          if (page === 'gantt') return;
+          const pageMap = {
+            dashboard: 'index.html',
+            devices: 'equipment.html',
+            tasks: 'tasks.html',
+            alerts: 'alerts.html'
+          };
+          if (pageMap[page]) {
+            window.location.href = pageMap[page];
+          }
+        });
+      });
+    }
+
+    function init() {
+      allTasks = MockData.data.tasks;
+
+      const today = getToday();
+      const startInput = document.getElementById('startDate');
+      const endInput = document.getElementById('endDate');
+      const defaultStart = new Date(today);
+      defaultStart.setDate(defaultStart.getDate() - 30);
+      const defaultEnd = new Date(today);
+      defaultEnd.setDate(defaultEnd.getDate() + 90);
+      startInput.value = formatDate(defaultStart);
+      endInput.value = formatDate(defaultEnd);
+      dateRangeStart = defaultStart;
+      dateRangeEnd = defaultEnd;
+
+      startInput.addEventListener('change', (e) => {
+        dateRangeStart = parseDate(e.target.value);
+        renderGantt();
+      });
+      endInput.addEventListener('change', (e) => {
+        dateRangeEnd = parseDate(e.target.value);
+        renderGantt();
+      });
+
+      document.querySelectorAll('.scale-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentScale = btn.dataset.scale;
+          renderGantt();
+        });
+      });
+
+      document.getElementById('toolbarTypeFilter').addEventListener('change', (e) => {
+        const v = e.target.value;
+        currentFilters.type = v || null;
+        document.querySelectorAll('#typeFilter .filter-item').forEach(i => {
+          i.classList.toggle('active', (i.dataset.type || '') === v);
+        });
+        renderGantt();
+      });
+
+      document.getElementById('btnToday').addEventListener('click', () => {
+        const rightBody = document.getElementById('ganttBodyRight');
+        const range = getDateRange();
+        const todayIndex = diffDays(range.start, getToday());
+        const scrollTo = todayIndex * dayWidth - rightBody.clientWidth / 2;
+        rightBody.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' });
+      });
+
+      document.getElementById('modalClose').addEventListener('click', closeTaskDetail);
+      document.getElementById('modalCancel').addEventListener('click', closeTaskDetail);
+      document.getElementById('taskDetailModal').addEventListener('click', (e) => {
+        if (e.target.id === 'taskDetailModal') closeTaskDetail();
+      });
+
+      document.getElementById('btnAddTask').addEventListener('click', () => {
+        const modal = document.getElementById('addTaskModal');
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        const today = getToday();
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        document.getElementById('newStart').value = formatDate(today);
+        document.getElementById('newEnd').value = formatDate(nextWeek);
+      });
+      document.getElementById('addModalClose').addEventListener('click', () => {
+        document.getElementById('addTaskModal').classList.remove('show');
+        document.body.style.overflow = '';
+      });
+      document.getElementById('addModalCancel').addEventListener('click', () => {
+        document.getElementById('addTaskModal').classList.remove('show');
+        document.body.style.overflow = '';
+      });
+      document.getElementById('addModalConfirm').addEventListener('click', () => {
+        const title = document.getElementById('newTitle').value.trim();
+        if (!title) {
+          alert('请输入任务名称');
+          return;
+        }
+        const newTask = {
+          id: 'TASK-NEW-' + Date.now(),
+          title: title,
+          type: document.getElementById('newType').value,
+          priority: document.getElementById('newPriority').value,
+          status: '待执行',
+          progress: 0,
+          area: 'A',
+          assignee: document.getElementById('newAssignee').value || '未分配',
+          device: 'DEV-000',
+          startDate: document.getElementById('newStart').value + ' 08:00:00',
+          endDate: document.getElementById('newEnd').value + ' 18:00:00',
+          createdAt: formatDate(getToday()) + ' 08:00:00'
+        };
+        allTasks.push(newTask);
+        buildSidebarFilters();
+        renderGantt();
+        document.getElementById('addTaskModal').classList.remove('show');
+        document.body.style.overflow = '';
+        document.getElementById('newTitle').value = '';
+        if (window.App) App.toast('任务新增成功', 'success');
+      });
+
+      initNav();
+      buildSidebarFilters();
+      renderGantt();
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>
