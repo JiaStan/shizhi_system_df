@@ -1,0 +1,38 @@
+{
+  "id": "critical_part_4d_scoring_1",
+  "pluginKey": "@official-plugins/ai-text-to-json",
+  "pluginVersion": "1.0.23",
+  "name": "关键件四维评分",
+  "description": "对候选零件按安全件/大件/紧缺件/工艺件四个维度进行1-5分评分，输出结构化结果",
+  "icon": "",
+  "paramsSchema": {
+    "type": "object",
+    "properties": {
+      "parts_list_text": {
+        "type": "string",
+        "description": "待评分的零件列表文本，包含零件号和零件名信息"
+      }
+    },
+    "required": [
+      "parts_list_text"
+    ]
+  },
+  "formValue": {
+    "jsonStructure": [
+      {
+        "paramType": "Array",
+        "paramDescription": "零件评分列表，items schema: {part_code: string(零件编号), part_name: string(零件名称), safety: Number(安全维度评分1-5), size: Number(大小维度评分1-5), scarcity: Number(稀缺性维度评分1-5), process: Number(工艺维度评分1-5), total_score: Number(总分), is_critical: Boolean(是否为关键件), reason: string(评分理由)}",
+        "name": "parts"
+      }
+    ],
+    "modelID": "87",
+    "modelParams": {
+      "maxTokens": 8192,
+      "temperature": 0.5
+    },
+    "prompt": "你是一位专业的汽车零部件评分专家，擅长从安全、尺寸、稀缺性、工艺难度四个维度对零件进行综合评估。\n\n请根据以下零件列表文本，对每个零件进行四维评分：\n零件列表：{{input.parts_list_text}}\n\n评分标准：\n1. safety（安全维度1-5分）：分值越高表示该零件对整车安全影响越大，5分表示直接影响行车安全的核心部件\n2. size（大小维度1-5分）：分值越高表示零件体积/重量越大，5分表示大型结构件\n3. scarcity（稀缺性1-5分）：分值越高表示零件供应越紧缺、采购难度越大，5分表示独家供应或进口管制部件\n4. process（工艺维度1-5分）：分值越高表示零件制造工艺越复杂、加工难度越大，5分表示高精度特殊工艺部件\n5. total_score：四个维度得分的总和\n6. is_critical：布尔值，总分≥16分时为true，表示关键件，否则为false\n7. reason：评分理由的简要说明（50字以内）\n\n请严格按照指定的JSON结构输出，确保每个字段类型正确，分数在1-5范围内。"
+  },
+  "createdAt": 1782200081860,
+  "updatedAt": 1782200081860,
+  "createdBy": 7561988053791752194
+}

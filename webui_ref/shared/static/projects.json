@@ -1,0 +1,8 @@
+[
+  { "id": 1, "project_name": "E70 迭代改款", "project_code": "E70-2026", "apply_code": "SQ20260601-001", "parts_count": 456, "delivery_rate": 92.3, "critical_ready_rate": 88.5, "created_at": "2026-06-01T09:00:00Z" },
+  { "id": 2, "project_name": "V58 新能源改款", "project_code": "V58-2026-NEV", "apply_code": "SQ20260520-002", "parts_count": 328, "delivery_rate": 97.1, "critical_ready_rate": 95.8, "created_at": "2026-05-20T10:30:00Z" },
+  { "id": 3, "project_name": "D60 平台样车", "project_code": "D60-2026", "apply_code": "SQ20260621-003", "parts_count": 512, "delivery_rate": 76.4, "critical_ready_rate": 68.2, "created_at": "2026-06-21T08:15:00Z" },
+  { "id": 4, "project_name": "S73 智驾版", "project_code": "S73-2026-ADAS", "apply_code": "SQ20260619-001", "parts_count": 289, "delivery_rate": 85.7, "critical_ready_rate": 82.1, "created_at": "2026-06-19T11:00:00Z" },
+  { "id": 5, "project_name": "M30 混动平台", "project_code": "M30-HEV-2026", "apply_code": "SQ20260510-004", "parts_count": 398, "delivery_rate": 95.6, "critical_ready_rate": 93.2, "created_at": "2026-05-10T14:20:00Z" },
+  { "id": 6, "project_name": "X90 旗舰版", "project_code": "X90-FLAG-2026", "apply_code": "SQ20260615-005", "parts_count": 245, "delivery_rate": 68.9, "critical_ready_rate": 55.3, "created_at": "2026-06-15T16:45:00Z" }
+]

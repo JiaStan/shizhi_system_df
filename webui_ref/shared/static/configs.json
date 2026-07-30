@@ -1,0 +1,15 @@
+[
+  { "id": 1, "project_id": 1, "config_name": "M101", "config_alias": "标准续航版", "part_count": 152, "value_range": "0-1", "key_parts_total": 28, "key_parts_ready": 25, "ready_rate": 89.3, "status": "warning" },
+  { "id": 2, "project_id": 1, "config_name": "M102", "config_alias": "长续航版", "part_count": 168, "value_range": "0-1", "key_parts_total": 32, "key_parts_ready": 30, "ready_rate": 93.8, "status": "warning" },
+  { "id": 3, "project_id": 1, "config_name": "M103", "config_alias": "四驱版", "part_count": 136, "value_range": "0-1", "key_parts_total": 35, "key_parts_ready": 29, "ready_rate": 82.9, "status": "warning" },
+  { "id": 4, "project_id": 2, "config_name": "M201", "config_alias": "纯电版", "part_count": 180, "value_range": "0-1", "key_parts_total": 40, "key_parts_ready": 38, "ready_rate": 95.0, "status": "safe" },
+  { "id": 5, "project_id": 2, "config_name": "M202", "config_alias": "插混版", "part_count": 148, "value_range": "0-1", "key_parts_total": 36, "key_parts_ready": 35, "ready_rate": 97.2, "status": "safe" },
+  { "id": 6, "project_id": 3, "config_name": "M301", "config_alias": "基础版", "part_count": 256, "value_range": "0-1", "key_parts_total": 45, "key_parts_ready": 28, "ready_rate": 62.2, "status": "danger" },
+  { "id": 7, "project_id": 3, "config_name": "M302", "config_alias": "科技版", "part_count": 256, "value_range": "0-1", "key_parts_total": 52, "key_parts_ready": 38, "ready_rate": 73.1, "status": "danger" },
+  { "id": 8, "project_id": 4, "config_name": "M401", "config_alias": "城市智驾", "part_count": 145, "value_range": "0-1", "key_parts_total": 30, "key_parts_ready": 25, "ready_rate": 83.3, "status": "warning" },
+  { "id": 9, "project_id": 4, "config_name": "M402", "config_alias": "高速智驾", "part_count": 144, "value_range": "0-1", "key_parts_total": 34, "key_parts_ready": 28, "ready_rate": 82.4, "status": "warning" },
+  { "id": 10, "project_id": 5, "config_name": "M501", "config_alias": "标准混动", "part_count": 198, "value_range": "0-1", "key_parts_total": 38, "key_parts_ready": 36, "ready_rate": 94.7, "status": "warning" },
+  { "id": 11, "project_id": 5, "config_name": "M502", "config_alias": "高性能混动", "part_count": 200, "value_range": "0-1", "key_parts_total": 42, "key_parts_ready": 39, "ready_rate": 92.9, "status": "warning" },
+  { "id": 12, "project_id": 6, "config_name": "M601", "config_alias": "行政版", "part_count": 122, "value_range": "0-1", "key_parts_total": 26, "key_parts_ready": 14, "ready_rate": 53.8, "status": "danger" },
+  { "id": 13, "project_id": 6, "config_name": "M602", "config_alias": "运动版", "part_count": 123, "value_range": "0-1", "key_parts_total": 28, "key_parts_ready": 16, "ready_rate": 57.1, "status": "danger" }
+]

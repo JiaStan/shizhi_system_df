@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设备台账 - 试制资源数智化管理系统</title>
+<link rel="stylesheet" href="./assets/css/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+<script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="./assets/js/mock-data.js"></script>
+<script src="./assets/js/app.js"></script>
+<style>
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .status-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .status-online { background: rgba(22, 119, 255, 0.15); color: #4096FF; }
+  .status-online .dot { background: #1677FF; }
+  .status-idle { background: rgba(82, 196, 26, 0.15); color: #73D13D; }
+  .status-idle .dot { background: #52C41A; }
+  .status-warning { background: rgba(250, 173, 20, 0.15); color: #FFC53D; }
+  .status-warning .dot { background: #FAAD14; }
+  .status-maintenance { background: rgba(139, 149, 168, 0.15); color: #BFBFBF; }
+  .status-maintenance .dot { background: #8B95A8; }
+  .status-fault { background: rgba(255, 77, 79, 0.15); color: #FF7875; }
+  .status-fault .dot { background: #FF4D4F; }
+  .status-offline { background: rgba(139, 149, 168, 0.15); color: #BFBFBF; }
+  .status-offline .dot { background: #5A6478; }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .search-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 0 12px;
+    height: 36px;
+    min-width: 240px;
+    transition: all 0.2s;
+  }
+  .search-input:focus-within {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15);
+  }
+  .search-input input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .search-input input::placeholder { color: var(--text-muted); }
+  .search-input i { color: var(--text-muted); width: 16px; height: 16px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--brand-primary);
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: var(--brand-light);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:hover {
+    background: #FF7875;
+  }
+  .btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .btn-link {
+    background: transparent;
+    border: none;
+    color: var(--brand-light);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+    transition: color 0.15s;
+    font-family: inherit;
+  }
+  .btn-link:hover { color: var(--brand-primary); }
+  .btn-link.danger { color: var(--danger); }
+  .btn-link.danger:hover { color: #FF7875; }
+
+  .table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table thead th {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+  .data-table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  .data-table tbody tr {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .data-table tbody tr:hover {
+    background: var(--bg-hover);
+  }
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .table-code {
+    font-family: 'SF Mono', Consolas, monospace;
+    color: var(--brand-light);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .table-name {
+    display: flex;
+    flex-direction: column;
+  }
+  .table-name .name {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .table-name .model {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .util-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+  }
+  .util-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-hover);
+    border-radius: 3px;
+    overflow: hidden;
+    max-width: 80px;
+  }
+  .util-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s;
+  }
+  .util-fill.low { background: var(--danger); }
+  .util-fill.mid { background: var(--warning); }
+  .util-fill.high { background: var(--success); }
+  .util-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+  .pagination-info {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-btn:hover:not(:disabled) {
+    border-color: var(--brand-primary);
+    color: var(--brand-light);
+  }
+  .page-btn.active {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: #fff;
+  }
+  .page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .page-size-select {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  .modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+  }
+  .modal-mask.show {
+    opacity: 1;
+    visibility: visible;
+  }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .modal-mask.show .modal {
+    transform: scale(1);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+  }
+  .modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-color);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .form-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-item.full {
+    grid-column: 1 / -1;
+  }
+  .form-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .form-input, .form-select {
+    height: 36px;
+    padding: 0 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15);
+  }
+  .form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B95A8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .detail-section {
+    margin-bottom: 20px;
+  }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .detail-section-title i { color: var(--brand-light); width: 16px; height: 16px; }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+  }
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+  }
+  .detail-item .label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .detail-item .value {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .detail-item.full { grid-column: 1 / -1; }
+
+  .timeline-list {
+    list-style: none;
+    padding: 0;
+  }
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    position: relative;
+    border-left: 2px solid var(--border-color);
+    padding-left: 16px;
+    margin-left: 6px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brand-primary);
+    border: 2px solid var(--bg-card);
+  }
+  .timeline-date {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .timeline-desc {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-top: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state i {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .empty-state div { font-size: 14px; }
+
+  .select-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .select-wrap select {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+  }
+  .select-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 22px;
+    padding: 8px 38px 8px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 13px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+    font-family: inherit;
+    font-weight: 500;
+    position: relative;
+  }
+  .select-trigger:hover { border-color: var(--brand-primary); }
+  .select-wrap.open .select-trigger { border-color: var(--brand-primary); }
+  .select-trigger::after {
+    content: '';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--text-secondary);
+    border-bottom: 2px solid var(--text-secondary);
+    transform: translateY(-70%) rotate(45deg);
+  }
+  .select-wrap.open .select-trigger::after {
+    transform: translateY(-30%) rotate(-135deg);
+    border-color: var(--brand-primary);
+  }
+  .select-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    padding: 6px;
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .select-wrap.open .select-panel {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .select-option {
+    display: block;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+  .select-option:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .select-option.selected { background: rgba(22, 119, 255, 0.15); color: var(--brand-light); }
+
+  .filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+    padding: 1px 6px;
+    background: rgba(22, 119, 255, 0.15);
+    color: var(--brand-light);
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .detail-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    min-width: 280px;
+    max-width: 400px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    animation: toastIn 0.3s ease;
+  }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  .toast.warning { border-left: 3px solid var(--warning); }
+  .toast.info { border-left: 3px solid var(--info); }
+  .toast-icon { flex-shrink: 0; }
+  .toast.success .toast-icon { color: var(--success); }
+  .toast.error .toast-icon { color: var(--danger); }
+  .toast.warning .toast-icon { color: var(--warning); }
+  .toast.info .toast-icon { color: var(--info); }
+  .toast-body { flex: 1; }
+  .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .toast-msg { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+  }
+  .close-btn:hover { color: var(--text-primary); }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 1400px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 1024px) {
+    .app-layout {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "header"
+        "main"
+        "statusbar";
+    }
+    .app-sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== Header ===== -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-container">
+        <div class="logo-icon"><i data-lucide="factory" style="width:18px;height:18px;"></i></div>
+        <span class="system-title">试制资源数智化管理系统</span>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item" onclick="location.href='index.html'">仪表盘</li>
+        <li class="nav-item active">设备台账</li>
+        <li class="nav-item">任务管理</li>
+        <li class="nav-item">人员管理</li>
+        <li class="nav-item">告警管理</li>
+      </ul>
+    </div>
+    <div class="header-right">
+      <div class="header-action">
+        <div class="status-dot"></div>
+        <span>系统运行正常</span>
+      </div>
+      <div class="header-action">
+        <i data-lucide="bell" style="width:16px;height:16px;"></i>
+        <span>通知</span>
+      </div>
+      <div class="header-action">
+        <i data-lucide="user" style="width:16px;height:16px;"></i>
+        <span>管理员</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="app-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">设备状态</div>
+      <div id="statusFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">区域筛选</div>
+      <div id="areaFilters"></div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main class="app-main">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-input">
+          <i data-lucide="search"></i>
+          <input type="text" id="searchInput" placeholder="搜索设备编号、名称或型号...">
+        </div>
+        <div class="select-wrap" id="areaFilter">
+          <select id="areaSelect">
+            <option value="">全部区域</option>
+          </select>
+        </div>
+        <div class="select-wrap" id="statusFilter">
+          <select id="statusSelect">
+            <option value="">全部状态</option>
+          </select>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-primary" id="btnAddDevice">
+          <i data-lucide="plus" style="width:16px;height:16px;"></i>
+          新增设备
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="kpi-card" id="kpiTotal">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="package" class="kpi-icon"></i>设备总数</div>
+        </div>
+        <div class="kpi-value" id="kpiTotalValue">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend flat">
+            <i data-lucide="minus" style="width:12px;height:12px;"></i>
+            全部
+          </span>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpiOnline">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="activity" class="kpi-icon" style="color:#4096FF;"></i>运行中</div>
+        </div>
+        <div class="kpi-value" id="kpiOnlineValue" style="color:#4096FF;">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend up">
+            <i data-lucide="trending-up" style="width:12px;height:12px;"></i>
+            正常运转
+          </span>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpiWarning">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="alert-triangle" class="kpi-icon" style="color:#FAAD14;"></i>预警</div>
+        </div>
+        <div class="kpi-value" id="kpiWarningValue" style="color:#FAAD14;">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend down">
+            <i data-lucide="alert-circle" style="width:12px;height:12px;"></i>
+            需要关注
+          </span>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpiMaintenance">
+        <div class="kpi-header">
+          <div class="kpi-title"><i data-lucide="wrench" class="kpi-icon" style="color:#8B95A8;"></i>维护中</div>
+        </div>
+        <div class="kpi-value" id="kpiMaintenanceValue" style="color:#8B95A8;">0</div>
+        <div class="kpi-sub">
+          <span class="kpi-trend flat">
+            <i data-lucide="clock" style="width:12px;height:12px;"></i>
+            维护作业
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equipment Table -->
+    <div class="table-card">
+      <table class="data-table" id="equipmentTable">
+        <thead>
+          <tr>
+            <th>设备编号</th>
+            <th>设备名称/型号</th>
+            <th>所属区域</th>
+            <th>状态</th>
+            <th>利用率</th>
+            <th>负责人</th>
+            <th>上次维护</th>
+            <th style="text-align:right;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="equipmentTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar">
+      <div class="pagination-info" id="paginationInfo">共 0 条</div>
+      <div class="pagination-controls">
+        <button class="page-btn" id="prevPage">
+          <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+        </button>
+        <div id="pageNumbers" style="display:flex;gap:6px;"></div>
+        <button class="page-btn" id="nextPage">
+          <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+        </button>
+        <select class="page-size-select" id="pageSizeSelect">
+          <option value="10">10 条/页</option>
+          <option value="20" selected>20 条/页</option>
+          <option value="50">50 条/页</option>
+        </select>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===== Statusbar ===== -->
+  <footer class="app-statusbar">
+    <div class="status-group">
+      <div class="status-item"><span class="status-dot"></span><span>设备台账管理模块</span></div>
+      <div class="status-item"><span>数据实时同步</span></div>
+    </div>
+    <div class="status-group">
+      <div class="status-item" id="currentTime"></div>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ===== Add/Edit Modal ===== -->
+<div class="modal-mask" id="formModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="formModalTitle">新增设备</h3>
+      <button class="modal-close" onclick="closeFormModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-item">
+          <label class="form-label">设备编号</label>
+          <input type="text" class="form-input" id="f_id" placeholder="DEV-001">
+        </div>
+        <div class="form-item">
+          <label class="form-label">设备名称</label>
+          <input type="text" class="form-input" id="f_name" placeholder="请输入设备名称">
+        </div>
+        <div class="form-item">
+          <label class="form-label">设备型号</label>
+          <input type="text" class="form-input" id="f_model" placeholder="如 CNC-850">
+        </div>
+        <div class="form-item">
+          <label class="form-label">所属区域</label>
+          <select class="form-select" id="f_area">
+            <option value="A">A车间</option>
+            <option value="B">B车间</option>
+            <option value="C">C车间</option>
+            <option value="D">D车间</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label class="form-label">状态</label>
+          <select class="form-select" id="f_status">
+            <option value="online">运行中</option>
+            <option value="idle">空闲</option>
+            <option value="warning">预警</option>
+            <option value="maintenance">维护中</option>
+            <option value="fault">故障</option>
+            <option value="offline">离线</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label class="form-label">负责人</label>
+          <input type="text" class="form-input" id="f_manager" placeholder="请输入负责人">
+        </div>
+        <div class="form-item">
+          <label class="form-label">利用率 (%)</label>
+          <input type="number" class="form-input" id="f_utilization" min="0" max="100" value="75">
+        </div>
+        <div class="form-item">
+          <label class="form-label">运行时长 (小时)</label>
+          <input type="number" class="form-input" id="f_runtime" min="0" value="500">
+        </div>
+        <div class="form-item">
+          <label class="form-label">上次维护日期</label>
+          <input type="date" class="form-input" id="f_lastMaintain">
+        </div>
+        <div class="form-item">
+          <label class="form-label">下次维护日期</label>
+          <input type="date" class="form-input" id="f_nextMaintain">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeFormModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveDevice()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Detail Modal ===== -->
+<div class="modal-mask" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="detailTitle">设备详情</h3>
+      <button class="modal-close" onclick="closeDetailModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDetailModal()">关闭</button>
+      <button class="btn btn-primary" id="detailEditBtn">编辑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const state = {
+    search: '',
+    area: '',
+    status: '',
+    page: 1,
+    pageSize: 20,
+    editingId: null
+  };
+
+  function getFilteredDevices() {
+    const d = MockData.data.devices;
+    return d.filter(function (item) {
+      if (state.search) {
+        const s = state.search.toLowerCase();
+        if (item.id.toLowerCase().indexOf(s) === -1 &&
+            item.name.toLowerCase().indexOf(s) === -1 &&
+            item.model.toLowerCase().indexOf(s) === -1) {
+          return false;
+        }
+      }
+      if (state.area && item.area !== state.area) return false;
+      if (state.status && item.status !== state.status) return false;
+      return true;
+    });
+  }
+
+  function getStatusClass(status) {
+    return 'status-' + status;
+  }
+
+  function getStatusDotClass(status) {
+    return getStatusClass(status);
+  }
+
+  function renderStatusFilters() {
+    const container = document.getElementById('statusFilters');
+    const devices = MockData.data.devices;
+    const counts = {};
+    devices.forEach(function (d) {
+      counts[d.status] = (counts[d.status] || 0) + 1;
+    });
+    const statusOrder = ['online', 'idle', 'warning', 'maintenance', 'fault', 'offline'];
+    const labels = MockData.data.statusMap;
+    let html = '';
+    statusOrder.forEach(function (s) {
+      if (!labels[s]) return;
+      const count = counts[s] || 0;
+      const active = state.status === s ? 'active' : '';
+      html += '<div class="filter-item ' + active + '" data-status="' + s + '">' +
+        '<span class="filter-dot" style="background:' + getStatusColor(s) + ';"></span>' +
+        '<span>' + labels[s].label + '</span>' +
+        '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + count + '</span>' +
+      '</div>';
+    });
+    html += '<div class="filter-item ' + (state.status === '' ? 'active' : '') + '" data-status="">' +
+      '<span>' + '全部' + '</span>' +
+      '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + devices.length + '</span>' +
+    '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('.filter-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.status = el.dataset.status;
+        state.page = 1;
+        renderAll();
+      });
+    });
+  }
+
+  function getStatusColor(status) {
+    const map = {
+      online: '#1677FF',
+      idle: '#52C41A',
+      warning: '#FAAD14',
+      maintenance: '#8B95A8',
+      fault: '#FF4D4F',
+      offline: '#5A6478'
+    };
+    return map[status] || '#8B95A8';
+  }
+
+  function renderAreaFilters() {
+    const container = document.getElementById('areaFilters');
+    const devices = MockData.data.devices;
+    const areas = MockData.data.areas;
+    const counts = {};
+    devices.forEach(function (d) {
+      counts[d.area] = (counts[d.area] || 0) + 1;
+    });
+    let html = '';
+    areas.forEach(function (a) {
+      const count = counts[a.id] || 0;
+      const active = state.area === a.id ? 'active' : '';
+      html += '<div class="filter-item ' + active + '" data-area="' + a.id + '">' +
+        '<span class="filter-dot" style="background:var(--brand-primary);"></span>' +
+        '<span>' + a.name + '</span>' +
+        '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + count + '</span>' +
+      '</div>';
+    });
+    html += '<div class="filter-item ' + (state.area === '' ? 'active' : '') + '" data-area="">' +
+      '<span>全部</span>' +
+      '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + devices.length + '</span>' +
+    '</div>';
+    container.innerHTML = html;
+    container.querySelectorAll('.filter-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        state.area = el.dataset.area;
+        state.page = 1;
+        renderAll();
+      });
+    });
+  }
+
+  function renderAreaSelect() {
+    const sel = document.getElementById('areaSelect');
+    sel.innerHTML = '<option value="">全部区域</option>';
+    MockData.data.areas.forEach(function (a) {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name;
+      sel.appendChild(opt);
+    });
+    initSelectFor('areaFilter', function (val) {
+      state.area = val;
+      state.page = 1;
+      renderAll();
+    });
+  }
+
+  function renderStatusSelect() {
+    const sel = document.getElementById('statusSelect');
+    sel.innerHTML = '<option value="">全部状态</option>';
+    const map = MockData.data.statusMap;
+    Object.keys(map).forEach(function (key) {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = map[key].label;
+      sel.appendChild(opt);
+    });
+    initSelectFor('statusFilter', function (val) {
+      state.status = val;
+      state.page = 1;
+      renderAll();
+    });
+  }
+
+  function initSelectFor(wrapperId, onChange) {
+    const wrap = document.getElementById(wrapperId);
+    if (!wrap || wrap.dataset.init === '1') return;
+    wrap.dataset.init = '1';
+    App.initSelect(wrap.querySelector('select'), onChange);
+  }
+
+  function renderKPIs() {
+    const devices = MockData.data.devices;
+    const total = devices.length;
+    const online = devices.filter(function (d) { return d.status === 'online'; }).length;
+    const warning = devices.filter(function (d) { return d.status === 'warning'; }).length;
+    const maintenance = devices.filter(function (d) { return d.status === 'maintenance'; }).length;
+    document.getElementById('kpiTotalValue').textContent = total;
+    document.getElementById('kpiOnlineValue').textContent = online;
+    document.getElementById('kpiWarningValue').textContent = warning;
+    document.getElementById('kpiMaintenanceValue').textContent = maintenance;
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('equipmentTableBody');
+    const filtered = getFilteredDevices();
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+    if (state.page > totalPages) state.page = totalPages;
+    const start = (state.page - 1) * state.pageSize;
+    const pageData = filtered.slice(start, start + state.pageSize);
+
+    if (pageData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8">' +
+        '<div class="empty-state">' +
+          '<i data-lucide="inbox"></i>' +
+          '<div>暂无符合条件的设备数据</div>' +
+        '</div>' +
+      '</td></tr>';
+    } else {
+      let html = '';
+      pageData.forEach(function (d) {
+        const areaObj = MockData.data.areas.find(function (a) { return a.id === d.area; });
+        const areaName = areaObj ? areaObj.name : d.area;
+        const statusClass = getStatusClass(d.status);
+        const statusLabel = d.statusLabel || (MockData.data.statusMap[d.status] || {}).label || d.status;
+        const utilClass = d.utilization >= 80 ? 'high' : (d.utilization >= 60 ? 'mid' : 'low');
+        const lastMaint = d.lastMaintain ? d.lastMaintain.split(' ')[0] : '-';
+
+        html += '<tr data-id="' + d.id + '">' +
+          '<td><span class="table-code">' + d.id + '</span></td>' +
+          '<td>' +
+            '<div class="table-name">' +
+              '<span class="name">' + d.name + '</span>' +
+              '<span class="model">' + d.model + '</span>' +
+            '</div>' +
+          '</td>' +
+          '<td>' + areaName + '</td>' +
+          '<td>' +
+            '<span class="status-badge ' + statusClass + '">' +
+              '<span class="dot"></span>' + statusLabel +
+            '</span>' +
+          '</td>' +
+          '<td>' +
+            '<div class="util-cell">' +
+              '<div class="util-bar"><div class="util-fill ' + utilClass + '" style="width:' + d.utilization + '%;"></div></div>' +
+              '<span class="util-text">' + d.utilization + '%</span>' +
+            '</div>' +
+          '</td>' +
+          '<td>' + d.manager + '</td>' +
+          '<td style="color:var(--text-muted);font-size:12px;">' + lastMaint + '</td>' +
+          '<td style="text-align:right;">' +
+            '<div class="table-actions">' +
+              '<button class="btn-link" data-action="view">查看</button>' +
+              '<button class="btn-link" data-action="edit">编辑</button>' +
+              '<button class="btn-link danger" data-action="delete">删除</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      tr.addEventListener('click', function (e) {
+        if (e.target.closest('.table-actions')) return;
+        const id = tr.dataset.id;
+        openDetailModal(id);
+      });
+    });
+    tbody.querySelectorAll('[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const tr = btn.closest('tr');
+        const id = tr.dataset.id;
+        const action = btn.dataset.action;
+        if (action === 'view') openDetailModal(id);
+        else if (action === 'edit') openFormModal(id);
+        else if (action === 'delete') deleteDevice(id);
+      });
+    });
+
+    renderPagination(total, totalPages);
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderPagination(total, totalPages) {
+    document.getElementById('paginationInfo').textContent = '共 ' + total + ' 条 · 第 ' + state.page + ' / ' + totalPages + ' 页';
+    document.getElementById('prevPage').disabled = state.page <= 1;
+    document.getElementById('nextPage').disabled = state.page >= totalPages;
+
+    const pn = document.getElementById('pageNumbers');
+    let html = '';
+    const startP = Math.max(1, state.page - 2);
+    const endP = Math.min(totalPages, startP + 4);
+    for (let i = startP; i <= endP; i++) {
+      html += '<button class="page-btn' + (i === state.page ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+    }
+    pn.innerHTML = html;
+    pn.querySelectorAll('[data-page]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.page = parseInt(btn.dataset.page);
+        renderTable();
+      });
+    });
+  }
+
+  function openFormModal(deviceId) {
+    state.editingId = deviceId || null;
+    const modal = document.getElementById('formModal');
+    const title = document.getElementById('formModalTitle');
+
+    if (deviceId) {
+      const d = MockData.data.devices.find(function (x) { return x.id === deviceId; });
+      if (d) {
+        title.textContent = '编辑设备 - ' + d.id;
+        document.getElementById('f_id').value = d.id;
+        document.getElementById('f_name').value = d.name;
+        document.getElementById('f_model').value = d.model;
+        document.getElementById('f_area').value = d.area;
+        document.getElementById('f_status').value = d.status;
+        document.getElementById('f_manager').value = d.manager;
+        document.getElementById('f_utilization').value = d.utilization;
+        document.getElementById('f_runtime').value = d.runtime;
+        document.getElementById('f_lastMaintain').value = d.lastMaintain ? d.lastMaintain.split(' ')[0] : '';
+        document.getElementById('f_nextMaintain').value = d.nextMaintain ? d.nextMaintain.split(' ')[0] : '';
+      }
+    } else {
+      title.textContent = '新增设备';
+      const nextId = 'DEV-' + String(MockData.data.devices.length + 1).padStart(3, '0');
+      document.getElementById('f_id').value = nextId;
+      document.getElementById('f_name').value = '';
+      document.getElementById('f_model').value = '';
+      document.getElementById('f_area').value = 'A';
+      document.getElementById('f_status').value = 'online';
+      document.getElementById('f_manager').value = '';
+      document.getElementById('f_utilization').value = 75;
+      document.getElementById('f_runtime').value = 500;
+      document.getElementById('f_lastMaintain').value = '';
+      document.getElementById('f_nextMaintain').value = '';
+    }
+    App.openModal('formModal');
+  }
+
+  function closeFormModal() {
+    App.closeModal('formModal');
+  }
+
+  function saveDevice() {
+    const id = document.getElementById('f_id').value.trim();
+    const name = document.getElementById('f_name').value.trim();
+    const model = document.getElementById('f_model').value.trim();
+    const area = document.getElementById('f_area').value;
+    const status = document.getElementById('f_status').value;
+    const manager = document.getElementById('f_manager').value.trim();
+    const utilization = parseInt(document.getElementById('f_utilization').value) || 0;
+    const runtime = parseInt(document.getElementById('f_runtime').value) || 0;
+    const lastMaintain = document.getElementById('f_lastMaintain').value;
+    const nextMaintain = document.getElementById('f_nextMaintain').value;
+
+    if (!id || !name) {
+      App.toast('设备编号和名称不能为空', 'warning');
+      return;
+    }
+
+    const statusLabel = (MockData.data.statusMap[status] || {}).label || status;
+
+    if (state.editingId) {
+      const d = MockData.data.devices.find(function (x) { return x.id === state.editingId; });
+      if (d) {
+        d.id = id;
+        d.name = name;
+        d.model = model;
+        d.area = area;
+        d.status = status;
+        d.statusLabel = statusLabel;
+        d.manager = manager;
+        d.utilization = utilization;
+        d.runtime = runtime;
+        d.lastMaintain = lastMaintain ? lastMaintain + ' 08:00:00' : '';
+        d.nextMaintain = nextMaintain ? nextMaintain + ' 08:00:00' : '';
+      }
+      App.toast('设备信息已更新');
+    } else {
+      if (MockData.data.devices.find(function (x) { return x.id === id; })) {
+        App.toast('设备编号已存在', 'warning');
+        return;
+      }
+      MockData.data.devices.push({
+        id: id,
+        name: name,
+        model: model,
+        area: area,
+        status: status,
+        statusLabel: statusLabel,
+        manager: manager,
+        utilization: utilization,
+        runtime: runtime,
+        lastMaintain: lastMaintain ? lastMaintain + ' 08:00:00' : '',
+        nextMaintain: nextMaintain ? nextMaintain + ' 08:00:00' : '',
+        createdAt: new Date().toISOString().replace('T', ' ').slice(0, 19)
+      });
+      App.toast('设备已新增');
+    }
+    state.editingId = null;
+    closeFormModal();
+    renderAll();
+  }
+
+  function deleteDevice(id) {
+    App.openConfirm({
+      title: '删除设备',
+      message: '确定要删除设备 ' + id + ' 吗？',
+      onConfirm: function () {
+        const idx = MockData.data.devices.findIndex(function (d) { return d.id === id; });
+        if (idx !== -1) {
+          MockData.data.devices.splice(idx, 1);
+          App.toast('设备已删除');
+          renderAll();
+        }
+      }
+    });
+  }
+
+  function openDetailModal(deviceId) {
+    const d = MockData.data.devices.find(function (x) { return x.id === deviceId; });
+    if (!d) return;
+    const areaObj = MockData.data.areas.find(function (a) { return a.id === d.area; });
+    const areaName = areaObj ? areaObj.fullName : d.area;
+    const statusLabel = d.statusLabel || (MockData.data.statusMap[d.status] || {}).label || d.status;
+    const statusClass = getStatusClass(d.status);
+
+    document.getElementById('detailTitle').textContent = d.name + ' - ' + d.id;
+
+    const historyItems = [
+      { date: d.lastMaintain ? d.lastMaintain.split(' ')[0] : '-', desc: '定期维护保养（' + d.model + '）' },
+      { date: '2026-05-15', desc: '日常巡检 - 状态正常' },
+      { date: '2026-04-20', desc: '易损件更换 - 刀具' },
+      { date: '2026-03-10', desc: '故障维修 - 主轴温度异常' },
+      { date: d.createdAt ? d.createdAt.split(' ')[0] : '-', desc: '设备投入使用' }
+    ];
+
+    let html = '';
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title"><i data-lucide="info"></i>基本信息</div>' +
+      '<div class="detail-grid">' +
+        '<div class="detail-item"><span class="label">设备编号</span><span class="value">' + d.id + '</span></div>' +
+        '<div class="detail-item"><span class="label">设备型号</span><span class="value">' + d.model + '</span></div>' +
+        '<div class="detail-item"><span class="label">所属区域</span><span class="value">' + areaName + '</span></div>' +
+        '<div class="detail-item"><span class="label">状态</span><span class="value"><span class="status-badge ' + statusClass + '"><span class="dot"></span>' + statusLabel + '</span></span></div>' +
+        '<div class="detail-item"><span class="label">负责人</span><span class="value">' + d.manager + '</span></div>' +
+        '<div class="detail-item"><span class="label">利用率</span><span class="value">' + d.utilization + '%</span></div>' +
+        '<div class="detail-item"><span class="label">运行时长</span><span class="value">' + d.runtime + ' 小时</span></div>' +
+        '<div class="detail-item"><span class="label">上次维护</span><span class="value">' + (d.lastMaintain ? d.lastMaintain.split(' ')[0] : '-') + '</span></div>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title"><i data-lucide="calendar"></i>维护历史</div>' +
+      '<ul class="timeline-list">';
+    historyItems.forEach(function (h) {
+      html += '<li class="timeline-item">' +
+        '<div>' +
+          '<div class="timeline-date">' + h.date + '</div>' +
+          '<div class="timeline-desc">' + h.desc + '</div>' +
+        '</div>' +
+      '</li>';
+    });
+    html += '</ul></div>';
+
+    html += '<div class="detail-section">' +
+      '<div class="detail-section-title"><i data-lucide="tool"></i>操作</div>' +
+      '<div class="detail-actions">' +
+        '<button class="btn btn-primary" onclick="closeDetailModal();openFormModal(\'' + d.id + '\')">' +
+          '<i data-lucide="edit" style="width:14px;height:14px;"></i>编辑' +
+        '</button>' +
+        '<button class="btn btn-ghost" onclick="markMaintenance(\'' + d.id + '\')">' +
+          '<i data-lucide="wrench" style="width:14px;height:14px;"></i>标记维护' +
+        '</button>' +
+        '<button class="btn btn-ghost" onclick="App.toast(\'查看历史功能开发中\', \'info\')">' +
+          '<i data-lucide="clock" style="width:14px;height:14px;"></i>查看历史' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    document.getElementById('detailBody').innerHTML = html;
+    App.openModal('detailModal');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function closeDetailModal() {
+    App.closeModal('detailModal');
+  }
+
+  function markMaintenance(id) {
+    const d = MockData.data.devices.find(function (x) { return x.id === id; });
+    if (d) {
+      d.status = 'maintenance';
+      d.statusLabel = '维护中';
+      App.toast('已将 ' + id + ' 标记为维护中');
+      closeDetailModal();
+      renderAll();
+    }
+  }
+
+  function renderAll() {
+    renderStatusFilters();
+    renderAreaFilters();
+    renderKPIs();
+    renderTable();
+  }
+
+  function updateTime() {
+    const now = new Date();
+    const pad = function (n) { return n < 10 ? '0' + n : n; };
+    const str = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' +
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    document.getElementById('currentTime').textContent = str;
+  }
+
+  document.getElementById('searchInput').addEventListener('input', function (e) {
+    state.search = e.target.value;
+    state.page = 1;
+    renderTable();
+  });
+
+  document.getElementById('prevPage').addEventListener('click', function () {
+    if (state.page > 1) { state.page--; renderTable(); }
+  });
+  document.getElementById('nextPage').addEventListener('click', function () {
+    state.page++; renderTable();
+  });
+  document.getElementById('pageSizeSelect').addEventListener('change', function (e) {
+    state.pageSize = parseInt(e.target.value);
+    state.page = 1;
+    renderTable();
+  });
+
+  document.getElementById('btnAddDevice').addEventListener('click', function () {
+    openFormModal(null);
+  });
+
+  document.querySelectorAll('.modal-mask').forEach(function (mask) {
+    mask.addEventListener('click', function (e) {
+      if (e.target === mask) {
+        mask.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    });
+  });
+
+  window.closeFormModal = closeFormModal;
+  window.closeDetailModal = closeDetailModal;
+  window.saveDevice = saveDevice;
+  window.markMaintenance = markMaintenance;
+  window.openFormModal = openFormModal;
+
+  renderAreaSelect();
+  renderStatusSelect();
+  renderAll();
+  updateTime();
+  setInterval(updateTime, 1000);
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+
+</body>
+</html>

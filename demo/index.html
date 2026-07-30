@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>试制资源数智化管理系统 - Demo 导航</title>
+  <link rel="stylesheet" href="./assets/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+      overflow: auto;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+      max-width: 720px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: rgba(22, 119, 255, 0.15);
+      border: 1px solid rgba(22, 119, 255, 0.3);
+      border-radius: 20px;
+      color: var(--brand-light);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      letter-spacing: 2px;
+    }
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 28px;
+    }
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--brand-light);
+    }
+    .hero-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      width: 100%;
+      margin-bottom: 48px;
+    }
+    .module-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .module-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--brand-primary));
+      opacity: 0.8;
+    }
+    .module-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--brand-primary);
+      box-shadow: 0 12px 40px rgba(22, 119, 255, 0.2);
+    }
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .module-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(22, 119, 255, 0.12);
+      color: var(--brand-light);
+    }
+    .module-icon i {
+      width: 22px;
+      height: 22px;
+    }
+    .module-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .module-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+    .tag-core {
+      background: rgba(22, 119, 255, 0.15);
+      color: var(--brand-light);
+    }
+    .tag-v2 {
+      background: rgba(82, 196, 26, 0.15);
+      color: var(--success);
+    }
+    .module-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      flex: 1;
+    }
+    .module-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .feature-tag {
+      padding: 3px 10px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .demo-footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .demo-footer a {
+      color: var(--brand-light);
+      text-decoration: none;
+    }
+    .demo-footer a:hover {
+      text-decoration: underline;
+    }
+    .version-info {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .version-info span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .deco-grid {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .deco-grid::before {
+      content: '';
+      position: absolute;
+      top: 20%; left: 10%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(22, 119, 255, 0.12) 0%, transparent 70%);
+    }
+    .deco-grid::after {
+      content: '';
+      position: absolute;
+      bottom: 10%; right: 5%;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(82, 196, 26, 0.08) 0%, transparent 70%);
+    }
+  </style>
+</head>
+<body>
+  <div class="deco-grid"></div>
+
+  <div class="hero">
+    <div class="hero-badge">
+      <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
+      Demo 演示版 · V6 试制资源数智化管理系统
+    </div>
+    <h1 class="hero-title">试制资源数智化管理系统</h1>
+    <p class="hero-subtitle">
+      面向试制车间的设备、人员、任务、预警一体化管理平台<br>
+      实时监控 · 智能调度 · 数据驱动
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">9</div>
+        <div class="hero-stat-label">功能模块</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">50+</div>
+        <div class="hero-stat-label">Mock 设备数据</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">30</div>
+        <div class="hero-stat-label">Mock 任务数据</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">15</div>
+        <div class="hero-stat-label">Mock 预警数据</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="version-info">
+    <span><i data-lucide="layers" style="width:14px;height:14px;"></i> Demo v1.0</span>
+    <span><i data-lucide="database" style="width:14px;height:14px;"></i> 纯前端 Mock 数据</span>
+    <span><i data-lucide="palette" style="width:14px;height:14px;"></i> 深色科技风</span>
+  </div>
+
+  <div class="modules-grid">
+    <a href="./dashboard.html" class="module-card" style="--card-accent: #1677FF;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="layout-dashboard"></i></div>
+        <div>
+          <span class="module-title">综合驾驶舱</span>
+          <span class="module-tag tag-core">核心</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        一览全局 KPI 指标、设备状态分布、人员在岗情况、车间实时布局和异常告警概览
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">KPI 卡片</span>
+        <span class="feature-tag">ECharts 图表</span>
+        <span class="feature-tag">车间布局</span>
+        <span class="feature-tag">告警列表</span>
+      </div>
+    </a>
+
+    <a href="./equipment.html" class="module-card" style="--card-accent: #52C41A;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="cpu"></i></div>
+        <div>
+          <span class="module-title">设备台账</span>
+          <span class="module-tag tag-core">核心</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        设备全生命周期管理：台账信息、状态追踪、利用率统计、维护记录
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">CRUD 管理</span>
+        <span class="feature-tag">多维筛选</span>
+        <span class="feature-tag">状态流转</span>
+        <span class="feature-tag">维护记录</span>
+      </div>
+    </a>
+
+    <a href="./tasks.html" class="module-card" style="--card-accent: #FAAD14;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="clipboard-list"></i></div>
+        <div>
+          <span class="module-title">任务管理</span>
+          <span class="module-tag tag-core">核心</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        三类任务统一管理：零星任务、ABC类任务、试制岛任务，支持外部系统数据同步
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">Tab 切换</span>
+        <span class="feature-tag">进度追踪</span>
+        <span class="feature-tag">状态流转</span>
+        <span class="feature-tag">数据同步</span>
+      </div>
+    </a>
+
+    <a href="./alerts.html" class="module-card" style="--card-accent: #FF4D4F;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="alert-triangle"></i></div>
+        <div>
+          <span class="module-title">异常预警中心</span>
+          <span class="module-tag tag-core">核心</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        实时异常监控与处理：设备故障、质量异常、安全隐患、物料短缺等预警管理
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">多级预警</span>
+        <span class="feature-tag">处理流程</span>
+        <span class="feature-tag">指派/关闭</span>
+        <span class="feature-tag">处理时间线</span>
+      </div>
+    </a>
+
+    <div class="module-card" style="--card-accent: #722ED1; opacity: 0.65; cursor: not-allowed;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="map"></i></div>
+        <div>
+          <span class="module-title">园区地图</span>
+          <span class="module-tag tag-v2">规划中</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        SVG 车间平面图，实时展示设备位置、人员分布、区域占用情况
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">SVG 平面图</span>
+        <span class="feature-tag">设备定位</span>
+        <span class="feature-tag">人员分布</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--card-accent: #13C2C2; opacity: 0.65; cursor: not-allowed;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="calendar-days"></i></div>
+        <div>
+          <span class="module-title">甘特图排程</span>
+          <span class="module-tag tag-v2">规划中</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        可视化排程管理：任务时间线、资源冲突检测、关键路径分析
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">甘特图</span>
+        <span class="feature-tag">冲突检测</span>
+        <span class="feature-tag">关键路径</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--card-accent: #EB2F96; opacity: 0.65; cursor: not-allowed;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="users"></i></div>
+        <div>
+          <span class="module-title">人员看板</span>
+          <span class="module-tag tag-v2">规划中</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        人员实时状态、位置分布、技能分组、工时统计
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">实时状态</span>
+        <span class="feature-tag">位置分布</span>
+        <span class="feature-tag">技能分组</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--card-accent: #FA541C; opacity: 0.65; cursor: not-allowed;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="gauge"></i></div>
+        <div>
+          <span class="module-title">资源占用看板</span>
+          <span class="module-tag tag-v2">规划中</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        区域占用率矩阵、利用率趋势分析、设备效率排名
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">占用率矩阵</span>
+        <span class="feature-tag">趋势分析</span>
+        <span class="feature-tag">效率排名</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--card-accent: #597EF7; opacity: 0.65; cursor: not-allowed;">
+      <div class="module-header">
+        <div class="module-icon"><i data-lucide="line-chart"></i></div>
+        <div>
+          <span class="module-title">人效分析</span>
+          <span class="module-tag tag-v2">规划中</span>
+        </div>
+      </div>
+      <div class="module-desc">
+        工时分布统计、任务完成率分析、人效指标看板
+      </div>
+      <div class="module-features">
+        <span class="feature-tag">工时统计</span>
+        <span class="feature-tag">完成率</span>
+        <span class="feature-tag">人效指标</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-footer">
+    <p>
+      基于 <strong>HTML5 + ECharts 5 + Tailwind CSS</strong> 构建 · 纯前端 Mock 数据
+    </p>
+    <p style="margin-top: 8px;">
+      参照需求文档：<a href="../需求文档_V6_试制资源数智化管理系统.md" target="_blank">需求文档_V6</a> ·
+      开发计划：<a href="../开发计划_V6.md" target="_blank">开发计划_V6</a>
+    </p>
+  </div>
+
+  <script>
+    // 更新实时时钟
+    function updateTime() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+      const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const timeStr = `${dateStr} ${weekDays[now.getDay()]} ${h}:${m}:${s}`;
+      document.querySelectorAll('.clock-display').forEach(el => el.textContent = timeStr);
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 初始化图标
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

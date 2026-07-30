@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>综合驾驶舱 - 试制资源数智化管理系统</title>
+  <link rel="stylesheet" href="./assets/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      min-width: 280px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    .toast.warning { border-left: 3px solid var(--warning); }
+    .toast.info { border-left: 3px solid var(--brand-primary); }
+    .toast-icon { flex-shrink: 0; }
+    .toast.success .toast-icon { color: var(--success); }
+    .toast.error .toast-icon { color: var(--danger); }
+    .toast.warning .toast-icon { color: var(--warning); }
+    .toast.info .toast-icon { color: var(--brand-primary); }
+    .toast-icon i { width: 20px; height: 20px; }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .toast-msg { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .toast .close-btn { color: var(--text-muted); cursor: pointer; }
+    .toast .close-btn:hover { color: var(--text-primary); }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+    }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--brand-primary); color: white; }
+    .btn-primary:hover { background: var(--brand-light); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+    .btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #FF7875; }
+
+    .modal-detail-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+    .modal-detail-row:last-child { border-bottom: none; }
+    .modal-detail-label { width: 100px; color: var(--text-secondary); flex-shrink: 0; }
+    .modal-detail-value { color: var(--text-primary); flex: 1; }
+
+    .alarm-item.high { border-left-color: var(--warning); }
+    .alarm-item.medium { border-left-color: var(--brand-primary); }
+    .alarm-item.low { border-left-color: var(--text-muted); }
+    .alarm-level.high { background: rgba(250, 173, 20, 0.15); color: var(--warning); }
+    .alarm-level.medium { background: rgba(22, 119, 255, 0.15); color: var(--brand-primary); }
+    .alarm-level.low { background: rgba(139, 149, 168, 0.15); color: var(--text-secondary); }
+
+    .tab-section { display: flex; gap: 4px; margin-bottom: 12px; }
+    .tab-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { background: rgba(22, 119, 255, 0.15); color: var(--brand-light); border-color: var(--brand-primary); }
+
+    .online-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      display: inline-block;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i data-lucide="factory" style="width:18px;height:18px;"></i>
+          </div>
+          <span class="system-title">试制资源数智化管理系统</span>
+        </div>
+        <nav>
+          <ul class="nav-menu">
+            <li class="nav-item active" data-page="dashboard">综合驾驶舱</li>
+            <li class="nav-item" data-page="devices">设备台账</li>
+            <li class="nav-item" data-page="tasks">任务管理</li>
+            <li class="nav-item" data-page="alerts">异常预警中心</li>
+          </ul>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="header-action" id="syncBtn">
+          <span class="status-dot sync"></span>
+          <span>同步中</span>
+        </div>
+        <div class="header-action">
+          <span class="status-dot"></span>
+          <span>系统正常</span>
+        </div>
+        <div class="header-action">
+          <i data-lucide="clock" style="width:14px;height:14px;"></i>
+          <span id="currentTime">--:--:--</span>
+        </div>
+        <div class="header-action" id="userBtn">
+          <i data-lucide="user" style="width:14px;height:14px;"></i>
+          <span>管理员</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="app-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">车间区域</div>
+        <div id="areaFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">设备状态</div>
+        <div id="statusFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">统计概览</div>
+        <div id="sidebarStats"></div>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="pie-chart" class="card-title-icon"></i>
+              设备状态分布
+            </div>
+          </div>
+          <div id="deviceStatusChart" class="chart-container"></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="bar-chart-3" class="card-title-icon"></i>
+              任务类型统计
+            </div>
+          </div>
+          <div id="taskTypeChart" class="chart-container"></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="alert-triangle" class="card-title-icon"></i>
+              预警级别分布
+            </div>
+          </div>
+          <div id="alertLevelChart" class="chart-container"></div>
+        </div>
+      </div>
+
+      <div class="layout-row">
+        <div class="workshop-layout">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="layout-grid" class="card-title-icon"></i>
+              车间实时布局
+            </div>
+            <div class="legend">
+              <div class="legend-item">
+                <span class="legend-color" style="background:var(--brand-primary);opacity:0.7;"></span>
+                运行中
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="background:var(--success);opacity:0.7;"></span>
+                空闲
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="background:var(--danger);opacity:0.8;"></span>
+                故障
+              </div>
+              <div class="legend-item">
+                <span class="legend-color" style="background:var(--text-muted);opacity:0.6;"></span>
+                维护中
+              </div>
+            </div>
+          </div>
+          <div class="workshop-grid" id="workshopGrid"></div>
+        </div>
+
+        <div class="alarm-list">
+          <div class="card-header">
+            <div class="card-title">
+              <i data-lucide="bell-ring" class="card-title-icon"></i>
+              异常告警列表
+            </div>
+            <div class="tab-section">
+              <button class="tab-btn active" data-alarm-filter="all">全部</button>
+              <button class="tab-btn" data-alarm-filter="未处理">未处理</button>
+              <button class="tab-btn" data-alarm-filter="处理中">处理中</button>
+            </div>
+          </div>
+          <div id="alarmItems"></div>
+        </div>
+      </div>
+
+      <div class="tasks-list">
+        <div class="card-header">
+          <div class="card-title">
+            <i data-lucide="list-checks" class="card-title-icon"></i>
+            今日任务进度
+          </div>
+          <div class="tab-section">
+            <button class="tab-btn active" data-task-filter="all">全部</button>
+            <button class="tab-btn" data-task-filter="执行中">执行中</button>
+            <button class="tab-btn" data-task-filter="已完成">已完成</button>
+            <button class="tab-btn" data-task-filter="已延期">已延期</button>
+          </div>
+        </div>
+        <div id="taskItems" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;"></div>
+      </div>
+    </main>
+
+    <footer class="app-statusbar">
+      <div class="status-group">
+        <div class="status-item">
+          <span class="status-dot"></span>
+          <span id="systemStatus">系统运行正常</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i>
+          <span id="syncStatus">数据同步完成</span>
+        </div>
+      </div>
+      <div class="status-group">
+        <div class="status-item">
+          <i data-lucide="database" style="width:12px;height:12px;"></i>
+          <span>数据库: 已连接</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="hard-drive" style="width:12px;height:12px;"></i>
+          <span>存储: 正常</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="clock" style="width:12px;height:12px;"></i>
+          <span id="lastUpdateTime">最后更新: --:--:--</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="device-tooltip" id="deviceTooltip"></div>
+
+  <script src="./assets/js/mock-data.js"></script>
+  <script src="./assets/js/app.js"></script>
+  <script>
+    (function () {
+      const d = MockData.data;
+      const stats = d.stats;
+      let currentAreaFilter = 'all';
+      let currentAlarmFilter = 'all';
+      let currentTaskFilter = 'all';
+      let charts = {};
+
+      function fmtTime(d) {
+        const pad = n => String(n).padStart(2, '0');
+        return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      }
+
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent =
+          now.getFullYear() + '-' +
+          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+          String(now.getDate()).padStart(2, '0') + ' ' + fmtTime(now);
+      }
+
+      function statusClass(s) {
+        const map = {
+          online: 'occupied',
+          idle: 'idle',
+          fault: 'fault',
+          maintenance: 'maintenance',
+          warning: 'fault',
+          offline: 'maintenance'
+        };
+        return map[s] || 'maintenance';
+      }
+
+      function statusLabelClass(s) {
+        const map = {
+          critical: 'critical', high: 'high', medium: 'medium', low: 'low',
+          严重: 'critical', 高: 'high', 中: 'medium', 低: 'low'
+        };
+        return map[s] || 'low';
+      }
+
+      function levelClassFromLabel(label) {
+        const map = { '严重': 'critical', '高': 'high', '中': 'medium', '低': 'low' };
+        return map[label] || 'low';
+      }
+
+      function deviceStatusColor(s) {
+        const map = {
+          online: '#1677FF',
+          idle: '#52C41A',
+          fault: '#FF4D4F',
+          maintenance: '#5A6478',
+          warning: '#FAAD14',
+          offline: '#5A6478'
+        };
+        return map[s] || '#5A6478';
+      }
+
+      function renderKPI() {
+        const items = [
+          { title: '设备总数', value: stats.kpi.totalDevices, unit: '台', icon: 'cpu', trend: 'up', trendVal: '+2', sub: '较上月' },
+          { title: '运行中设备', value: stats.kpi.onlineDevices, unit: '台', icon: 'activity', trend: 'up', trendVal: '+3', sub: '在线率 70%' },
+          { title: '总任务数', value: stats.kpi.totalTasks, unit: '项', icon: 'clipboard-list', trend: 'flat', trendVal: '0', sub: '本月累计' },
+          { title: '进行中任务', value: stats.kpi.inProgressTasks, unit: '项', icon: 'loader', trend: 'up', trendVal: '+1', sub: '完成率 40%' },
+          { title: '在线人员', value: stats.kpi.onlinePersonnel, unit: '人', icon: 'users', trend: 'flat', trendVal: '0', sub: '出勤率 75%' },
+          { title: '未处理预警', value: stats.kpi.unresolvedAlerts, unit: '条', icon: 'alert-octagon', trend: 'down', trendVal: '-2', sub: '较昨日' }
+        ];
+        const html = items.map(it => `
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-title">
+                <i data-lucide="${it.icon}" class="kpi-icon"></i>
+                ${it.title}
+              </div>
+              <span class="kpi-trend ${it.trend}">
+                <i data-lucide="${it.trend === 'up' ? 'trending-up' : it.trend === 'down' ? 'trending-down' : 'minus'}" style="width:12px;height:12px;"></i>
+                ${it.trendVal}
+              </span>
+            </div>
+            <div>
+              <span class="kpi-value">${it.value}</span>
+              <span class="kpi-unit">${it.unit}</span>
+            </div>
+            <div class="kpi-sub">${it.sub}</div>
+          </div>
+        `).join('');
+        document.getElementById('kpiGrid').innerHTML = html;
+      }
+
+      function renderSidebar() {
+        const areaHtml = d.areas.map(a => {
+          const count = d.devices.filter(dev => dev.area === a.id).length;
+          const online = d.devices.filter(dev => dev.area === a.id && ['online', 'idle'].includes(dev.status)).length;
+          return `
+            <div class="stat-item" data-area="${a.id}">
+              <span class="stat-label">${a.name}</span>
+              <span class="stat-value">${online}/${count}</span>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('areaFilters').innerHTML = areaHtml;
+
+        const statusItems = [
+          { key: 'online', label: '运行中', color: '#1677FF', count: d.devices.filter(x => x.status === 'online').length },
+          { key: 'idle', label: '空闲', color: '#52C41A', count: d.devices.filter(x => x.status === 'idle').length },
+          { key: 'warning', label: '预警', color: '#FAAD14', count: d.devices.filter(x => x.status === 'warning').length },
+          { key: 'fault', label: '故障', color: '#FF4D4F', count: d.devices.filter(x => x.status === 'fault').length },
+          { key: 'maintenance', label: '维护中', color: '#5A6478', count: d.devices.filter(x => x.status === 'maintenance').length },
+          { key: 'offline', label: '离线', color: '#5A6478', count: d.devices.filter(x => x.status === 'offline').length }
+        ];
+        const statusHtml = statusItems.map(s => `
+          <div class="stat-item" data-status="${s.key}">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="filter-dot" style="background:${s.color};"></span>
+              <span class="stat-label">${s.label}</span>
+            </div>
+            <span class="stat-value">${s.count}</span>
+          </div>
+        `).join('');
+        document.getElementById('statusFilters').innerHTML = statusHtml;
+
+        const statsHtml = `
+          <div class="stat-item">
+            <span class="stat-label">设备利用率</span>
+            <span class="stat-value">${stats.kpi.avgUtilization}%</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">已完成任务</span>
+            <span class="stat-value">${stats.kpi.completedTasks}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">预警总数</span>
+            <span class="stat-value">${stats.kpi.totalAlerts}</span>
+          </div>
+        `;
+        document.getElementById('sidebarStats').innerHTML = statsHtml;
+
+        document.querySelectorAll('#areaFilters .stat-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const area = el.dataset.area;
+            if (currentAreaFilter === area) {
+              currentAreaFilter = 'all';
+              el.classList.remove('active');
+            } else {
+              currentAreaFilter = area;
+              document.querySelectorAll('#areaFilters .stat-item').forEach(e => e.classList.remove('active'));
+              el.classList.add('active');
+            }
+            renderWorkshop();
+          });
+        });
+      }
+
+      function initDeviceStatusChart() {
+        const el = document.getElementById('deviceStatusChart');
+        charts.deviceStatus = echarts.init(el);
+        const option = {
+          tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c} 台 ({d}%)',
+            backgroundColor: '#151C2C',
+            borderColor: '#1E2A3E',
+            textStyle: { color: '#FFFFFF' }
+          },
+          legend: {
+            bottom: 0,
+            left: 'center',
+            textStyle: { color: '#8B95A8', fontSize: 11 },
+            itemWidth: 10,
+            itemHeight: 10
+          },
+          color: ['#1677FF', '#52C41A', '#FAAD14', '#5A6478', '#FF4D4F', '#8B95A8'],
+          series: [{
+            type: 'pie',
+            radius: ['45%', '70%'],
+            center: ['50%', '45%'],
+            avoidLabelOverlap: true,
+            itemStyle: {
+              borderColor: '#151C2C',
+              borderWidth: 2
+            },
+            label: {
+              show: false,
+              position: 'center'
+            },
+            emphasis: {
+              label: { show: true, fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
+              itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' }
+            },
+            labelLine: { show: false },
+            data: stats.deviceStatus.labels.map((label, i) => ({
+              name: label,
+              value: stats.deviceStatus.values[i]
+            }))
+          }]
+        };
+        charts.deviceStatus.setOption(option);
+      }
+
+      function initTaskTypeChart() {
+        const el = document.getElementById('taskTypeChart');
+        charts.taskType = echarts.init(el);
+        const option = {
+          tooltip: {
+            trigger: 'axis',
+            backgroundColor: '#151C2C',
+            borderColor: '#1E2A3E',
+            textStyle: { color: '#FFFFFF' }
+          },
+          grid: { left: 40, right: 20, top: 20, bottom: 30, containLabel: true },
+          xAxis: {
+            type: 'category',
+            data: stats.taskType.labels,
+            axisLine: { lineStyle: { color: '#1E2A3E' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11 },
+            axisTick: { show: false }
+          },
+          yAxis: {
+            type: 'value',
+            splitLine: { lineStyle: { color: '#1E2A3E', type: 'dashed' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11 }
+          },
+          series: [{
+            type: 'bar',
+            data: stats.taskType.values,
+            barWidth: 40,
+            itemStyle: {
+              borderRadius: [4, 4, 0, 0],
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#4096FF' },
+                { offset: 1, color: '#1677FF' }
+              ])
+            },
+            label: {
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 600
+            }
+          }]
+        };
+        charts.taskType.setOption(option);
+      }
+
+      function initAlertLevelChart() {
+        const el = document.getElementById('alertLevelChart');
+        charts.alertLevel = echarts.init(el);
+        const option = {
+          tooltip: {
+            trigger: 'axis',
+            backgroundColor: '#151C2C',
+            borderColor: '#1E2A3E',
+            textStyle: { color: '#FFFFFF' }
+          },
+          grid: { left: 40, right: 20, top: 20, bottom: 30, containLabel: true },
+          xAxis: {
+            type: 'category',
+            data: stats.alertLevel.labels,
+            axisLine: { lineStyle: { color: '#1E2A3E' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11 },
+            axisTick: { show: false }
+          },
+          yAxis: {
+            type: 'value',
+            splitLine: { lineStyle: { color: '#1E2A3E', type: 'dashed' } },
+            axisLabel: { color: '#8B95A8', fontSize: 11 }
+          },
+          series: [{
+            type: 'bar',
+            data: stats.alertLevel.values.map((v, i) => ({
+              value: v,
+              itemStyle: {
+                borderRadius: [4, 4, 0, 0],
+                color: [
+                  new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#FF7875' }, { offset: 1, color: '#FF4D4F' }]),
+                  new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#FFC53D' }, { offset: 1, color: '#FAAD14' }]),
+                  new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#4096FF' }, { offset: 1, color: '#1677FF' }]),
+                  new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#8B95A8' }, { offset: 1, color: '#5A6478' }])
+                ][i]
+              }
+            })),
+            barWidth: 40,
+            label: {
+              show: true,
+              position: 'top',
+              color: '#FFFFFF',
+              fontSize: 12,
+              fontWeight: 600
+            }
+          }]
+        };
+        charts.alertLevel.setOption(option);
+      }
+
+      function renderWorkshop() {
+        const container = document.getElementById('workshopGrid');
+        const areas = currentAreaFilter === 'all' ? d.areas : d.areas.filter(a => a.id === currentAreaFilter);
+
+        container.style.gridTemplateColumns = areas.length === 1 ? '1fr' : areas.length === 2 ? '1fr 1fr' : areas.length === 4 ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)';
+
+        const html = areas.map(area => {
+          const devices = d.devices.filter(dev => dev.area === area.id);
+          const onlineCount = devices.filter(dev => ['online', 'idle'].includes(dev.status)).length;
+          const cellCount = Math.max(devices.length, 10);
+          let cellsHtml = '';
+          for (let i = 0; i < cellCount; i++) {
+            if (i < devices.length) {
+              const dev = devices[i];
+              const cls = statusClass(dev.status);
+              cellsHtml += `<div class="device-cell ${cls}" data-dev-id="${dev.id}"></div>`;
+            } else {
+              cellsHtml += `<div class="device-cell" style="background:var(--bg-hover);opacity:0.3;"></div>`;
+            }
+          }
+          return `
+            <div class="zone-card">
+              <div class="zone-header">
+                <span class="zone-name">${area.name}</span>
+                <span class="zone-stats">${onlineCount}/${devices.length} 在线</span>
+              </div>
+              <div class="device-grid">${cellsHtml}</div>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = html;
+
+        container.querySelectorAll('.device-cell[data-dev-id]').forEach(cell => {
+          cell.addEventListener('mouseenter', onDeviceHover);
+          cell.addEventListener('mousemove', onDeviceMove);
+          cell.addEventListener('mouseleave', onDeviceLeave);
+        });
+      }
+
+      let hoveredDeviceId = null;
+      function onDeviceHover(e) {
+        const id = e.currentTarget.dataset.devId;
+        const dev = d.devices.find(x => x.id === id);
+        if (!dev) return;
+        hoveredDeviceId = id;
+        const tip = document.getElementById('deviceTooltip');
+        tip.innerHTML = `
+          <div class="tooltip-title">${dev.name}</div>
+          <div class="tooltip-row"><span class="tooltip-label">设备编号</span><span class="tooltip-value">${dev.id}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">型号</span><span class="tooltip-value">${dev.model}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">状态</span><span class="tooltip-value" style="color:${deviceStatusColor(dev.status)}">${dev.statusLabel}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">车间</span><span class="tooltip-value">${dev.area}区</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">利用率</span><span class="tooltip-value">${dev.utilization}%</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">运行时长</span><span class="tooltip-value">${dev.runtime}h</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">负责人</span><span class="tooltip-value">${dev.manager}</span></div>
+        `;
+        tip.classList.add('show');
+        onDeviceMove(e);
+      }
+      function onDeviceMove(e) {
+        const tip = document.getElementById('deviceTooltip');
+        const x = e.clientX + 16;
+        const y = e.clientY + 16;
+        tip.style.left = Math.min(x, window.innerWidth - 220) + 'px';
+        tip.style.top = Math.min(y, window.innerHeight - 200) + 'px';
+      }
+      function onDeviceLeave() {
+        hoveredDeviceId = null;
+        document.getElementById('deviceTooltip').classList.remove('show');
+      }
+
+      function renderAlarms() {
+        const container = document.getElementById('alarmItems');
+        let alerts = d.alerts;
+        if (currentAlarmFilter !== 'all') {
+          alerts = alerts.filter(a => a.status === currentAlarmFilter);
+        }
+        alerts.sort((a, b) => {
+          const order = { 'critical': 0, 'high': 1, 'medium': 2, 'low': 3 };
+          return order[a.level] - order[b.level];
+        });
+
+        const html = alerts.slice(0, 8).map(alert => {
+          const lvlClass = levelClassFromLabel(alert.levelLabel);
+          const isUnresolved = alert.status === '未处理';
+          return `
+            <div class="alarm-item ${lvlClass}" data-alert-id="${alert.id}">
+              <span class="alarm-level ${lvlClass}">${alert.levelLabel}</span>
+              <div class="alarm-content">
+                <div class="alarm-desc">${alert.message}</div>
+                <div class="alarm-time">${alert.device} · ${alert.area}区 · ${alert.createdAt}</div>
+              </div>
+              <span class="alarm-action" data-alert-action="${alert.id}">${isUnresolved ? '处理' : '查看'}</span>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = html;
+
+        container.querySelectorAll('.alarm-item').forEach(item => {
+          item.addEventListener('click', () => openAlertModal(item.dataset.alertId));
+        });
+
+        container.querySelectorAll('[data-alert-action]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const alert = d.alerts.find(a => a.id === btn.dataset.alertAction);
+            App.toast(`正在处理预警: ${alert.message}`, 'info', '处理预警');
+          });
+        });
+
+        document.querySelectorAll('[data-alarm-filter]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-alarm-filter]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentAlarmFilter = btn.dataset.alarmFilter;
+            renderAlarms();
+          });
+        });
+      }
+
+      function openAlertModal(alertId) {
+        const alert = d.alerts.find(a => a.id === alertId);
+        if (!alert) return;
+        const lvlClass = levelClassFromLabel(alert.levelLabel);
+        const html = `
+          <div class="modal-mask show" id="alertModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3>预警详情</h3>
+                <button class="modal-close" onclick="App.closeModal('alertModal');lucide.createIcons();">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                  <span class="alarm-level ${lvlClass}" style="font-size:14px;padding:4px 12px;">${alert.levelLabel}</span>
+                  <span style="color:var(--text-primary);font-weight:500;">${alert.message}</span>
+                </div>
+                <div class="modal-detail-row"><span class="modal-detail-label">预警编号</span><span class="modal-detail-value">${alert.id}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">预警类型</span><span class="modal-detail-value">${alert.type}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">设备编号</span><span class="modal-detail-value">${alert.device}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">所属车间</span><span class="modal-detail-value">${alert.area}区</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">处理状态</span><span class="modal-detail-value">${alert.status}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">负责人</span><span class="modal-detail-value">${alert.assignee}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">发生时间</span><span class="modal-detail-value">${alert.createdAt}</span></div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="App.closeModal('alertModal')">关闭</button>
+                <button class="btn btn-primary" onclick="App.closeModal('alertModal');App.toast('已指派给 ${alert.assignee}', 'success');lucide.createIcons();">指派处理</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        App.openModal('alertModal');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function renderTasks() {
+        const container = document.getElementById('taskItems');
+        let tasks = d.tasks;
+        if (currentTaskFilter !== 'all') {
+          tasks = tasks.filter(t => t.status === currentTaskFilter);
+        }
+        tasks = tasks.slice(0, 8);
+
+        const html = tasks.map(task => {
+          let progressClass = 'normal';
+          if (task.status === '已延期' || task.progress < 30) progressClass = 'danger';
+          else if (task.progress < 60) progressClass = 'warning';
+
+          return `
+            <div class="task-item">
+              <div class="task-header">
+                <span class="task-name">${task.title}</span>
+                <span class="task-progress-text">${task.progress}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill ${progressClass}" style="width:${task.progress}%;"></div>
+              </div>
+              <div class="task-meta">
+                <span>${task.type} · ${task.area}区 · ${task.assignee}</span>
+                <span style="color:${
+                  task.status === '已完成' ? 'var(--success)' :
+                  task.status === '执行中' ? 'var(--brand-light)' :
+                  task.status === '已延期' ? 'var(--danger)' :
+                  task.status === '预警' ? 'var(--warning)' :
+                  'var(--text-secondary)'
+                }">${task.status}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = html;
+
+        document.querySelectorAll('[data-task-filter]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-task-filter]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTaskFilter = btn.dataset.taskFilter;
+            renderTasks();
+          });
+        });
+      }
+
+      function bindNav() {
+        document.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            if (item.dataset.page !== 'dashboard') {
+              App.toast(`跳转到 ${item.textContent} 页面`, 'info');
+              document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+              document.querySelector('[data-page="dashboard"]').classList.add('active');
+            }
+          });
+        });
+
+        document.getElementById('syncBtn').addEventListener('click', () => {
+          App.toast('正在同步数据...', 'info');
+          setTimeout(() => {
+            MockData.refresh();
+            renderAll();
+            updateLastTime();
+            App.toast('数据同步完成', 'success');
+          }, 800);
+        });
+
+        document.getElementById('userBtn').addEventListener('click', () => {
+          App.toast('管理员账户信息', 'info');
+        });
+      }
+
+      function updateLastTime() {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        document.getElementById('lastUpdateTime').textContent =
+          '最后更新: ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      }
+
+      function renderAll() {
+        renderKPI();
+        renderSidebar();
+        renderWorkshop();
+        renderAlarms();
+        renderTasks();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function initCharts() {
+        initDeviceStatusChart();
+        initTaskTypeChart();
+        initAlertLevelChart();
+      }
+
+      window.addEventListener('resize', () => {
+        Object.values(charts).forEach(c => c && c.resize());
+      });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        updateClock();
+        setInterval(updateClock, 1000);
+        updateLastTime();
+        renderAll();
+        initCharts();
+        if (window.lucide) lucide.createIcons();
+      });
+    })();
+  </script>
+</body>
+</html>

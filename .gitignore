@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# 日志
+logs/
+*.log
+
+# 上传文件
+uploads/
+
+# 构建与缓存
+dist/
+build/
+*.tsbuildinfo
+.cache/
+tmp/
+temp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 前端
+node_modules/
+*/node_modules/
+frontend/node_modules/
+frontend/dist/
+webui_ref/node_modules/
+webui_ref/node_modules_old/
+webui_ref/dist/

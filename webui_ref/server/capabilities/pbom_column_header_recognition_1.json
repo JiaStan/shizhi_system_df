@@ -1,0 +1,38 @@
+{
+  "id": "pbom_column_header_recognition_1",
+  "pluginKey": "@official-plugins/ai-text-to-json",
+  "pluginVersion": "1.0.23",
+  "name": "PBOM列头智能识别",
+  "description": "分析Excel列名，智能识别区分配置列、元数据列及未知类型列，输出包含列类型、置信度和理由的结构化JSON结果",
+  "icon": "",
+  "paramsSchema": {
+    "required": [
+      "excel_column_names"
+    ],
+    "type": "object",
+    "properties": {
+      "excel_column_names": {
+        "type": "string",
+        "description": "待识别的Excel列名文本，多个列名用换行或逗号分隔"
+      }
+    }
+  },
+  "formValue": {
+    "prompt": "你是专业的PBOM列头识别专家，擅长分析Excel列名并准确识别列的类型。\n\n请分析以下Excel列名列表，判断每个列的类型：\n{{input.excel_column_names}}\n\n识别规则：\n1. 配置列（config）：列名包含M+数字的编码格式，如M101、M102、M2001等型号/配置编码类列\n2. 元数据列（metadata）：列名描述属性、参数、规格等信息，如力矩及范围、重量、尺寸、材质、供应商等业务属性列\n3. 未知类型（unknown）：无法明确判断类型的列\n\n输出要求：\n- 每个列名对应一条记录\n- 置信度为0-1的浮点数，越高表示判断越准确\n- 理由需简洁说明判断依据\n- 严格按照指定的JSON结构输出，不要额外内容",
+    "jsonStructure": [
+      {
+        "name": "column_list",
+        "paramType": "Array",
+        "paramDescription": "列识别结果列表，items schema: {column_name: string(列名), column_type: string(列类型，只能是config/metadata/unknown), confidence: number(置信度0-1), reason: string(判断理由)}"
+      }
+    ],
+    "modelID": "87",
+    "modelParams": {
+      "maxTokens": 8192,
+      "temperature": 0.5
+    }
+  },
+  "createdAt": 1782200081761,
+  "updatedAt": 1782200081761,
+  "createdBy": 7561988053791752194
+}

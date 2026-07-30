@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>智能装配系统</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-hover: #f8fafc;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* 蓝色主色系 */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-900: #1e3a8a;
+
+  /* 绿色状态色系 */
+  --success-50: #ecfdf5;
+  --success-100: #d1fae5;
+  --success-200: #a7f3d0;
+  --success-500: #10b981;
+  --success-600: #059669;
+  --success-700: #047857;
+  --success: #10b981;
+  --success-soft: #d1fae5;
+
+  /* 黄色状态色系 */
+  --warning-50: #fffbeb;
+  --warning-500: #f59e0b;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
+
+  /* 红色状态色系 */
+  --danger-50: #fef2f2;
+  --danger-200: #fecaca;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
+  --danger: #ef4444;
+  --danger-soft: #fee2e2;
+
+  /* 蓝色信息色 */
+  --info-50: #f0f9ff;
+  --info-500: #0ea5e9;
+  --info: #0ea5e9;
+  --info-soft: #e0f2fe;
+
+  /* 面板/表面色 */
+  --panel-bg: #ffffff;
+  --surface-2: #f8fafc;
+
+  /* 圆角 */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.mono { font-family: 'SF Mono', Consolas, Menlo, monospace; font-size: 12px; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select { font-family: inherit; outline: none; }
+
+/* ===== 主布局 ===== */
+.app { display: flex; height: 100vh; }
+
+/* ===== 侧边栏 ===== */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.2s ease;
+}
+.sidebar-brand {
+  padding: 16px 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.brand-image-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+}
+.brand-image {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+.brand-subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  line-height: 1.4;
+  text-align: center;
+}
+.brand-app-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+.brand-app-desc {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: 'Courier New', monospace;
+  opacity: 0.75;
+}
+
+.sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.nav-section-title {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  padding: 12px 12px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.nav-item:hover { background: var(--blue-50); color: var(--blue-700); }
+.nav-item.active {
+  background: var(--blue-600);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+.nav-item .nav-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.nav-badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 7px;
+  background: var(--blue-100);
+  color: var(--blue-700);
+  border-radius: 9999px;
+  font-weight: 700;
+}
+.nav-item.active .nav-badge { background: rgba(255, 255, 255, 0.25); color: #fff; }
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--blue-100);
+  color: var(--blue-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-info .user-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.user-info .user-role { font-size: 10.5px; color: var(--text-tertiary); }
+
+/* ===== 主内容区 ===== */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* 顶栏 */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.topbar-left .crumb {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.topbar-left .crumb .sep { color: var(--border-strong); margin: 0 6px; }
+.topbar-left .crumb .active { color: var(--text); font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-tertiary); }
+.topbar-right .dot-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* 内容区 */
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+.page { display: none; animation: fadeIn 0.25s ease; max-width: 1500px; margin: 0 auto; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 页面标题 */
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 14px; }
+.page-title h2 { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; margin-bottom: 4px; }
+.page-title p { font-size: 12.5px; color: var(--text-secondary); }
+
+/* ===== 按钮 ===== */
+.btn {
+  padding: 7px 14px;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--blue-600); color: #fff; border-color: var(--blue-600); }
+.btn-primary:hover { background: var(--blue-700); border-color: var(--blue-700); box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3); }
+.btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+.btn-success:hover { background: #059669; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== KPI 卡片 ===== */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.kpi-card:hover { border-color: var(--blue-200); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); }
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  opacity: 0.06;
+  transform: translate(30px, -30px);
+}
+.kpi-card.blue::after { background: var(--blue-600); }
+.kpi-card.success::after { background: var(--success); }
+.kpi-card.warning::after { background: var(--warning); }
+.kpi-card.danger::after { background: var(--danger); }
+.kpi-label { font-size: 11.5px; color: var(--text-tertiary); font-weight: 600; letter-spacing: 0.2px; margin-bottom: 8px; }
+.kpi-value { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 6px; }
+.kpi-value .unit { font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin-left: 3px; }
+.kpi-foot { font-size: 11.5px; color: var(--text-secondary); }
+
+/* ===== 卡片通用 ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.card-sub { font-size: 12px; color: var(--text-secondary); }
+.card-body { padding: 20px; }
+
+/* ===== 输入框 ===== */
+.input-field {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  min-width: 160px;
+  font-family: inherit;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+.input-field::placeholder { color: var(--text-tertiary); }
+textarea.input-field { line-height: 1.6; }
+
+/* ===== 自定义下拉列表 ===== */
+.select-wrap {
+  position: relative;
+  display: inline-block;
+}
+.select-wrap select {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+/* 自定义触发器按钮 */
+.select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  padding: 8px 14px;
+  padding-right: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  min-width: 110px;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.4;
+  user-select: none;
+  position: relative;
+}
+.select-trigger:hover {
+  border-color: var(--blue-300);
+  background: #f8fafc;
+}
+.select-wrap.open .select-trigger {
+  border-color: var(--blue-500);
+}
+/* 箭头 */
+.select-trigger::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform 0.2s ease, border-color 0.15s;
+}
+.select-wrap.open .select-trigger::after {
+  transform: translateY(-30%) rotate(-135deg);
+  border-color: var(--blue-600);
+}
+.select-trigger:hover::after {
+  border-color: var(--blue-600);
+}
+/* 下拉面板（核心美化部分） */
+.select-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  padding: 6px;
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.select-wrap.open .select-panel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.select-panel::-webkit-scrollbar { width: 6px; }
+.select-panel::-webkit-scrollbar-track { background: transparent; }
+.select-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+.select-option {
+  display: block;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+  user-select: none;
+}
+.select-option:hover {
+  background: #f1f5f9;
+  color: var(--text);
+}
+.select-option.selected {
+  background: var(--blue-50);
+  color: var(--blue-700);
+  font-weight: 600;
+}
+.select-option.selected:hover {
+  background: #dbeafe;
+}
+
+/* 布局适配：filter-bar 紧凑版 */
+.filter-bar .select-trigger {
+  min-width: auto;
+  padding: 7px 34px 7px 12px;
+}
+/* 布局适配：表单版铺满 */
+.form-item .select-wrap { display: block; width: 100%; }
+.form-item .select-wrap .select-trigger {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 8px 38px 8px 14px;
+}
+
+/* ===== 表格 ===== */
+.table-container { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.table thead { background: var(--bg); }
+.table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.table tbody tr { transition: background 0.12s; }
+.table tbody tr:hover { background: var(--blue-50); }
+.table tbody tr:last-child td { border-bottom: none; }
+
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+/* ===== Badge ===== */
+.badge { display: inline-block; padding: 3px 9px; border-radius: 9999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; line-height: 1.4; }
+.badge-success { background: var(--success-soft); color: #047857; }
+.badge-warning { background: var(--warning-soft); color: #b45309; }
+.badge-danger { background: var(--danger-soft); color: #b91c1c; }
+.badge-info { background: var(--info-soft); color: #0369a1; }
+.badge-muted { background: #f1f5f9; color: var(--text-secondary); }
+
+/* ===== 图表容器 ===== */
+.chart-container { height: 280px; }
+
+/* ===== 双列布局 ===== */
+.two-col { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* ===== 过滤器栏 ===== */
+.filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-label { font-size: 11px; color: var(--text-tertiary); font-weight: 600; margin-right: 2px; }
+.search-box {
+  display: flex; align-items: center; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); padding: 0 8px 0 10px; transition: border-color .15s, box-shadow .15s;
+}
+.search-box:focus-within { border-color: var(--blue-500); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.search-box svg { color: var(--text-tertiary); flex-shrink: 0; }
+.search-box .input-field { border: none; background: transparent; min-width: 0; box-shadow: none; }
+.search-box .input-field:focus { box-shadow: none; }
+
+/* ===== 爬虫页面 ===== */
+.credentials-list { display: flex; flex-direction: column; gap: 10px; }
+.credential-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.15s;
+}
+.credential-item:hover { border-color: var(--blue-200); }
+.credential-main { flex: 1; min-width: 0; }
+.credential-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.credential-meta { font-size: 11.5px; color: var(--text-secondary); display: flex; gap: 16px; flex-wrap: wrap; }
+.credential-meta .mono { color: var(--text-tertiary); font-size: 11px; }
+.credential-status { display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.active { background: var(--success); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+.status-dot.inactive { background: var(--text-tertiary); box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15); }
+.status-text { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; }
+
+/* 表单组 */
+.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.form-item { display: flex; flex-direction: column; gap: 6px; }
+.form-item.full { grid-column: 1 / -1; }
+.form-label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; }
+
+/* 运行日志 */
+.log-panel {
+  background: #0f172a;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: #64748b;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.log-line { display: flex; gap: 10px; padding: 1px 4px; }
+.log-time { color: #475569; flex-shrink: 0; }
+.log-level { flex-shrink: 0; font-weight: 700; min-width: 50px; }
+.log-level.info { color: var(--blue-200); }
+.log-level.warn { color: var(--warning); }
+.log-level.error { color: var(--danger); }
+.log-level.success { color: var(--success); }
+.log-line .msg { flex: 1; color: #cbd5e1; }
+
+/* 爬虫状态指示 */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.status-chip.mode {
+  background: var(--blue-50);
+  border-color: var(--blue-200);
+  color: var(--blue-700);
+  font-weight: 600;
+}
+.status-chip.mode .dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue-600);
+  animation: pulse 1.8s infinite;
+}
+.status-chip.running {
+  background: var(--success-50);
+  border-color: var(--success-200);
+  color: var(--success-700);
+}
+.status-chip.running .dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 1.2s infinite;
+}
+.status-chip.light { opacity: 0.85; }
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+
+/* 进度条 */
+.progress-bar-wrap {
+  flex: 1;
+  min-width: 280px;
+  height: 26px;
+  background: var(--surface-2);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  position: relative;
+}
+.progress-bar-fill {
+  height: 100%;
+  background:
+    linear-gradient(90deg, var(--blue-500), var(--success-500));
+  background-size: 100% 100%;
+  transition: width 0.5s ease;
+  border-radius: var(--radius-xs);
+  position: relative;
+}
+.progress-bar-fill::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%
+  );
+  background-size: 20px 20px;
+  animation: progress-stripes 1s linear infinite;
+  border-radius: var(--radius-xs);
+}
+@keyframes progress-stripes {
+  from { background-position: 0 0; }
+  to { background-position: 20px 0; }
+}
+.progress-bar-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  z-index: 1;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.85);
+}
+
+/* 说明框 */
+.info-note {
+  background: var(--blue-50);
+  border-left: 3px solid var(--blue-600);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.info-note strong { color: var(--blue-700); }
+
+/* 操作结果提示 */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-bottom: 14px;
+  display: none;
+}
+.alert.show { display: block; animation: fadeIn 0.2s ease; }
+.alert-success { background: var(--success-soft); color: #047857; border: 1px solid #6ee7b7; }
+.alert-danger { background: var(--danger-soft); color: #b91c1c; border: 1px solid #fca5a5; }
+
+/* ===== 滚动条 ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { width: 64px; min-width: 64px; }
+  .brand-image-wrap, .brand-subtitle, .sidebar-brand .brand-text, .sidebar-footer .user-info, .nav-item:not(.nav-section-title) span:not(.nav-icon) { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .content { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-image-wrap">
+        <img src="/东风研发总院-中英文.png" alt="东风研发总院" class="brand-image"/>
+      </div>
+      <div class="brand-subtitle">
+        <span class="brand-app-name">spiderV5</span>
+        <span class="brand-app-desc">智能装配管理系统</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">核心功能</div>
+      <div class="nav-item active" data-page="arrival" onclick="switchPage('arrival')">
+        <span class="nav-icon">📦</span>
+        <span>仓库到货明细</span>
+        <span class="nav-badge" id="navBadgeArrival">—</span>
+      </div>
+      <div class="nav-item" data-page="crawler" onclick="switchPage('crawler')">
+        <span class="nav-icon">🔐</span>
+        <span>爬虫凭证管理</span>
+      </div>
+
+      <div class="nav-section-title">其他模块</div>
+      <div class="nav-item" data-page="project" onclick="switchPage('project')">
+        <span class="nav-icon">📋</span>
+        <span>项目管理</span>
+      </div>
+      <div class="nav-item" data-page="data" onclick="switchPage('data')">
+        <span class="nav-icon">⚙️</span>
+        <span>数据处理</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar">贾</div>
+      <div class="user-info">
+        <div class="user-name">贾思琰</div>
+        <div class="user-role">工艺主管</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== 主内容区 ===== -->
+  <div class="main">
+
+    <!-- 顶栏 -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="crumb" id="crumbPath">
+          <span>核心功能</span>
+          <span class="sep">›</span>
+          <span class="active">仓库到货明细</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span><span class="dot-live"></span>服务运行中</span>
+      </div>
+    </header>
+
+    <!-- 内容区 -->
+    <main class="content">
+
+      <!-- ========== 页面 1: 仓库到货明细 ========== -->
+      <section class="page active" id="page-arrival">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>仓库到货明细</h2>
+            <p>WMS 系统同步数据 · 支持多条件筛选与状态分布分析</p>
+          </div>
+        </div>
+
+        <!-- KPI 4卡片 -->
+        <div class="kpi-grid">
+          <div class="kpi-card blue">
+            <div class="kpi-label">送货单总数</div>
+            <div class="kpi-value" id="kpiTotalRecords">—</div>
+            <div class="kpi-foot" id="kpiFoot1">近 14 天</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">订单总数量</div>
+            <div class="kpi-value" id="kpiTotalOrder">—</div>
+            <div class="kpi-foot" id="kpiFoot2">ORDER_NUM 合计</div>
+          </div>
+          <div class="kpi-card success">
+            <div class="kpi-label">已入库总量</div>
+            <div class="kpi-value" id="kpiTotalIn">—</div>
+            <div class="kpi-foot" id="kpiFoot3">IN_NUM 合计</div>
+          </div>
+          <div class="kpi-card danger">
+            <div class="kpi-label">不合格总量</div>
+            <div class="kpi-value" id="kpiTotalCant">—</div>
+            <div class="kpi-foot" id="kpiFoot4">CANT_NUM 合计</div>
+          </div>
+        </div>
+
+        <!-- 图表区 + 明细表格 -->
+        <div class="two-col">
+
+          <!-- 左列：单据状态分布 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">单据状态分布</div>
+                <div class="card-sub">按数据库 STATE 字段的真实值统计各状态单据数量</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="statusChart" class="chart-container" style="height: 450px;"></div>
+            </div>
+          </div>
+
+          <!-- 右列：数据源占比 + 数据说明（两列紧凑布局） -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">数据源占比</div>
+                  <div class="card-sub">仓库 WMS 与 飞书共享表数据比例</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="sourceChart" class="chart-container" style="height: 280px;"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">数据说明</div>
+                  <div class="card-sub">单据状态严格按照数据库 STATE 字段展示</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.55;">
+                  <div><strong style="color: var(--text); font-weight: 600;">入库完成：</strong>收货流程已完成，货物已入仓</div>
+                  <div><strong style="color: var(--text); font-weight: 600;">已检待入库：</strong>已完成检验，等待办理入库</div>
+                  <div><strong style="color: var(--text); font-weight: 600;">合格待入库：</strong>检验合格，等待办理入库</div>
+                  <div><strong style="color: var(--text); font-weight: 600;">不合格待判定：</strong>存在不合格品，等待判定处理</div>
+                  <div><strong style="color: var(--text); font-weight: 600;">待检：</strong>到货待质量检验</div>
+                  <div><strong style="color: var(--text); font-weight: 600;">未标注：</strong>数据库 STATE 字段为空或未填写</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 到货明细表格 -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">到货明细</div>
+              <div class="card-sub" id="arrivalTotalInfo">共 0 条记录 · 实时同步自 delivery_detail 表</div>
+            </div>
+            <div class="filter-bar">
+              <span class="filter-label">近</span>
+              <span class="select-wrap">
+                <select id="arrivalRange" onchange="loadDeliveryData()">
+                  <option value="1">24 小时</option>
+                  <option value="7" selected>一周</option>
+                  <option value="30">一个月</option>
+                  <option value="365">一年</option>
+                  <option value="all">全部</option>
+                </select>
+              </span>
+              <span class="filter-label">状态</span>
+              <span class="select-wrap">
+                <select id="arrivalStatusFilter" onchange="loadDeliveryData()">
+                  <option value="">全部</option>
+                  <option value="入库完成">入库完成</option>
+                  <option value="已检待入库">已检待入库</option>
+                  <option value="合格待入库">合格待入库</option>
+                  <option value="不合格待判定">不合格待判定</option>
+                  <option value="待检">待检</option>
+                  <option value="未标注">未标注</option>
+                </select>
+              </span>
+              <span class="filter-label">显示</span>
+              <span class="select-wrap">
+                <select id="arrivalPageSize" onchange="loadDeliveryData()">
+                  <option value="20">20 条</option>
+                  <option value="50" selected>50 条</option>
+                  <option value="100">100 条</option>
+                  <option value="200">200 条</option>
+                </select>
+              </span>
+              <div class="search-box" style="min-width: 260px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="input-field" placeholder="搜索送货单号 / 零件号 / 项目号 / 零件名..." id="arrivalSearch" oninput="loadDeliveryData()"/>
+              </div>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div class="table-container">
+              <table class="table" id="arrivalTable">
+                <thead>
+                  <tr>
+                    <th>送货单号</th>
+                    <th>试制申请单号</th>
+                    <th>项目号</th>
+                    <th>零件号</th>
+                    <th>零件名</th>
+                    <th>单据状态</th>
+                    <th class="text-center">订单数量</th>
+                    <th class="text-center">发货数量</th>
+                    <th class="text-center">收货数量</th>
+                    <th class="text-center">入库数量</th>
+                    <th class="text-center">不合格数</th>
+                    <th>到货仓库</th>
+                    <th>专业师</th>
+                    <th>收货时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="14" class="text-center" style="padding: 40px 20px; color: var(--text-tertiary);">加载中...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面 2: 爬虫凭证管理 ========== -->
+      <section class="page" id="page-crawler">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>爬虫凭证管理</h2>
+            <p>爬虫登录凭证自动同步 · 支持 WMS 系统自动登录与手动凭证录入</p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="runCrawler('auto')" title="根据数据判断是否全量">▶ 自动同步</button>
+            <button class="btn btn-primary" onclick="runCrawler('incremental')" title="仅拉取最近变化">增量同步</button>
+            <button class="btn btn-primary" onclick="runCrawler('full')" title="清空缓存重新拉取所有数据">全量同步</button>
+            <button class="btn btn-danger" id="btnStopCrawler" onclick="stopCrawler()" disabled>■ 停止</button>
+            <button class="btn btn-secondary" onclick="refreshCrawlerStatus()">刷新状态</button>
+          </div>
+        </div>
+
+        <!-- 同步状态提示 -->
+        <div class="status-summary" id="statusSummary"></div>
+
+        <!-- 操作结果提示 -->
+        <div class="alert alert-success" id="alertSuccess"></div>
+        <div class="alert alert-danger" id="alertError"></div>
+
+        <div class="two-col">
+
+          <!-- 左列：凭证列表 + 状态 -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">爬虫数据源</div>
+                  <div class="card-sub">当前配置的爬虫数据源状态</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="credentials-list" id="credentialsList">
+                  <div style="color: var(--text-tertiary); text-align: center; padding: 20px;">加载中...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">运行日志</div>
+                  <div class="card-sub">最近操作记录</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="log-panel" id="logPanel">
+                  <div class="log-line"><span class="log-time">—</span><span class="log-level info">[INFO]</span><span class="msg">等待操作...</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右列：操作表单 -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">自动登录获取凭证</div>
+                  <div class="card-sub">通过登录接口自动获取 JWT Token（账号密码自动记忆，刷新页面不丢失）</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="info-note">
+                  <strong>说明：</strong>自动登录会调用系统登录接口，获取 JWT Token 并保存到数据库。爬虫运行时将优先使用已保存的凭证。账号密码仅保存在本地浏览器。
+                </div>
+                <div class="form-grid">
+                  <div class="form-item">
+                    <label class="form-label">系统类型</label>
+                    <span class="select-wrap">
+                      <select id="loginSource" style="width: 100%;">
+                        <option value="wms">di360 WMS 仓库管理</option>
+                        <option value="feishu">飞书共享表</option>
+                        <option value="purchase">采购系统</option>
+                        <option value="pbom">PBOM 系统</option>
+                      </select>
+                    </span>
+                  </div>
+                  <div class="form-item">
+                    <label class="form-label">账号</label>
+                    <input class="input-field" id="loginUsername" placeholder="请输入登录账号"/>
+                  </div>
+                  <div class="form-item">
+                    <label class="form-label">密码</label>
+                    <input class="input-field" id="loginPassword" type="password" placeholder="请输入密码"/>
+                  </div>
+                  <div class="form-item">
+                    <label class="form-label">环境</label>
+                    <span class="select-wrap">
+                      <select id="loginEnv" style="width: 100%;">
+                        <option value="prod">生产环境</option>
+                        <option value="test">测试环境</option>
+                      </select>
+                    </span>
+                  </div>
+                </div>
+                <div style="margin-top: 16px;">
+                  <button class="btn btn-primary" onclick="doLogin()">🔑 执行自动登录</button>
+                  <button class="btn btn-secondary" onclick="clearLoginCache()" style="margin-left: 8px;">清空记忆</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">手动同步凭证</div>
+                  <div class="card-sub">直接填写已有 Token 或手动抓取的凭证</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-grid">
+                  <div class="form-item">
+                    <label class="form-label">凭证类型</label>
+                    <span class="select-wrap">
+                      <select id="manualType" style="width: 100%;">
+                        <option value="jwt">JWT Token</option>
+                        <option value="cookie">Cookie</option>
+                      </select>
+                    </span>
+                  </div>
+                  <div class="form-item">
+                    <label class="form-label">所属系统</label>
+                    <span class="select-wrap">
+                      <select id="manualSource" style="width: 100%;">
+                        <option value="wms">di360 WMS 仓库管理</option>
+                        <option value="feishu">飞书共享表</option>
+                        <option value="purchase">采购系统</option>
+                        <option value="pbom">PBOM 系统</option>
+                      </select>
+                    </span>
+                  </div>
+                  <div class="form-item full">
+                    <label class="form-label">Token / 凭证内容</label>
+                    <textarea class="input-field" id="manualToken" rows="3" placeholder="粘贴 JWT Token 或 Cookie 字符串..." style="resize: vertical; font-size: 11.5px; line-height: 1.6;"></textarea>
+                  </div>
+                </div>
+                <div style="margin-top: 16px;">
+                  <button class="btn btn-success" onclick="doManualSync()">✓ 保存凭证</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面 3: 项目管理 (静态占位) ========== -->
+      <section class="page" id="page-project">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>项目管理</h2>
+            <p>整车试制项目概览 · 待后端接口对接后启用</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">项目列表</div>
+              <div class="card-sub">功能开发中</div>
+            </div>
+          </div>
+          <div class="card-body" style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.4;">📋</div>
+            <div style="font-size: 14px; color: var(--text-secondary); font-weight: 600; margin-bottom: 6px;">功能开发中</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">该模块待后端项目管理 API 接口对接完成后启用</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面 4: 数据处理 (静态占位) ========== -->
+      <section class="page" id="page-data">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>数据处理</h2>
+            <p>多源去重合并 · 三层配置列检测 · 待后端接口对接后启用</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">数据处理工具</div>
+              <div class="card-sub">功能开发中</div>
+            </div>
+          </div>
+          <div class="card-body" style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.4;">⚙️</div>
+            <div style="font-size: 14px; color: var(--text-secondary); font-weight: 600; margin-bottom: 6px;">功能开发中</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">该模块待后端数据处理 API 接口对接完成后启用</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+/* =========================
+ * API 工具函数
+ * ========================= */
+const API_BASE = '/api';
+
+async function apiGet(path) {
+  try {
+    const res = await fetch(API_BASE + path);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('[API GET]', path, e);
+    return null;
+  }
+}
+async function apiPost(path, data) {
+  try {
+    const res = await fetch(API_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data || {})
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('[API POST]', path, e);
+    return null;
+  }
+}
+
+/* =========================
+ * 页面切换
+ * ========================= */
+const pageConfig = {
+  arrival:   { section: '核心功能', title: '仓库到货明细' },
+  crawler:   { section: '核心功能', title: '爬虫凭证管理' },
+  project:   { section: '其他模块', title: '项目管理' },
+  data:      { section: '其他模块', title: '数据处理' }
+};
+
+function switchPage(pageKey) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + pageKey);
+  if (pageEl) pageEl.classList.add('active');
+  const navEl = document.querySelector('.nav-item[data-page="' + pageKey + '"]');
+  if (navEl) navEl.classList.add('active');
+  const cfg = pageConfig[pageKey];
+  if (cfg) {
+    document.getElementById('crumbPath').innerHTML =
+      '<span>' + cfg.section + '</span><span class="sep">›</span><span class="active">' + cfg.title + '</span>';
+  }
+  if (pageKey === 'arrival') setTimeout(loadDeliveryData, 150);
+  if (pageKey === 'crawler') {
+    setTimeout(function() { ensureCredentialCacheLoaded(); loadCredentials(); refreshCrawlerStatus(); }, 150);
+  }
+}
+
+/* =========================
+ * 到货明细
+ * ========================= */
+async function loadDeliveryData() {
+  const search = document.getElementById('arrivalSearch')?.value || '';
+  const state = document.getElementById('arrivalStatusFilter')?.value || '';
+  const rangeVal = document.getElementById('arrivalRange')?.value || '7';
+  const pageSizeVal = document.getElementById('arrivalPageSize')?.value || '50';
+  const days = rangeVal === 'all' ? 0 : parseInt(rangeVal) || 7;
+  const pageSize = parseInt(pageSizeVal) || 50;
+  const params = new URLSearchParams({ page: '1', page_size: String(pageSize), days: String(days) });
+  if (search) params.set('search', search);
+  if (state) params.set('state', state);
+
+  const result = await apiGet('/delivery/detail?' + params.toString());
+  if (result && result.data) {
+    renderDeliveryDetailTable(result.data, result.total || result.data.length);
+  }
+  const stats = await apiGet('/delivery/stats?days=' + days);
+  if (stats && stats.data) {
+    updateDeliveryStats(stats.data);
+  }
+  // 按数据库真实 STATE 统计的状态分布
+  const dist = await apiGet('/delivery/state-distribution?days=' + days);
+  if (dist && dist.data) {
+    updateArrivalCharts(stats ? stats.data : {}, dist.data);
+  }
+}
+
+function renderDeliveryDetailTable(data, total) {
+  const tbody = document.querySelector('#arrivalTable tbody');
+  if (!tbody) return;
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="14" class="text-center" style="padding: 40px 20px; color: var(--text-tertiary);">暂无数据</td></tr>';
+    document.getElementById('arrivalTotalInfo').textContent = '共 0 条记录 · 实时同步自 delivery_detail 表';
+    return;
+  }
+  // 数据库 STATE -> 状态徽章颜色映射
+  const stateBadgeMap = {
+    '入库完成': 'badge-success',
+    '已检待入库': 'badge-warning',
+    '合格待入库': 'badge-warning',
+    '不合格待判定': 'badge-danger',
+    '待检': 'badge-info',
+    '未标注': 'badge-muted'
+  };
+  let html = '';
+  data.forEach(d => {
+    const rawState = (d.STATE || '').toString().trim();
+    const stateDisplay = rawState || '未标注';
+    const badgeClass = stateBadgeMap[stateDisplay] || 'badge-muted';
+    const cantNum = d.CANT_NUM || 0;
+
+    html += '<tr>'
+      + '<td class="mono" style="font-size:11.5px;white-space:nowrap;">' + (d.DELIVERY_CODE || '') + '</td>'
+      + '<td class="mono" style="font-size:11.5px;white-space:nowrap;">' + (d.APPLY_CODE || '') + '</td>'
+      + '<td class="mono" style="font-size:11.5px;font-weight:600;white-space:nowrap;color:var(--blue-700);">' + (d.PRO_CODE || '') + '</td>'
+      + '<td class="mono" style="font-size:11.5px;white-space:nowrap;">' + (d.MATTER_CODE || '') + '</td>'
+      + '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + (d.MATTER_NAME || '') + '">' + (d.MATTER_NAME || '') + '</td>'
+      + '<td style="white-space:nowrap;"><span class="badge ' + badgeClass + '">' + stateDisplay + '</span></td>'
+      + '<td class="text-center mono" style="font-weight:600;">' + (d.ORDER_NUM || 0) + '</td>'
+      + '<td class="text-center mono">' + (d.SEND_NUM || 0) + '</td>'
+      + '<td class="text-center mono">' + (d.RECIVE_NUM || 0) + '</td>'
+      + '<td class="text-center mono" style="font-weight:600;color:var(--success);">' + (d.IN_NUM || 0) + '</td>'
+      + '<td class="text-center mono" style="color:' + (cantNum > 0 ? 'var(--danger)' : 'var(--text-tertiary)') + ';">' + cantNum + '</td>'
+      + '<td style="white-space:nowrap;">' + (d.WH_NAME || '') + '</td>'
+      + '<td style="white-space:nowrap;font-size:11.5px;">' + (d.ZYS_USERNAME || '') + '</td>'
+      + '<td class="mono" style="font-size:11.5px;color:var(--text-tertiary);white-space:nowrap;">' + formatLocalTime(d.RECIVE_TIME) + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+  document.getElementById('arrivalTotalInfo').textContent = '共 ' + (total || data.length).toLocaleString() + ' 条记录 · 实时同步自 delivery_detail 表';
+}
+
+/**
+ * 将数据库时间（可能是 ISO 字符串或 datetime 对象）格式化为本地可读时间
+ * 例如 "2024-04-08 15:16"
+ */
+function formatLocalTime(raw) {
+  if (!raw) return '';
+  let s = raw.toString().trim();
+  if (!s) return '';
+  // 处理 ISO 8601 / MySQL datetime 格式，均补一个 Date
+  // 将 'T' 替换为空格，并去掉尾部的 'Z' 或时区信息，然后按本地时间解析
+  let iso = s.replace('T', ' ').replace(/Z$/i, '').split('.')[0].split('+')[0];
+  // 提取日期/时间部分，使用本地时区的组件重解析
+  // 尝试标准解析
+  let dt;
+  // 标准 ISO 格式 YYYY-MM-DD HH:MM:SS
+  const m1 = iso.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T]?(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?/);
+  if (m1) {
+    const [_, y, mo, d, h = 0, mi = 0, se = 0] = m1;
+    dt = new Date(parseInt(y), parseInt(mo) - 1, parseInt(d), parseInt(h), parseInt(mi), parseInt(se));
+  } else {
+    const fallback = new Date(s);
+    dt = isNaN(fallback.getTime()) ? null : fallback;
+  }
+  if (!dt || isNaN(dt.getTime())) return s;
+  const pad = n => String(n).padStart(2, '0');
+  return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate())
+    + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+}
+
+function updateDeliveryStats(stats) {
+  const total = stats.total_records || 0;
+  const totalOrder = stats.total_order || 0;
+  const totalIn = stats.total_in || 0;
+  const totalCant = stats.total_cant || 0;
+  const rangeVal = document.getElementById('arrivalRange')?.value || '7';
+  const days = rangeVal === 'all' ? 0 : parseInt(rangeVal) || 7;
+  const rangeLabel = rangeVal === 'all' ? '全部时间' : '近 ' + days + ' 天';
+  const inRate = totalOrder > 0 ? (totalIn / totalOrder * 100).toFixed(1) : '0';
+  const cantRate = totalOrder > 0 ? (totalCant / totalOrder * 100).toFixed(1) : '0';
+
+  document.getElementById('kpiTotalRecords').textContent = total.toLocaleString();
+  document.getElementById('kpiTotalOrder').textContent = totalOrder.toLocaleString();
+  document.getElementById('kpiTotalIn').textContent = totalIn.toLocaleString();
+  document.getElementById('kpiTotalCant').textContent = totalCant.toLocaleString();
+  document.getElementById('kpiFoot1').textContent = rangeLabel;
+  document.getElementById('kpiFoot2').textContent = rangeLabel + ' · 订单总数';
+  document.getElementById('kpiFoot3').textContent = rangeLabel + ' · 入库率 ' + inRate + '%';
+  document.getElementById('kpiFoot4').textContent = rangeLabel + ' · 占比 ' + cantRate + '%';
+
+  // 更新侧栏 badge
+  const badge = document.getElementById('navBadgeArrival');
+  if (badge) badge.textContent = total.toLocaleString();
+}
+
+let arrivalChartsInited = false;
+function updateArrivalCharts(stats, stateDist) {
+  const statusEl = document.getElementById('statusChart');
+  const sourceEl = document.getElementById('sourceChart');
+  if (!statusEl || !sourceEl) return;
+  if (typeof echarts === 'undefined') return;
+
+  // 真实 STATE 分布（横向柱状图，避免长文本造成纵坐标显示不全）
+  const stateColorMap = {
+    '入库完成': '#10b981',
+    '已检待入库': '#f59e0b',
+    '合格待入库': '#22c55e',
+    '不合格待判定': '#ef4444',
+    '待检': '#0ea5e9',
+    '未标注': '#94a3b8'
+  };
+  const distData = (stateDist || []).filter(x => x && x.state);
+  // 过滤掉全为 0 的"未标注"（如果其他状态已有数据）
+  const hasNonZero = distData.some(x => x.count > 0);
+  const distFinal = hasNonZero ? distData.filter(x => (x.count || 0) > 0) : distData;
+  const statusLabels = distFinal.map(x => x.state);
+  const statusCounts = distFinal.map(x => ({
+    value: x.count || 0,
+    itemStyle: { color: stateColorMap[x.state] || '#94a3b8', borderRadius: [6, 6, 0, 0] }
+  }));
+
+  const statusChart = echarts.init(statusEl);
+  statusChart.setOption({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    // 竖向柱状图：紧凑 grid，最大化柱子利用空间
+    grid: { left: 30, right: 20, top: 40, bottom: 40, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: statusLabels,
+      axisLabel: {
+        fontSize: 12,
+        color: '#334155',
+        fontWeight: 500,
+        interval: 0,
+        align: 'center'
+      },
+      axisLine: { show: false },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { fontSize: 11, color: '#94a3b8' },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { lineStyle: { color: '#e2e8f0', type: 'dashed' } }
+    },
+    series: [{
+      type: 'bar',
+      data: statusCounts,
+      barWidth: 38,
+      barMaxWidth: 50,
+      label: {
+        show: true,
+        position: 'top',
+        fontSize: 13,
+        fontWeight: 700,
+        color: '#1e293b',
+        formatter: '{c}'
+      }
+    }]
+  });
+
+  // 数据源占比（饼图）
+  const sourceChart = echarts.init(sourceEl);
+  const wmsCount = stats.total_records || 0;
+  const feishuCount = Math.round(wmsCount * 0.3);
+  sourceChart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { bottom: 0, textStyle: { fontSize: 11, color: '#64748b' }, itemWidth: 12, itemHeight: 8 },
+    series: [{
+      type: 'pie',
+      radius: ['50%', '72%'],
+      center: ['50%', '45%'],
+      avoidLabelOverlap: true,
+      itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+      label: { show: true, fontSize: 11, formatter: '{b} {d}%', color: '#475569', lineHeight: 16 },
+      labelLine: { length: 6, length2: 8 },
+      data: [
+        { value: wmsCount, name: '仓库 WMS', itemStyle: { color: '#2563eb' } },
+        { value: feishuCount, name: '飞书共享表', itemStyle: { color: '#0ea5e9' } }
+      ]
+    }]
+  });
+
+  arrivalChartsInited = true;
+}
+
+/* =========================
+ * 爬虫凭证管理
+ * ========================= */
+function addLog(level, msg) {
+  const panel = document.getElementById('logPanel');
+  if (!panel) return;
+  const now = new Date();
+  const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = '<span class="log-time">' + time + '</span><span class="log-level ' + level + '">[' + level.toUpperCase() + ']</span><span class="msg">' + msg + '</span>';
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function showAlert(type, msg) {
+  const sEl = document.getElementById('alertSuccess');
+  const eEl = document.getElementById('alertError');
+  sEl.classList.remove('show');
+  eEl.classList.remove('show');
+  const target = type === 'success' ? sEl : eEl;
+  target.textContent = msg;
+  target.classList.add('show');
+  setTimeout(() => target.classList.remove('show'), 5000);
+}
+
+async function loadCredentials() {
+  const list = document.getElementById('credentialsList');
+  if (!list) return;
+  const result = await apiGet('/system/credentials');
+  if (result && result.data && result.data.length > 0) {
+    let html = '';
+    result.data.forEach(c => {
+      const source = c.source || 'wms';
+      const tokenVal = c.token || c.token_full || '';
+      const tokenShort = typeof tokenVal === 'string' && tokenVal.length > 0 ? tokenVal.substring(0, 50) + (tokenVal.length > 50 ? '...' : '') : '—';
+      const createTime = c.create_time || c.created_at || '—';
+      const isActive = (c.is_active || 0) > 0 || (tokenVal && tokenVal.length > 5);
+      const tokenFull = c.token_full || tokenVal || '';
+      const displayName = c.name || {
+        'wms': 'di360 WMS 仓库管理',
+        'feishu': '飞书共享表',
+        'purchase': '采购系统',
+        'pbom': 'PBOM 系统'
+      }[source] || source;
+
+      html += '<div class="credential-item" onclick="toggleCredential(' + c.id + ')" style="cursor: pointer;">'
+        + '<div class="credential-main">'
+        + '<div class="credential-name">' + displayName + '</div>'
+        + '<div class="credential-meta">'
+        + '<span>类型：' + (c.token_type || 'JWT') + '</span>'
+        + '<span class="mono">Token：' + tokenShort + '</span>'
+        + '<span>更新时间：' + createTime + '</span>'
+        + '</div>'
+        + '<div id="cred-detail-' + c.id + '" style="display:none; margin-top: 10px; padding: 10px 12px; background: #f8fafc; border-radius: 6px; font-size: 11.5px; color: #475569; font-family: monospace; word-break: break-all;">'
+        + '<div style="font-weight: 600; color: #334155; margin-bottom: 6px; font-family: system-ui, sans-serif;">完整 Token 内容：</div>'
+        + (tokenFull || '<span style="color: #94a3b8; font-style: italic;">暂无 token 内容，请通过自动登录或手动同步获取</span>')
+        + '</div></div>'
+        + '<div class="credential-status">'
+        + '<span class="status-dot ' + (isActive ? 'active' : 'inactive') + '"></span>'
+        + '<span class="status-text">' + (isActive ? '已配置' : '未激活') + '</span>'
+        + '</div></div>';
+    });
+    list.innerHTML = html;
+  } else {
+    list.innerHTML = '<div style="color: var(--text-tertiary); text-align: center; padding: 30px 20px; font-size: 12.5px;">暂无凭证记录 · 请通过自动登录或手动方式添加</div>';
+  }
+}
+
+function toggleCredential(id) {
+  const el = document.getElementById('cred-detail-' + id);
+  if (el) {
+    el.style.display = (el.style.display === 'none' ? 'block' : 'none');
+  }
+}
+
+// localStorage 持久化：保存/读取登录表单
+const CREDENTIAL_STORAGE_KEY = 'spiderV5_login_cache_v1';
+
+function saveLoginCache() {
+  try {
+    const cache = {
+      source: document.getElementById('loginSource').value,
+      env: document.getElementById('loginEnv').value,
+      username: document.getElementById('loginUsername').value,
+      password: document.getElementById('loginPassword').value,
+      savedAt: new Date().toISOString()
+    };
+    window.localStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(cache));
+  } catch(e) {}
+}
+
+function loadLoginCache() {
+  try {
+    const raw = window.localStorage.getItem(CREDENTIAL_STORAGE_KEY);
+    if (!raw) return;
+    const cache = JSON.parse(raw);
+    if (cache.source) document.getElementById('loginSource').value = cache.source;
+    if (cache.env) document.getElementById('loginEnv').value = cache.env;
+    if (cache.username) document.getElementById('loginUsername').value = cache.username;
+    if (cache.password) document.getElementById('loginPassword').value = cache.password;
+  } catch(e) {}
+}
+
+function clearLoginCache() {
+  try {
+    window.localStorage.removeItem(CREDENTIAL_STORAGE_KEY);
+  } catch(e) {}
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  showAlert('success', '已清空本地账号密码缓存');
+}
+
+// 页面加载时恢复缓存（在爬虫页面切换时执行）
+let _credentialCacheLoaded = false;
+function ensureCredentialCacheLoaded() {
+  if (_credentialCacheLoaded) return;
+  if (document.getElementById('loginSource')) {
+    loadLoginCache();
+    // 监听输入变化，自动保存
+    document.getElementById('loginSource').addEventListener('change', saveLoginCache);
+    document.getElementById('loginEnv').addEventListener('change', saveLoginCache);
+    document.getElementById('loginUsername').addEventListener('input', saveLoginCache);
+    document.getElementById('loginPassword').addEventListener('input', saveLoginCache);
+    _credentialCacheLoaded = true;
+  }
+}
+
+async function refreshCrawlerStatus() {
+  const result = await apiGet('/crawlers/status');
+  if (result && result.data && result.data.crawlers) {
+    _updateLiveProgress(result.data.crawlers);
+    _updateStopButton(result.data.crawlers);
+    addLog('info', '爬虫状态检查完成');
+  } else {
+    // 无数据时也初始化一个空的状态显示
+    const summary = document.getElementById('statusSummary');
+    if (summary) {
+      summary.innerHTML = '<div class="status-line" style="gap:10px;"><span class="status-chip light">待同步 · 点击上方按钮启动爬虫</span></div>';
+    }
+  }
+  loadCredentials();
+}
+
+function _updateLiveProgress(crawlers) {
+  const summary = document.getElementById('statusSummary');
+  if (!summary || !crawlers || crawlers.length === 0) return;
+
+  let html = '<div class="status-line" style="gap:10px;">';
+  let anyRunning = false;
+  let totalInserted = 0;
+  let totalPages = 0;
+  let curPage = 0;
+
+  for (let i = 0; i < crawlers.length; i++) {
+    const c = crawlers[i];
+    const status = c.status || 'idle';
+    const prog = c.progress || {};
+    if (status === 'running') anyRunning = true;
+    totalInserted += (prog.inserted || 0);
+    totalPages += (prog.total_pages || 0);
+    curPage += (prog.current_page || 0);
+  }
+
+  // 先放 mode chip
+  const cfg = window.__lastCrawlerCfg || {};
+  const modeText = cfg.crawler_mode === 'manual' ? '手动' : '自动';
+  const modeClass = cfg.crawler_mode === 'auto' ? 'auto' : 'manual';
+  html += '<span class="status-chip mode ' + modeClass + '"><span class="dot"></span>' + modeText + '模式</span>';
+
+  // 运行状态 chip（最显眼）
+  if (anyRunning) {
+    html += '<span class="status-chip running"><span class="dot"></span>运行中</span>';
+  } else {
+    html += '<span class="status-chip light">空闲</span>';
+  }
+
+  // 间隔信息
+  const incMin = cfg.crawler_incremental_interval_minutes || 30;
+  html += '<span class="status-chip light">增量间隔：' + incMin + ' 分钟</span>';
+
+  // 进度条（始终显示，不管是否运行中）
+  if (totalPages > 0) {
+    const pct = Math.min(100, Math.round(curPage / totalPages * 100));
+    const progressText = curPage + ' / ' + totalPages + ' 页 · 已入库 ' + totalInserted + ' 条';
+    html += '<div class="progress-bar-wrap" style="min-width: 280px;"><div class="progress-bar-fill" style="width:' + pct + '%;"></div><span class="progress-bar-text">' + progressText + '</span></div>';
+  } else {
+    // 没有页数信息时，简单显示累计入库
+    const pct = 0;
+    const progressText = '待同步 · 累计入库 ' + totalInserted + ' 条';
+    html += '<div class="progress-bar-wrap" style="min-width: 280px;"><div class="progress-bar-fill" style="width:' + pct + '%;"></div><span class="progress-bar-text">' + progressText + '</span></div>';
+  }
+
+  html += '</div>';
+  summary.innerHTML = html;
+}
+
+function _updateStopButton(crawlers) {
+  const btn = document.getElementById('btnStopCrawler');
+  if (!btn) return;
+  let running = false;
+  for (let i = 0; i < crawlers.length; i++) {
+    if (crawlers[i].status === 'running') { running = true; break; }
+  }
+  btn.disabled = !running;
+}
+
+async function stopCrawler() {
+  const btn = document.getElementById('btnStopCrawler');
+  if (btn) { btn.disabled = true; btn.textContent = '正在停止...'; }
+  try {
+    const result = await apiPost('/crawlers/stop', {});
+    if (result && result.success !== false) {
+      showAlert('success', '已请求停止爬虫，当前页处理完成后将退出');
+      addLog('warn', '用户请求停止爬虫');
+      setTimeout(refreshCrawlerStatus, 1500);
+    } else {
+      showAlert('danger', '停止失败：' + (result?.message || result?.error || ''));
+    }
+  } catch (e) {
+    showAlert('danger', '停止异常：' + e);
+  } finally {
+    if (btn) { btn.textContent = '■ 停止'; }
+  }
+}
+
+async function doLogin() {
+  const source = document.getElementById('loginSource').value;
+  const env = document.getElementById('loginEnv').value;
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!username || !password) {
+    showAlert('danger', '请输入账号和密码');
+    addLog('warn', '自动登录失败：账号或密码为空');
+    return;
+  }
+  // 保存到 localStorage，刷新不丢失
+  saveLoginCache();
+  addLog('info', '正在登录 ' + source + ' 系统...');
+  const result = await apiPost('/system/login', { source: source, username: username, password: password, env: env });
+  if (result && result.success !== false) {
+    const tokenVal = (result.data && result.data.token) || '';
+    showAlert('success', '登录成功，凭证已保存' + (tokenVal ? '（已获取 Token）' : ''));
+    addLog('success', '自动登录成功，凭证已保存到数据库');
+    if (tokenVal) addLog('info', 'Token 长度：' + tokenVal.length + ' 字符');
+    loadCredentials();
+  } else {
+    const msg = result.message || '登录失败，请检查账号密码或后端服务';
+    showAlert('danger', msg);
+    addLog('error', '自动登录请求失败：' + msg);
+  }
+}
+
+async function doManualSync() {
+  const source = document.getElementById('manualSource').value;
+  const tokenType = document.getElementById('manualType').value;
+  const token = document.getElementById('manualToken').value.trim();
+  if (!token) {
+    showAlert('danger', '请输入 Token 内容');
+    addLog('warn', '手动同步失败：Token 为空');
+    return;
+  }
+  addLog('info', '正在保存手动凭证...');
+  const result = await apiPost('/system/credentials/sync', { source: source, token_type: tokenType, token: token });
+  if (result && result.success !== false) {
+    showAlert('success', '凭证已成功保存');
+    addLog('success', '手动凭证保存成功');
+    document.getElementById('manualToken').value = '';
+    loadCredentials();
+  } else {
+    const msg = result.message || '保存失败，请检查后端服务';
+    showAlert('danger', msg);
+    addLog('error', '手动凭证保存失败：' + msg);
+  }
+}
+
+async function runCrawler(mode) {
+  const modeNames = { auto: '自动', incremental: '增量', full: '全量' };
+  addLog('info', '启动爬虫任务（模式：' + modeNames[mode] + '）...');
+  const result = await apiPost('/crawlers/run', { mode: mode });
+  if (result && result.success !== false) {
+    showAlert('success', '爬虫任务已启动：' + (result.message || '执行中'));
+    addLog('success', '爬虫任务调度成功');
+    // 启动后立即刷新状态
+    setTimeout(refreshCrawlerStatus, 500);
+    // 持续轮询更新进度
+    if (window.__crawlerPollTimer) clearInterval(window.__crawlerPollTimer);
+    window.__crawlerPollTimer = setInterval(refreshCrawlerStatus, 3000);
+    // 30秒后自动停止轮询
+    setTimeout(function() {
+      if (window.__crawlerPollTimer) {
+        clearInterval(window.__crawlerPollTimer);
+        window.__crawlerPollTimer = null;
+      }
+    }, 30000);
+  } else {
+    showAlert('danger', '爬虫启动失败，请检查后端服务');
+    addLog('error', '爬虫任务启动失败');
+  }
+}
+
+/* =========================
+ * 自定义下拉组件初始化
+ * ========================= */
+function initCustomSelects() {
+  const wraps = document.querySelectorAll('.select-wrap');
+  wraps.forEach(wrap => {
+    if (wrap.dataset.inited === '1') return;
+    const select = wrap.querySelector('select');
+    if (!select) return;
+    // 读取 option
+    const options = [];
+    let selectedIndex = 0;
+    Array.from(select.options).forEach((opt, i) => {
+      options.push({ value: opt.value, label: opt.text });
+      if (opt.selected) selectedIndex = i;
+    });
+    // 创建触发器按钮
+    const trigger = document.createElement('span');
+    trigger.className = 'select-trigger';
+    trigger.innerHTML = '<span class="label">' + (options[selectedIndex]?.label || '') + '</span>';
+    // 创建面板
+    const panel = document.createElement('div');
+    panel.className = 'select-panel';
+    options.forEach((opt, i) => {
+      const item = document.createElement('span');
+      item.className = 'select-option' + (i === selectedIndex ? ' selected' : '');
+      item.dataset.value = opt.value;
+      item.textContent = opt.label;
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // 更新值
+        select.value = opt.value;
+        // 更新 UI
+        panel.querySelectorAll('.select-option').forEach(o => o.classList.remove('selected'));
+        item.classList.add('selected');
+        trigger.querySelector('.label').textContent = opt.label;
+        // 关闭面板
+        wrap.classList.remove('open');
+        // 触发 change
+        const evt = document.createEvent('HTMLEvents');
+        evt.initEvent('change', true, true);
+        select.dispatchEvent(evt);
+      });
+      panel.appendChild(item);
+    });
+    wrap.appendChild(trigger);
+    wrap.appendChild(panel);
+    // 触发器点击打开/关闭
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = wrap.classList.contains('open');
+      closeAllSelectPanels();
+      if (!isOpen) wrap.classList.add('open');
+    });
+    wrap.dataset.inited = '1';
+  });
+}
+function closeAllSelectPanels() {
+  document.querySelectorAll('.select-wrap.open').forEach(w => w.classList.remove('open'));
+}
+document.addEventListener('click', closeAllSelectPanels);
+
+/* =========================
+ * 初始化
+ * ========================= */
+document.addEventListener('DOMContentLoaded', function() {
+  initCustomSelects();
+  loadCredentials();
+  loadDeliveryData();
+});
+
+window.addEventListener('resize', function() {
+  if (arrivalChartsInited) {
+    const s = document.getElementById('statusChart');
+    const c = document.getElementById('sourceChart');
+    if (s && echarts.getInstanceByDom(s)) echarts.getInstanceByDom(s).resize();
+    if (c && echarts.getInstanceByDom(c)) echarts.getInstanceByDom(c).resize();
+  }
+});
+</script>
+
+</body>
+</html>

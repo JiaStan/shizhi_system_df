@@ -1,0 +1,31 @@
+{
+  "id": "loading_plan_whitebox_explain_1",
+  "pluginKey": "@official-plugins/ai-text-generate",
+  "pluginVersion": "1.0.17",
+  "name": "装车计划白盒解释插件",
+  "description": "为AI推荐的装配顺序生成可读的推理说明，解释排列逻辑和依据",
+  "icon": "",
+  "paramsSchema": {
+    "required": [
+      "assembly_data"
+    ],
+    "type": "object",
+    "properties": {
+      "assembly_data": {
+        "type": "string",
+        "description": "当前装配推荐数据，包含车型、配置、齐套率、缺件清单等信息"
+      }
+    }
+  },
+  "formValue": {
+    "modelID": "87",
+    "modelParams": {
+      "maxTokens": 8192,
+      "temperature": 0.5
+    },
+    "prompt": "你是一位专业的汽车生产装配计划专家，熟悉汽车装配流程和生产调度逻辑。\n\n请基于以下装配推荐数据，详细解释AI给出的装配顺序排列的推理逻辑：\n{{input.assembly_data}}\n\n解释要求：\n1. 整体说明：先总体阐述当前装配顺序的核心排序原则和优先级逻辑\n2. 逐车解释：按装配顺序逐一说明每辆车排在当前位置的具体原因，包括但不限于：\n   - 车型/配置因素\n   - 齐套率水平\n   - 缺件情况及影响\n   - 生产效率优化考量\n   - 交付优先级因素\n3. 优化建议：如果有可优化的空间，也可以给出合理的调整建议\n\n语言要求：\n- 使用通俗易懂的工业生产术语，避免过于技术化的AI算法术语\n- 逻辑清晰，层次分明，便于生产管理人员理解\n- 结论明确，依据充分，具有可操作性\n\n请以流式方式逐步输出解释内容。"
+  },
+  "createdAt": 1782200077571,
+  "updatedAt": 1782200077571,
+  "createdBy": 7561988053791752194
+}

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>现场到件登记</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-light: #eff6ff;
+    --success: #16a34a;
+    --success-light: #f0fdf4;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --border: #e2e8f0;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .header {
+    text-align: center;
+    padding: 20px 0 16px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .header .sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 14px;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .form-group label .required {
+    color: var(--danger);
+  }
+  .form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--text);
+    background: #fafbfc;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+  }
+  .form-row {
+    display: flex;
+    gap: 12px;
+  }
+  .form-row .form-group {
+    flex: 1;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:active { background: #1d4ed8; }
+  .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+  .msg {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 10px;
+    min-height: 20px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s;
+  }
+  .msg.success {
+    background: var(--success-light);
+    color: var(--success);
+  }
+  .msg.error {
+    background: var(--danger-light);
+    color: var(--danger);
+  }
+  .record-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .record-item:last-child { border-bottom: none; }
+  .record-left {
+    flex: 1;
+    min-width: 0;
+  }
+  .record-code {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'HarmonyOS Sans Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .record-info {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+  .record-qty {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-left: 12px;
+    white-space: nowrap;
+  }
+  .record-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  .status-matched { background: #dcfce7; color: #166534; }
+  .status-partial { background: #fef3c7; color: #92400e; }
+  .status-unmatched { background: #fee2e2; color: #b91c1c; }
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+  .project-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="project-badge" id="projectBadge">加载中...</div>
+  <h1>现场到件登记</h1>
+  <div class="sub">扫码填写零件到货信息</div>
+</div>
+
+<div class="card">
+  <div class="card-title">登记到货</div>
+  <div class="card-sub">请输入零件号和到货数量</div>
+  <form id="arrivalForm" onsubmit="submitArrival(event)">
+    <div class="form-group">
+      <label>零件号 <span class="required">*</span></label>
+      <input type="text" id="partCode" placeholder="例如: Q602316-0625" required autocomplete="off">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>到货数量 <span class="required">*</span></label>
+        <input type="number" id="arrivalQty" placeholder="数量" min="1" required inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label>零件名称</label>
+        <input type="text" id="partName" placeholder="零件名称" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>收货人</label>
+        <input type="text" id="submitter" placeholder="收货人姓名" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>到货时间</label>
+        <input type="datetime-local" id="arrivalTime">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>备注</label>
+      <input type="text" id="remark" placeholder="备注信息（可选）" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary" id="submitBtn">提交到货登记</button>
+    <div class="msg" id="msg"></div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-title">到货记录</div>
+  <div class="card-sub">最近 20 条登记记录</div>
+  <div class="stats-row" id="statsRow" style="display:none;">
+    <div class="stat-item">
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-label">今日登记</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="statMatched">0</div>
+      <div class="stat-label">已匹配</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="statUnmatched">0</div>
+      <div class="stat-label">未匹配</div>
+    </div>
+  </div>
+  <div id="recordsList">
+    <div class="loading">加载中...</div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+let projectId = null;
+
+function getParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+async function apiGet(path) {
+  try {
+    const res = await fetch(API_BASE + path);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('[API]', e);
+    return null;
+  }
+}
+
+async function loadProject() {
+  let projectIdRaw = getParam('project_id');
+  if (!projectIdRaw) {
+    document.getElementById('projectBadge').textContent = '未指定项目';
+    return;
+  }
+  projectId = parseInt(projectIdRaw, 10);
+  if (isNaN(projectId) || projectId <= 0) {
+    document.getElementById('projectBadge').textContent = '项目ID无效: ' + projectIdRaw;
+    return;
+  }
+
+  const data = await apiGet('/projects/' + projectId);
+  if (data && data.project) {
+    const p = data.project;
+    document.getElementById('projectBadge').textContent = p.name || p.code || ('项目#' + projectId);
+    document.title = (p.name || '项目') + ' - 现场到件登记';
+  } else {
+    document.getElementById('projectBadge').textContent = '项目不存在 #' + projectIdRaw;
+  }
+
+  loadRecords();
+}
+
+async function submitArrival(event) {
+  event.preventDefault();
+  if (!projectId) {
+    showMsg('未指定项目，请通过二维码重新进入', 'error');
+    return;
+  }
+
+  const partCode = document.getElementById('partCode').value.trim();
+  const arrivalQty = parseInt(document.getElementById('arrivalQty').value);
+  const partName = document.getElementById('partName').value.trim();
+  const submitter = document.getElementById('submitter').value.trim();
+  const arrivalTime = document.getElementById('arrivalTime').value;
+  const remark = document.getElementById('remark').value.trim();
+  const btn = document.getElementById('submitBtn');
+  const msgEl = document.getElementById('msg');
+
+  if (!partCode) { showMsg('请输入零件号', 'error'); return; }
+  if (!arrivalQty || arrivalQty < 1) { showMsg('请输入有效数量', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+  msgEl.className = 'msg';
+  msgEl.textContent = '';
+
+  try {
+    const resp = await fetch(API_BASE + '/qr-arrival/' + projectId + '/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        part_code: partCode,
+        arrival_qty: arrivalQty,
+        arrival_time: arrivalTime ? arrivalTime.replace('T', ' ') : new Date().toISOString().slice(0, 16).replace('T', ' '),
+        submitter: submitter || undefined,
+        remark: remark || undefined,
+      }),
+    });
+    const result = await resp.json();
+    if (resp.ok) {
+      showMsg('✓ 登记成功！' + partCode + ' 到货 ' + arrivalQty + ' 件', 'success');
+      document.getElementById('arrivalForm').reset();
+      loadRecords();
+    } else {
+      showMsg('登记失败: ' + (result.detail || result.message || '未知错误'), 'error');
+    }
+  } catch (e) {
+    showMsg('网络错误: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '提交到货登记';
+  }
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  if (type === 'success') {
+    setTimeout(() => { el.className = 'msg'; el.textContent = ''; }, 4000);
+  }
+}
+
+async function loadRecords() {
+  const container = document.getElementById('recordsList');
+  if (!projectId) {
+    container.innerHTML = '<div class="empty-state">未指定项目</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="loading">加载中...</div>';
+  const data = await apiGet('/qr-arrival/' + projectId + '/records');
+  if (!data || !data.records || data.records.length === 0) {
+    container.innerHTML = '<div class="empty-state">暂无到货记录，请在上方登记</div>';
+    document.getElementById('statsRow').style.display = 'none';
+    return;
+  }
+
+  const records = data.records.slice(0, 20);
+  const statusMap = {
+    'matched': '<span class="record-status status-matched">已匹配</span>',
+    'partial': '<span class="record-status status-partial">部分匹配</span>',
+    'unmatched': '<span class="record-status status-unmatched">未匹配</span>',
+  };
+
+  let html = '';
+  let matchedCount = 0, unmatchedCount = 0;
+  records.forEach(r => {
+    const status = r.matched_status || 'unmatched';
+    if (status === 'matched') matchedCount++;
+    else unmatchedCount++;
+
+    const time = r.arrival_time ? r.arrival_time.replace('T', ' ').slice(0, 16) : '-';
+    html += '<div class="record-item">'
+      + '<div class="record-left">'
+      + '<div class="record-code">' + (r.part_code || '') + '</div>'
+      + '<div class="record-info">' + (r.submitter || '') + ' · ' + time + '</div>'
+      + '</div>'
+      + (statusMap[status] || statusMap['unmatched'])
+      + '<div class="record-qty">' + (r.arrival_qty || 0) + ' 件</div>'
+      + '</div>';
+  });
+  container.innerHTML = html;
+
+  document.getElementById('statsRow').style.display = 'flex';
+  document.getElementById('statTotal').textContent = records.length;
+  document.getElementById('statMatched').textContent = matchedCount;
+  document.getElementById('statUnmatched').textContent = unmatchedCount;
+}
+
+loadProject();
+</script>
+</body>
+</html>

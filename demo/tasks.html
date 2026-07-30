@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>任务管理 - 试制资源数智化管理系统</title>
+  <link rel="stylesheet" href="./assets/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      min-width: 280px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    .toast.warning { border-left: 3px solid var(--warning); }
+    .toast.info { border-left: 3px solid var(--brand-primary); }
+    .toast-icon { flex-shrink: 0; }
+    .toast.success .toast-icon { color: var(--success); }
+    .toast.error .toast-icon { color: var(--danger); }
+    .toast.warning .toast-icon { color: var(--warning); }
+    .toast.info .toast-icon { color: var(--brand-primary); }
+    .toast-icon i { width: 20px; height: 20px; }
+    .toast-body { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .toast-msg { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .toast .close-btn { color: var(--text-muted); cursor: pointer; }
+    .toast .close-btn:hover { color: var(--text-primary); }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+    }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--brand-primary); color: white; }
+    .btn-primary:hover { background: var(--brand-light); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+    .btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #FF7875; }
+
+    .tab-section { display: flex; gap: 4px; }
+    .tab-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { background: rgba(22, 119, 255, 0.15); color: var(--brand-light); border-color: var(--brand-primary); }
+
+    .online-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      display: inline-block;
+      margin-right: 4px;
+    }
+    .online-dot.warn { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+    .online-dot.err { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+    .page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-input input {
+      width: 220px;
+      padding: 8px 12px 8px 36px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input input:focus { border-color: var(--brand-primary); }
+    .search-input i {
+      position: absolute;
+      left: 10px;
+      color: var(--text-muted);
+      width: 16px;
+      height: 16px;
+    }
+    .filter-select {
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-select option { background: var(--bg-card); }
+    .toolbar-right { display: flex; gap: 10px; }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+    }
+    .summary-card.total::before { background: var(--brand-primary); }
+    .summary-card.progress::before { background: var(--warning); }
+    .summary-card.done::before { background: var(--success); }
+    .summary-card.overdue::before { background: var(--danger); }
+    .summary-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .summary-icon.total { background: rgba(22, 119, 255, 0.15); color: var(--brand-light); }
+    .summary-icon.progress { background: rgba(250, 173, 20, 0.15); color: var(--warning); }
+    .summary-icon.done { background: rgba(82, 196, 26, 0.15); color: var(--success); }
+    .summary-icon.overdue { background: rgba(255, 77, 79, 0.15); color: var(--danger); }
+    .summary-info { flex: 1; }
+    .summary-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .summary-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .data-table thead th {
+      padding: 12px;
+      text-align: left;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .data-table tbody td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    .data-table tbody tr {
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .data-table tbody tr:hover {
+      background: var(--bg-hover);
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+
+    .type-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .type-tag.ling { background: rgba(22, 119, 255, 0.15); color: var(--brand-light); }
+    .type-tag.abc { background: rgba(114, 46, 209, 0.15); color: #B37FEB; }
+    .type-tag.test { background: rgba(19, 194, 194, 0.15); color: #13C2C2; }
+
+    .priority-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .priority-tag.urgent { background: rgba(255, 77, 79, 0.15); color: var(--danger); }
+    .priority-tag.high { background: rgba(250, 173, 20, 0.15); color: var(--warning); }
+    .priority-tag.mid { background: rgba(22, 119, 255, 0.15); color: var(--brand-light); }
+    .priority-tag.low { background: rgba(139, 149, 168, 0.15); color: var(--text-secondary); }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .status-badge.pending { background: rgba(139, 149, 168, 0.15); color: var(--text-secondary); }
+    .status-badge.progress { background: rgba(250, 173, 20, 0.15); color: var(--warning); }
+    .status-badge.done { background: rgba(82, 196, 26, 0.15); color: var(--success); }
+    .status-badge.overdue { background: rgba(255, 77, 79, 0.15); color: var(--danger); }
+    .status-badge.canceled { background: rgba(90, 100, 120, 0.15); color: var(--text-muted); }
+
+    .table-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 120px;
+    }
+    .table-progress .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-hover);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .table-progress .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .table-progress .progress-fill.normal { background: linear-gradient(90deg, var(--brand-primary), var(--brand-light)); }
+    .table-progress .progress-fill.warning { background: linear-gradient(90deg, var(--warning), #FFC53D); }
+    .table-progress .progress-fill.danger { background: linear-gradient(90deg, var(--danger), #FF7875); }
+    .table-progress .progress-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .action-btns { display: flex; gap: 6px; }
+    .action-btn {
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      color: var(--brand-light);
+      border-color: var(--brand-primary);
+    }
+
+    .pager {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 4px 2px;
+    }
+    .pager-info { font-size: 12px; color: var(--text-secondary); }
+    .pager-controls { display: flex; gap: 4px; }
+    .pager-btn {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .pager-btn:hover:not(:disabled) { color: var(--brand-light); border-color: var(--brand-primary); }
+    .pager-btn.active { background: var(--brand-primary); color: white; border-color: var(--brand-primary); }
+    .pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .form-row label {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .form-row input, .form-row select {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--brand-primary); }
+    .form-row input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .detail-section {
+      margin-bottom: 20px;
+    }
+    .detail-section-title {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 600;
+      margin-bottom: 10px;
+      padding-left: 8px;
+      border-left: 3px solid var(--brand-primary);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 100px 1fr 100px 1fr;
+      gap: 10px 12px;
+      font-size: 13px;
+    }
+    .detail-grid .label { color: var(--text-secondary); }
+    .detail-grid .value { color: var(--text-primary); }
+
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: var(--border-color);
+    }
+    .timeline-item {
+      position: relative;
+      padding-bottom: 14px;
+    }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -22px;
+      top: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      box-shadow: 0 0 0 3px var(--bg-card);
+    }
+    .timeline-item.done::before { background: var(--success); }
+    .timeline-item.current::before { background: var(--warning); animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px var(--bg-card); }
+      50% { box-shadow: 0 0 0 5px rgba(250, 173, 20, 0.3); }
+    }
+    .timeline-title { color: var(--text-primary); font-size: 13px; font-weight: 500; }
+    .timeline-desc { color: var(--text-secondary); font-size: 12px; margin-top: 2px; }
+    .timeline-time { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+
+    .status-dropdown {
+      position: absolute;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px 0;
+      min-width: 120px;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .status-dropdown-item {
+      padding: 6px 12px;
+      color: var(--text-primary);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .status-dropdown-item:hover { background: var(--bg-hover); }
+
+    .sync-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--bg-card);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 8px;
+    }
+    .sync-status-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .sync-status-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i { width: 40px; height: 40px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i data-lucide="factory" style="width:18px;height:18px;"></i>
+          </div>
+          <span class="system-title">试制资源数智化管理系统</span>
+        </div>
+        <nav>
+          <ul class="nav-menu">
+            <li class="nav-item" data-page="dashboard">综合驾驶舱</li>
+            <li class="nav-item" data-page="devices">设备台账</li>
+            <li class="nav-item active" data-page="tasks">任务管理</li>
+            <li class="nav-item" data-page="alerts">异常预警中心</li>
+          </ul>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="header-action" id="syncBtn">
+          <span class="status-dot sync"></span>
+          <span>同步中</span>
+        </div>
+        <div class="header-action">
+          <span class="status-dot"></span>
+          <span>系统正常</span>
+        </div>
+        <div class="header-action">
+          <i data-lucide="clock" style="width:14px;height:14px;"></i>
+          <span id="currentTime">--:--:--</span>
+        </div>
+        <div class="header-action" id="userBtn">
+          <i data-lucide="user" style="width:14px;height:14px;"></i>
+          <span>管理员</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="app-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">任务类型分布</div>
+        <div id="typeDistribution"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">状态筛选</div>
+        <div id="statusFilters"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">数据源状态</div>
+        <div class="sync-status-row">
+          <span class="sync-status-name"><span class="online-dot"></span>360系统</span>
+          <span class="sync-status-time">2分钟前</span>
+        </div>
+        <div class="sync-status-row">
+          <span class="sync-status-name"><span class="online-dot"></span>MES系统</span>
+          <span class="sync-status-time">5分钟前</span>
+        </div>
+        <div class="sync-status-row">
+          <span class="sync-status-name"><span class="online-dot warn"></span>运营表</span>
+          <span class="sync-status-time">1小时前</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <div class="page-toolbar">
+        <div class="toolbar-left">
+          <div class="tab-section" id="typeTabs">
+            <button class="tab-btn active" data-type="all">全部 <span class="count-num" id="countAll">(0)</span></button>
+            <button class="tab-btn" data-type="零星任务">零星任务 <span class="count-num" id="countLing">(0)</span></button>
+            <button class="tab-btn" data-type="ABC类任务">ABC类任务 <span class="count-num" id="countAbc">(0)</span></button>
+            <button class="tab-btn" data-type="试制岛任务">试制岛任务 <span class="count-num" id="countTest">(0)</span></button>
+          </div>
+          <div class="search-input">
+            <i data-lucide="search"></i>
+            <input type="text" id="searchInput" placeholder="搜索任务编号或名称">
+          </div>
+          <select class="filter-select" id="statusFilter">
+            <option value="">全部状态</option>
+            <option value="待执行">待执行</option>
+            <option value="执行中">执行中</option>
+            <option value="已完成">已完成</option>
+            <option value="已延期">已延期</option>
+            <option value="已取消">已取消</option>
+          </select>
+          <select class="filter-select" id="priorityFilter">
+            <option value="">全部优先级</option>
+            <option value="紧急">紧急</option>
+            <option value="高">高</option>
+            <option value="中">中</option>
+            <option value="低">低</option>
+          </select>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-primary" id="addTaskBtn">
+            <i data-lucide="plus" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>新增任务
+          </button>
+          <button class="btn btn-ghost" id="syncDataBtn">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>同步数据
+          </button>
+        </div>
+      </div>
+
+      <div class="summary-row" id="summaryRow"></div>
+
+      <div class="table-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title">
+            <i data-lucide="list-checks" class="card-title-icon"></i>
+            任务列表
+          </div>
+          <div class="card-title" id="currentTabTitle" style="color:var(--text-secondary);font-size:12px;font-weight:400;"></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>任务编号</th>
+                <th>任务名称</th>
+                <th>类型</th>
+                <th>优先级</th>
+                <th>状态</th>
+                <th style="min-width:150px;">进度</th>
+                <th>负责人</th>
+                <th>区域</th>
+                <th>计划日期</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="pager"></div>
+      </div>
+    </main>
+
+    <footer class="app-statusbar">
+      <div class="status-group">
+        <div class="status-item">
+          <span class="status-dot"></span>
+          <span id="systemStatus">系统运行正常</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i>
+          <span id="syncStatus">数据同步完成</span>
+        </div>
+      </div>
+      <div class="status-group">
+        <div class="status-item">
+          <i data-lucide="database" style="width:12px;height:12px;"></i>
+          <span>数据库: 已连接</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="hard-drive" style="width:12px;height:12px;"></i>
+          <span>存储: 正常</span>
+        </div>
+        <div class="status-item">
+          <i data-lucide="clock" style="width:12px;height:12px;"></i>
+          <span id="lastUpdateTime">最后更新: --:--:--</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./assets/js/mock-data.js"></script>
+  <script src="./assets/js/app.js"></script>
+  <script>
+    (function () {
+      const d = MockData.data;
+      let currentType = 'all';
+      let currentStatus = '';
+      let currentPriority = '';
+      let currentSearch = '';
+      let currentPage = 1;
+      const PAGE_SIZE = 8;
+
+      function fmtTime(d) {
+        const pad = n => String(n).padStart(2, '0');
+        return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      }
+
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent =
+          now.getFullYear() + '-' +
+          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+          String(now.getDate()).padStart(2, '0') + ' ' + fmtTime(now);
+      }
+
+      function updateLastTime() {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        document.getElementById('lastUpdateTime').textContent =
+          '最后更新: ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      }
+
+      function typeTagClass(type) {
+        if (type === '零星任务') return 'type-tag ling';
+        if (type === 'ABC类任务') return 'type-tag abc';
+        return 'type-tag test';
+      }
+
+      function priorityTagClass(p) {
+        if (p === '紧急') return 'priority-tag urgent';
+        if (p === '高') return 'priority-tag high';
+        if (p === '中') return 'priority-tag mid';
+        return 'priority-tag low';
+      }
+
+      function statusBadgeClass(s) {
+        if (s === '待执行') return 'status-badge pending';
+        if (s === '执行中') return 'status-badge progress';
+        if (s === '已完成') return 'status-badge done';
+        if (s === '已延期') return 'status-badge overdue';
+        return 'status-badge canceled';
+      }
+
+      function progressClass(task) {
+        if (task.status === '已延期') return 'danger';
+        if (task.status === '已完成') return 'normal';
+        if (task.progress < 30) return 'danger';
+        if (task.progress < 60) return 'warning';
+        return 'normal';
+      }
+
+      function applyFilters() {
+        let tasks = d.tasks.slice();
+        if (currentType !== 'all') {
+          tasks = tasks.filter(t => t.type === currentType);
+        }
+        if (currentStatus) tasks = tasks.filter(t => t.status === currentStatus);
+        if (currentPriority) tasks = tasks.filter(t => t.priority === currentPriority);
+        if (currentSearch) {
+          const kw = currentSearch.toLowerCase();
+          tasks = tasks.filter(t =>
+            t.id.toLowerCase().includes(kw) || t.title.toLowerCase().includes(kw)
+          );
+        }
+        return tasks;
+      }
+
+      function renderTypeDistribution() {
+        const counts = { '零星任务': 0, 'ABC类任务': 0, '试制岛任务': 0 };
+        d.tasks.forEach(t => { counts[t.type]++; });
+        const total = d.tasks.length || 1;
+        const html = Object.keys(counts).map(k => {
+          const pct = Math.round(counts[k] / total * 100);
+          return `
+            <div class="stat-item" data-type="${k}">
+              <div style="flex:1;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:4px;">
+                  <span>${k}</span>
+                  <span style="color:var(--brand-light);font-weight:600;">${counts[k]} (${pct}%)</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill normal" style="width:${pct}%;"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('typeDistribution').innerHTML = html;
+
+        document.querySelectorAll('#typeDistribution .stat-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const t = el.dataset.type;
+            currentType = (currentType === t) ? 'all' : t;
+            currentPage = 1;
+            renderAll();
+          });
+        });
+      }
+
+      function renderStatusFilters() {
+        const statuses = ['待执行', '执行中', '已完成', '已延期', '已取消'];
+        const counts = {};
+        statuses.forEach(s => { counts[s] = d.tasks.filter(t => t.status === s).length; });
+        const html = statuses.map(s => {
+          const cls = statusBadgeClass(s);
+          return `
+            <div class="stat-item" data-status="${s}">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="status-badge ${cls}" style="min-width:48px;text-align:center;">${s}</span>
+              </div>
+              <span class="stat-value">${counts[s]}</span>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('statusFilters').innerHTML = html;
+
+        document.querySelectorAll('#statusFilters .stat-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const s = el.dataset.status;
+            currentStatus = (currentStatus === s) ? '' : s;
+            document.getElementById('statusFilter').value = currentStatus;
+            currentPage = 1;
+            renderAll();
+          });
+        });
+      }
+
+      function renderCounts() {
+        const counts = { 'all': d.tasks.length, '零星任务': 0, 'ABC类任务': 0, '试制岛任务': 0 };
+        d.tasks.forEach(t => { counts[t.type]++; });
+        document.getElementById('countAll').textContent = '(' + counts.all + ')';
+        document.getElementById('countLing').textContent = '(' + counts['零星任务'] + ')';
+        document.getElementById('countAbc').textContent = '(' + counts['ABC类任务'] + ')';
+        document.getElementById('countTest').textContent = '(' + counts['试制岛任务'] + ')';
+      }
+
+      function renderSummary() {
+        const filtered = applyFilters();
+        const total = filtered.length;
+        const inProgress = filtered.filter(t => t.status === '执行中').length;
+        const done = filtered.filter(t => t.status === '已完成').length;
+        const overdue = filtered.filter(t => t.status === '已延期').length;
+
+        const items = [
+          { key: 'total', label: '总任务数', value: total, icon: 'clipboard-list', cls: 'total' },
+          { key: 'progress', label: '执行中', value: inProgress, icon: 'loader', cls: 'progress' },
+          { key: 'done', label: '已完成', value: done, icon: 'check-circle', cls: 'done' },
+          { key: 'overdue', label: '已延期', value: overdue, icon: 'alert-octagon', cls: 'overdue' }
+        ];
+        const html = items.map(it => `
+          <div class="summary-card ${it.cls}">
+            <div class="summary-icon ${it.cls}">
+              <i data-lucide="${it.icon}" style="width:22px;height:22px;"></i>
+            </div>
+            <div class="summary-info">
+              <div class="summary-value">${it.value}</div>
+              <div class="summary-label">${it.label}</div>
+            </div>
+          </div>
+        `).join('');
+        document.getElementById('summaryRow').innerHTML = html;
+      }
+
+      function renderTable() {
+        const filtered = applyFilters();
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const pageTasks = filtered.slice(start, start + PAGE_SIZE);
+
+        const tbody = document.getElementById('taskTableBody');
+        if (pageTasks.length === 0) {
+          tbody.innerHTML = `
+            <tr><td colspan="10">
+              <div class="empty-state">
+                <i data-lucide="inbox" style="width:40px;height:40px;"></i>
+                <div>暂无符合条件的任务</div>
+              </div>
+            </td></tr>
+          `;
+        } else {
+          tbody.innerHTML = pageTasks.map(task => {
+            const pcls = progressClass(task);
+            const typeCls = typeTagClass(task.type);
+            const priCls = priorityTagClass(task.priority);
+            const stCls = statusBadgeClass(task.status);
+            return `
+              <tr data-task-id="${task.id}">
+                <td style="color:var(--brand-light);font-weight:500;">${task.id}</td>
+                <td>${task.title}</td>
+                <td><span class="type-tag ${typeCls}">${task.type}</span></td>
+                <td><span class="priority-tag ${priCls}">${task.priority}</span></td>
+                <td><span class="status-badge ${stCls}">${task.status}</span></td>
+                <td>
+                  <div class="table-progress">
+                    <div class="progress-bar"><div class="progress-fill ${pcls}" style="width:${task.progress}%;"></div></div>
+                    <span class="progress-text">${task.progress}%</span>
+                  </div>
+                </td>
+                <td>${task.assignee}</td>
+                <td>${task.area}区</td>
+                <td style="white-space:nowrap;font-size:12px;color:var(--text-secondary);">
+                  ${(task.startDate || '').slice(5, 10)} ~ ${(task.endDate || '').slice(5, 10)}
+                </td>
+                <td>
+                  <div class="action-btns" style="position:relative;">
+                    <button class="action-btn" data-action="detail" data-id="${task.id}">详情</button>
+                    <button class="action-btn" data-action="edit" data-id="${task.id}">编辑</button>
+                    <button class="action-btn" data-action="update-status" data-id="${task.id}">更新状态</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        tbody.querySelectorAll('[data-action]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            if (action === 'detail') openDetailModal(id);
+            else if (action === 'edit') openFormModal(id);
+            else if (action === 'update-status') toggleStatusDropdown(btn, id);
+          });
+        });
+        tbody.querySelectorAll('tr').forEach(tr => {
+          tr.addEventListener('click', () => {
+            if (!tr.querySelector('.status-dropdown')) openDetailModal(tr.dataset.taskId);
+          });
+        });
+
+        renderPager(total, totalPages);
+
+        const tabs = { 'all': '全部任务', '零星任务': '零星任务', 'ABC类任务': 'ABC类任务', '试制岛任务': '试制岛任务' };
+        document.getElementById('currentTabTitle').textContent = tabs[currentType] || '全部任务';
+      }
+
+      function renderPager(total, totalPages) {
+        const pager = document.getElementById('pager');
+        let pagesHtml = '';
+        const maxShow = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxShow / 2));
+        let end = Math.min(totalPages, start + maxShow - 1);
+        start = Math.max(1, end - maxShow + 1);
+        for (let i = start; i <= end; i++) {
+          pagesHtml += `<button class="pager-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        }
+        pager.innerHTML = `
+          <div class="pager-info">共 ${total} 条, 第 ${currentPage} / ${totalPages} 页</div>
+          <div class="pager-controls">
+            <button class="pager-btn" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+            ${pagesHtml}
+            <button class="pager-btn" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+          </div>
+        `;
+        pager.querySelectorAll('.pager-btn[data-page]').forEach(b => {
+          b.addEventListener('click', () => {
+            currentPage = parseInt(b.dataset.page);
+            renderTable();
+          });
+        });
+        document.getElementById('prevPage').addEventListener('click', () => {
+          if (currentPage > 1) { currentPage--; renderTable(); }
+        });
+        document.getElementById('nextPage').addEventListener('click', () => {
+          if (currentPage < totalPages) { currentPage++; renderTable(); }
+        });
+      }
+
+      function toggleStatusDropdown(btn, id) {
+        document.querySelectorAll('.status-dropdown').forEach(d => d.remove());
+        const task = d.tasks.find(t => t.id === id);
+        if (!task) return;
+        const nextStatus = nextStatusFor(task.status);
+        const rect = btn.getBoundingClientRect();
+        const dropdown = document.createElement('div');
+        dropdown.className = 'status-dropdown';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        dropdown.innerHTML = `
+          <div class="status-dropdown-item" data-next="${nextStatus}">标记为: ${nextStatus}</div>
+          <div class="status-dropdown-item" data-next="已取消">取消任务</div>
+        `;
+        document.body.appendChild(dropdown);
+        lucide.createIcons();
+        dropdown.querySelectorAll('.status-dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const ns = item.dataset.next;
+            task.status = ns;
+            if (ns === '已完成') task.progress = 100;
+            else if (ns === '待执行') task.progress = 0;
+            dropdown.remove();
+            renderAll();
+            App.toast(`任务 ${task.id} 状态已更新为 ${ns}`, 'success', '更新成功');
+          });
+        });
+        const closeHandler = (e) => {
+          if (!dropdown.contains(e.target)) {
+            dropdown.remove();
+            document.removeEventListener('click', closeHandler);
+          }
+        };
+        setTimeout(() => document.addEventListener('click', closeHandler), 10);
+      }
+
+      function nextStatusFor(s) {
+        if (s === '待执行') return '执行中';
+        if (s === '执行中') return '已完成';
+        return '执行中';
+      }
+
+      function openDetailModal(taskId) {
+        const task = d.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        const html = `
+          <div class="modal-mask show" id="detailModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3>任务详情 - ${task.id}</h3>
+                <button class="modal-close" onclick="App.closeModal('detailModal');lucide.createIcons();">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="detail-section">
+                  <div class="detail-section-title">基础信息</div>
+                  <div class="detail-grid">
+                    <span class="label">任务编号</span><span class="value">${task.id}</span>
+                    <span class="label">任务名称</span><span class="value">${task.title}</span>
+                    <span class="label">任务类型</span><span class="value"><span class="type-tag ${typeTagClass(task.type)}">${task.type}</span></span>
+                    <span class="label">优先级</span><span class="value"><span class="priority-tag ${priorityTagClass(task.priority)}">${task.priority}</span></span>
+                    <span class="label">状态</span><span class="value"><span class="status-badge ${statusBadgeClass(task.status)}">${task.status}</span></span>
+                    <span class="label">负责人</span><span class="value">${task.assignee}</span>
+                    <span class="label">所属区域</span><span class="value">${task.area}区</span>
+                    <span class="label">关联设备</span><span class="value">${task.device}</span>
+                    <span class="label">计划开始</span><span class="value">${(task.startDate || '').slice(0, 10)}</span>
+                    <span class="label">计划结束</span><span class="value">${(task.endDate || '').slice(0, 10)}</span>
+                    <span class="label">创建时间</span><span class="value">${(task.createdAt || '').slice(0, 10)}</span>
+                    <span class="label">当前进度</span>
+                    <span class="value">
+                      <div class="table-progress" style="max-width:200px;">
+                        <div class="progress-bar"><div class="progress-fill ${progressClass(task)}" style="width:${task.progress}%;"></div></div>
+                        <span class="progress-text">${task.progress}%</span>
+                      </div>
+                    </span>
+                  </div>
+                </div>
+                <div class="detail-section">
+                  <div class="detail-section-title">执行时间线</div>
+                  <div class="timeline">
+                    <div class="timeline-item done">
+                      <div class="timeline-title">任务创建</div>
+                      <div class="timeline-desc">由系统自动生成任务编号 ${task.id}</div>
+                      <div class="timeline-time">${(task.createdAt || '').slice(0, 10)}</div>
+                    </div>
+                    <div class="timeline-item ${task.status === '待执行' ? 'current' : 'done'}">
+                      <div class="timeline-title">${task.status === '待执行' ? '待执行' : '启动执行'}</div>
+                      <div class="timeline-desc">负责人: ${task.assignee} · 区域: ${task.area}区</div>
+                      <div class="timeline-time">${(task.startDate || '').slice(0, 10)}</div>
+                    </div>
+                    ${task.status !== '待执行' && task.status !== '已取消' ? `
+                    <div class="timeline-item ${task.status === '已完成' ? 'done' : 'current'}">
+                      <div class="timeline-title">${task.status === '已完成' ? '执行完成' : '执行中'} (${task.progress}%)</div>
+                      <div class="timeline-desc">关联设备: ${task.device}</div>
+                      <div class="timeline-time">${new Date().toISOString().slice(0, 10)}</div>
+                    </div>` : ''}
+                    ${task.status === '已完成' ? `
+                    <div class="timeline-item done">
+                      <div class="timeline-title">任务验收</div>
+                      <div class="timeline-desc">任务已完成并验收</div>
+                      <div class="timeline-time">${(task.endDate || '').slice(0, 10)}</div>
+                    </div>` : ''}
+                    ${task.status === '已延期' ? `
+                    <div class="timeline-item current">
+                      <div class="timeline-title" style="color:var(--danger);">任务已延期</div>
+                      <div class="timeline-desc" style="color:var(--danger);">请尽快处理</div>
+                      <div class="timeline-time">${(task.endDate || '').slice(0, 10)}</div>
+                    </div>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="App.closeModal('detailModal')">关闭</button>
+                <button class="btn btn-primary" onclick="App.closeModal('detailModal');openFormModal('${task.id}');">编辑任务</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        App.openModal('detailModal');
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function openFormModal(taskId) {
+        const isEdit = !!taskId;
+        const task = isEdit ? d.tasks.find(t => t.id === taskId) : {
+          id: 'TASK-' + String(d.tasks.length + 1).padStart(2, '0'),
+          title: '',
+          type: '零星任务',
+          priority: '中',
+          status: '待执行',
+          assignee: d.personnel[0] ? d.personnel[0].name : '',
+          area: 'A',
+          startDate: new Date().toISOString().slice(0, 10) + ' 08:00:00',
+          endDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) + ' 18:00:00'
+        };
+        const html = `
+          <div class="modal-mask show" id="formModal">
+            <div class="modal">
+              <div class="modal-header">
+                <h3>${isEdit ? '编辑任务' : '新增任务'}</h3>
+                <button class="modal-close" onclick="App.closeModal('formModal');lucide.createIcons();">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="form-row">
+                  <label>任务编号</label>
+                  <input type="text" id="f_id" value="${task.id}" ${isEdit ? '' : ''} disabled>
+                </div>
+                <div class="form-row">
+                  <label>任务名称</label>
+                  <input type="text" id="f_title" value="${task.title}" placeholder="请输入任务名称">
+                </div>
+                <div class="form-row">
+                  <label>任务类型</label>
+                  <select id="f_type">
+                    ${['零星任务', 'ABC类任务', '试制岛任务'].map(t =>
+                      `<option value="${t}" ${t === task.type ? 'selected' : ''}>${t}</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>优先级</label>
+                  <select id="f_priority">
+                    ${['低', '中', '高', '紧急'].map(p =>
+                      `<option value="${p}" ${p === task.priority ? 'selected' : ''}>${p}</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>状态</label>
+                  <select id="f_status">
+                    ${['待执行', '执行中', '已完成', '已延期', '已取消'].map(s =>
+                      `<option value="${s}" ${s === task.status ? 'selected' : ''}>${s}</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>负责人</label>
+                  <select id="f_assignee">
+                    ${d.personnel.map(p =>
+                      `<option value="${p.name}" ${p.name === task.assignee ? 'selected' : ''}>${p.name} (${p.position})</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>所属区域</label>
+                  <select id="f_area">
+                    ${d.areas.map(a =>
+                      `<option value="${a.id}" ${a.id === task.area ? 'selected' : ''}>${a.name}</option>`
+                    ).join('')}
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>计划开始日期</label>
+                  <input type="date" id="f_start" value="${(task.startDate || '').slice(0, 10)}">
+                </div>
+                <div class="form-row">
+                  <label>计划结束日期</label>
+                  <input type="date" id="f_end" value="${(task.endDate || '').slice(0, 10)}">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="App.closeModal('formModal')">取消</button>
+                <button class="btn btn-primary" id="saveFormBtn">保存</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        App.openModal('formModal');
+        if (window.lucide) lucide.createIcons();
+
+        document.getElementById('saveFormBtn').addEventListener('click', () => {
+          const title = document.getElementById('f_title').value.trim();
+          if (!title) {
+            App.toast('请输入任务名称', 'warning');
+            return;
+          }
+          const payload = {
+            title: title,
+            type: document.getElementById('f_type').value,
+            priority: document.getElementById('f_priority').value,
+            status: document.getElementById('f_status').value,
+            assignee: document.getElementById('f_assignee').value,
+            area: document.getElementById('f_area').value,
+            startDate: document.getElementById('f_start').value + ' 08:00:00',
+            endDate: document.getElementById('f_end').value + ' 18:00:00'
+          };
+
+          if (isEdit) {
+            Object.assign(task, payload);
+            if (payload.status === '已完成') task.progress = 100;
+            else if (payload.status === '待执行') task.progress = 0;
+          } else {
+            d.tasks.unshift(Object.assign({
+              id: document.getElementById('f_id').value,
+              progress: payload.status === '已完成' ? 100 : (payload.status === '待执行' ? 0 : 10),
+              device: 'DEV-' + String(Math.floor(Math.random() * 50) + 1).padStart(2, '0'),
+              createdAt: new Date().toISOString().replace('T', ' ').slice(0, 19)
+            }, payload));
+          }
+          App.closeModal('formModal');
+          renderAll();
+          App.toast(isEdit ? `任务 ${task.id} 已更新` : `任务已创建: ${payload.title}`, 'success', isEdit ? '更新成功' : '创建成功');
+        });
+      }
+
+      function bindEvents() {
+        document.querySelectorAll('#typeTabs .tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('#typeTabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentType = btn.dataset.type;
+            currentPage = 1;
+            renderAll();
+          });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+          currentSearch = e.target.value.trim();
+          currentPage = 1;
+          renderTable();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+          currentStatus = e.target.value;
+          currentPage = 1;
+          renderTable();
+        });
+
+        document.getElementById('priorityFilter').addEventListener('change', (e) => {
+          currentPriority = e.target.value;
+          currentPage = 1;
+          renderTable();
+        });
+
+        document.getElementById('addTaskBtn').addEventListener('click', () => openFormModal(null));
+
+        document.getElementById('syncDataBtn').addEventListener('click', () => {
+          App.toast('正在同步数据...', 'info');
+          setTimeout(() => {
+            MockData.refresh();
+            renderAll();
+            updateLastTime();
+            App.toast('数据同步成功', 'success');
+          }, 800);
+        });
+
+        document.getElementById('syncBtn').addEventListener('click', () => {
+          App.toast('正在同步数据...', 'info');
+          setTimeout(() => {
+            MockData.refresh();
+            renderAll();
+            updateLastTime();
+            App.toast('数据同步成功', 'success');
+          }, 800);
+        });
+
+        document.getElementById('userBtn').addEventListener('click', () => {
+          App.toast('管理员账户信息', 'info');
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', () => {
+            App.toast(`跳转到 ${item.textContent} 页面`, 'info');
+          });
+        });
+      }
+
+      function renderAll() {
+        renderCounts();
+        renderTypeDistribution();
+        renderStatusFilters();
+        renderSummary();
+        renderTable();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        updateClock();
+        setInterval(updateClock, 1000);
+        updateLastTime();
+        renderAll();
+        bindEvents();
+      });
+    })();
+  </script>
+</body>
+</html>

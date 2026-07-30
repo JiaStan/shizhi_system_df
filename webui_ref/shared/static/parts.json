@@ -1,0 +1,17 @@
+[
+  {"id":1,"project_id":1,"part_code":"E70-BOD-001","part_name":"前保险杠总成","demand_quantity":20,"critical_level":2.8,"critical_reason":"外观件，供应商充足","safety":2,"size":3,"scarcity":2,"process":3},
+  {"id":2,"project_id":1,"part_code":"E70-CHS-012","part_name":"前制动卡钳","demand_quantity":40,"critical_level":4.2,"critical_reason":"安全件，涉及制动系统","safety":5,"size":2,"scarcity":4,"process":4},
+  {"id":3,"project_id":1,"part_code":"E70-ENG-005","part_name":"进气歧管总成","demand_quantity":10,"critical_level":3.1,"critical_reason":"动力总成关键件","safety":3,"size":3,"scarcity":3,"process":4},
+  {"id":4,"project_id":2,"part_code":"V58-ELE-021","part_name":"动力电池模组","demand_quantity":6,"critical_level":4.6,"critical_reason":"新能源核心大件，交期长","safety":4,"size":5,"scarcity":5,"process":4},
+  {"id":5,"project_id":2,"part_code":"V58-ELE-022","part_name":"电驱总成","demand_quantity":4,"critical_level":4.5,"critical_reason":"新能源核心驱动系统","safety":4,"size":5,"scarcity":4,"process":5},
+  {"id":6,"project_id":3,"part_code":"D60-CHS-008","part_name":"后悬挂控制臂","demand_quantity":30,"critical_level":3.8,"critical_reason":"底盘安全件","safety":4,"size":3,"scarcity":3,"process":4},
+  {"id":7,"project_id":3,"part_code":"D60-BOD-015","part_name":"车门铰链总成","demand_quantity":50,"critical_level":2.5,"critical_reason":"通用标准件","safety":2,"size":1,"scarcity":2,"process":4},
+  {"id":8,"project_id":4,"part_code":"S73-ECU-001","part_name":"智驾域控制器","demand_quantity":8,"critical_level":4.8,"critical_reason":"智驾核心电子件，芯片紧缺","safety":5,"size":2,"scarcity":5,"process":5},
+  {"id":9,"project_id":4,"part_code":"S73-SEN-010","part_name":"激光雷达总成","demand_quantity":12,"critical_level":4.7,"critical_reason":"智驾感知核心传感器","safety":5,"size":2,"scarcity":5,"process":4},
+  {"id":10,"project_id":5,"part_code":"M30-ENG-003","part_name":"混动变速箱","demand_quantity":15,"critical_level":4.4,"critical_reason":"混动系统核心大件","safety":4,"size":5,"scarcity":4,"process":5},
+  {"id":11,"project_id":5,"part_code":"M30-ELE-007","part_name":"高压线束总成","demand_quantity":25,"critical_level":3.5,"critical_reason":"高压安全件","safety":4,"size":3,"scarcity":3,"process":3},
+  {"id":12,"project_id":6,"part_code":"X90-INT-018","part_name":"中控仪表台总成","demand_quantity":10,"critical_level":3.2,"critical_reason":"内饰大件，模具周期长","safety":2,"size":5,"scarcity":3,"process":4},
+  {"id":13,"project_id":6,"part_code":"X90-CHS-022","part_name":"空气悬挂气泵","demand_quantity":8,"critical_level":4.3,"critical_reason":"高端底盘件，供应商少","safety":4,"size":3,"scarcity":5,"process":4},
+  {"id":14,"project_id":1,"part_code":"E70-CHS-020","part_name":"转向机总成","demand_quantity":15,"critical_level":4.5,"critical_reason":"转向安全件","safety":5,"size":3,"scarcity":4,"process":5},
+  {"id":15,"project_id":1,"part_code":"E70-EXH-003","part_name":"排气歧管","demand_quantity":20,"critical_level":2.6,"critical_reason":"排气系统标准件","safety":2,"size":3,"scarcity":2,"process":3}
+]

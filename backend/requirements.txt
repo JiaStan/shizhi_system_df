@@ -1,0 +1,21 @@
+# 基础依赖（复用 spiderV4）
+fastapi==0.103.2
+uvicorn==0.22.0
+pymysql==1.1.0
+DBUtils==3.0.2
+python-dotenv==0.21.1
+requests==2.31.0
+openpyxl==3.1.2
+xlrd==2.0.1
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# Phase 1 需要：QR码生成
+qrcode[pil]>=7.4.2
+Pillow>=10.0.0
+
+# Phase 2 需要（DeepSeek LLM）
+openai>=1.3.0
+
+# Phase 3 需要（可选，CP-SAT 求解）
+# ortools>=9.7.0  # 当前环境无此版本，Phase 3 时再安装
