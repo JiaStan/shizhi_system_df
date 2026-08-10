@@ -91,6 +91,84 @@
     }
     .gantt-filter option { background: var(--bg-card); }
 
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .stats-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .stats-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
+    .stats-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .stats-card-title {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stats-card-title .cat-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .stats-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .stats-card-value .number {
+      color: var(--text-primary);
+    }
+    .stats-card-value .unit {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .stats-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .stats-card-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .stats-card-a .stats-card-bar { background: #FF4D4F; }
+    .stats-card-b .stats-card-bar { background: #FA8C16; }
+    .stats-card-c .stats-card-bar { background: #1677FF; }
+    .stats-card-total .stats-card-bar { background: linear-gradient(90deg, #FF4D4F, #FA8C16, #1677FF); }
+    .stats-card-a .cat-dot { background: #FF4D4F; }
+    .stats-card-b .cat-dot { background: #FA8C16; }
+    .stats-card-c .cat-dot { background: #1677FF; }
+    .stats-card-total .cat-dot { background: linear-gradient(135deg, #FF4D4F, #1677FF); }
+
     .gantt-container {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -296,8 +374,7 @@
       opacity: 0.85;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      padding-right: 6px;
+      padding-left: 6px;
     }
     .gantt-task-bar-label {
       font-size: 10px;
@@ -305,6 +382,20 @@
       font-weight: 600;
       white-space: nowrap;
       text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+    .gantt-task-bar-category {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 9px;
+      color: #fff;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1px 5px;
+      border-radius: 3px;
+      white-space: nowrap;
+      z-index: 2;
     }
     .gantt-task-bar-conflict {
       position: absolute;
@@ -359,6 +450,18 @@
       margin-top: 8px;
       padding-top: 8px;
       border-top: 1px solid var(--border-color);
+    }
+    .tooltip-section {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+    .tooltip-section-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
     }
 
     .legend-bar {
@@ -537,7 +640,7 @@
     }
 
     .priority-critical { background: rgba(255, 77, 79, 0.15); color: #FF4D4F; }
-    .priority-high { background: rgba(250, 173, 20, 0.15); color: #FAAD14; }
+    .priority-high { background: rgba(250, 140, 22, 0.15); color: #FA8C16; }
     .priority-medium { background: rgba(22, 119, 255, 0.15); color: #1677FF; }
     .priority-low { background: rgba(139, 149, 168, 0.15); color: #8B95A8; }
 
@@ -608,6 +711,16 @@
       border-color: var(--brand-primary);
       color: var(--brand-light);
     }
+
+    .cat-badge-a { background: rgba(255, 77, 79, 0.15); color: #FF4D4F; }
+    .cat-badge-b { background: rgba(250, 140, 22, 0.15); color: #FA8C16; }
+    .cat-badge-c { background: rgba(22, 119, 255, 0.15); color: #1677FF; }
+
+    @media (max-width: 1200px) {
+      .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -648,8 +761,8 @@
 
     <aside class="app-sidebar">
       <div class="sidebar-filter-group">
-        <div class="sidebar-filter-title">任务类型</div>
-        <div id="typeFilter"></div>
+        <div class="sidebar-filter-title">任务类别</div>
+        <div id="categoryFilter"></div>
       </div>
       <div class="sidebar-filter-group">
         <div class="sidebar-filter-title">任务状态</div>
@@ -662,15 +775,78 @@
       <div class="sidebar-filter-group">
         <div class="sidebar-filter-title">图例</div>
         <div class="legend-bar" style="flex-direction:column; gap:10px; align-items:flex-start;">
-          <div class="legend-item"><span class="legend-color" style="background:#8B5CF6;"></span>零星任务</div>
-          <div class="legend-item"><span class="legend-color" style="background:#06B6D4;"></span>ABC类任务</div>
-          <div class="legend-item"><span class="legend-color" style="background:#1677FF;"></span>试制岛任务</div>
-          <div class="legend-item"><span class="legend-color" style="background:#FF4D4F;"></span>延期任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#FF4D4F;"></span>A类任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#FA8C16;"></span>B类任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#1677FF;"></span>C类任务</div>
+          <div class="legend-item"><span class="legend-color" style="background:#FF4D4F; opacity:0.5;"></span>延期任务</div>
         </div>
       </div>
     </aside>
 
     <main class="app-main">
+      <div class="stats-cards" id="statsCards">
+        <div class="stats-card stats-card-a">
+          <div class="stats-card-bar"></div>
+          <div class="stats-card-header">
+            <div class="stats-card-title"><span class="cat-dot"></span>A类项目</div>
+            <i data-lucide="flame" style="width:16px;height:16px;color:#FF4D4F;"></i>
+          </div>
+          <div class="stats-card-value">
+            <span class="number" id="countA">0</span>
+            <span class="unit">个项目</span>
+          </div>
+          <div class="stats-card-sub">
+            <i data-lucide="truck" style="width:12px;height:12px;"></i>
+            <span>总装 <strong id="unitsA">0</strong> 台</span>
+          </div>
+        </div>
+        <div class="stats-card stats-card-b">
+          <div class="stats-card-bar"></div>
+          <div class="stats-card-header">
+            <div class="stats-card-title"><span class="cat-dot"></span>B类项目</div>
+            <i data-lucide="zap" style="width:16px;height:16px;color:#FA8C16;"></i>
+          </div>
+          <div class="stats-card-value">
+            <span class="number" id="countB">0</span>
+            <span class="unit">个项目</span>
+          </div>
+          <div class="stats-card-sub">
+            <i data-lucide="truck" style="width:12px;height:12px;"></i>
+            <span>总装 <strong id="unitsB">0</strong> 台</span>
+          </div>
+        </div>
+        <div class="stats-card stats-card-c">
+          <div class="stats-card-bar"></div>
+          <div class="stats-card-header">
+            <div class="stats-card-title"><span class="cat-dot"></span>C类项目</div>
+            <i data-lucide="sparkles" style="width:16px;height:16px;color:#1677FF;"></i>
+          </div>
+          <div class="stats-card-value">
+            <span class="number" id="countC">0</span>
+            <span class="unit">个项目</span>
+          </div>
+          <div class="stats-card-sub">
+            <i data-lucide="truck" style="width:12px;height:12px;"></i>
+            <span>总装 <strong id="unitsC">0</strong> 台</span>
+          </div>
+        </div>
+        <div class="stats-card stats-card-total">
+          <div class="stats-card-bar"></div>
+          <div class="stats-card-header">
+            <div class="stats-card-title"><span class="cat-dot"></span>项目总计</div>
+            <i data-lucide="layers" style="width:16px;height:16px;color:var(--brand-light);"></i>
+          </div>
+          <div class="stats-card-value">
+            <span class="number" id="countTotal">0</span>
+            <span class="unit">个项目</span>
+          </div>
+          <div class="stats-card-sub">
+            <i data-lucide="truck" style="width:12px;height:12px;"></i>
+            <span>总装 <strong id="unitsTotal">0</strong> 台</span>
+          </div>
+        </div>
+      </div>
+
       <div class="gantt-toolbar">
         <div class="gantt-toolbar-left">
           <div class="scale-toggle" id="scaleToggle">
@@ -685,10 +861,10 @@
             <input type="date" id="endDate">
           </div>
           <select class="gantt-filter" id="toolbarTypeFilter">
-            <option value="">全部类型</option>
-            <option value="零星任务">零星任务</option>
-            <option value="ABC类任务">ABC类任务</option>
-            <option value="试制岛任务">试制岛任务</option>
+            <option value="">全部类别</option>
+            <option value="A类">A类任务</option>
+            <option value="B类">B类任务</option>
+            <option value="C类">C类任务</option>
           </select>
         </div>
         <div class="gantt-toolbar-right">
@@ -753,11 +929,11 @@
             <input class="form-input" id="newTitle" placeholder="请输入任务名称">
           </div>
           <div class="form-item">
-            <label class="form-label">任务类型</label>
-            <select class="form-select" id="newType">
-              <option value="零星任务">零星任务</option>
-              <option value="ABC类任务">ABC类任务</option>
-              <option value="试制岛任务">试制岛任务</option>
+            <label class="form-label">任务类别</label>
+            <select class="form-select" id="newCategory">
+              <option value="A类">A类任务</option>
+              <option value="B类">B类任务</option>
+              <option value="C类" selected>C类任务</option>
             </select>
           </div>
           <div class="form-item">
@@ -795,9 +971,28 @@
   <script>
   (function () {
     const TYPE_COLORS = {
-      '零星任务': '#8B5CF6',
-      'ABC类任务': '#06B6D4',
-      '试制岛任务': '#1677FF'
+      'A类任务': '#FF4D4F',
+      'B类任务': '#FA8C16',
+      'C类任务': '#1677FF',
+      '零星任务': '#8B95A8',
+      '试制岛任务': '#52C41A'
+    };
+    const CATEGORY_COLORS = {
+      'A类': '#FF4D4F',
+      'B类': '#FA8C16',
+      'C类': '#1677FF'
+    };
+    const CATEGORY_TYPE_MAP = {
+      'A类': 'A类任务',
+      'B类': 'B类任务',
+      'C类': 'C类任务'
+    };
+    const TYPE_CATEGORY_MAP = {
+      'A类任务': 'A类',
+      'B类任务': 'B类',
+      'C类任务': 'C类',
+      '零星任务': null,
+      '试制岛任务': null
     };
     const PRIORITY_MAP = {
       '低': 'priority-low',
@@ -814,7 +1009,7 @@
     };
 
     let currentScale = 'day';
-    let currentFilters = { type: null, status: null, priority: null };
+    let currentFilters = { category: null, status: null, priority: null };
     let dateRangeStart = null;
     let dateRangeEnd = null;
     let allTasks = [];
@@ -844,6 +1039,9 @@
     }
 
     function getTaskColor(task) {
+      if (task.category && CATEGORY_COLORS[task.category]) {
+        return CATEGORY_COLORS[task.category];
+      }
       return TYPE_COLORS[task.type] || '#8B95A8';
     }
 
@@ -853,7 +1051,10 @@
 
     function getFilteredTasks() {
       return allTasks.filter(t => {
-        if (currentFilters.type && t.type !== currentFilters.type) return false;
+        if (currentFilters.category) {
+          const taskCat = t.category || TYPE_CATEGORY_MAP[t.type];
+          if (taskCat !== currentFilters.category) return false;
+        }
         if (currentFilters.status && t.status !== currentFilters.status) return false;
         if (currentFilters.priority && t.priority !== currentFilters.priority) return false;
         return true;
@@ -899,7 +1100,7 @@
       let daysHTML = '';
       let currentMonth = range.start.getMonth();
       let currentYear = range.start.getFullYear();
-      let monthStartDay = 1;
+      let monthStartDay = 0;
 
       for (let i = 0; i < totalDays; i++) {
         const date = new Date(range.start);
@@ -988,6 +1189,7 @@
 
         const color = getTaskColor(task);
         const delayed = isTaskDelayed(task);
+        const category = task.category || TYPE_CATEGORY_MAP[task.type];
 
         const leftRow = document.createElement('div');
         leftRow.className = 'gantt-task-row';
@@ -1039,6 +1241,13 @@
         bar.appendChild(barInner);
         bar.appendChild(barProgress);
 
+        if (category) {
+          const catBadge = document.createElement('span');
+          catBadge.className = 'gantt-task-bar-category';
+          catBadge.textContent = '[' + category + ']';
+          bar.appendChild(catBadge);
+        }
+
         if (delayed) {
           const conflict = document.createElement('div');
           conflict.className = 'gantt-task-bar-conflict';
@@ -1088,13 +1297,17 @@
       const color = getTaskColor(task);
       const priorityClass = PRIORITY_MAP[task.priority];
       const statusClass = STATUS_MAP[task.status];
+      const category = task.category || TYPE_CATEGORY_MAP[task.type];
+      const catClass = category ? 'cat-badge-' + category.toLowerCase().replace('类', '') : '';
+
+      const totalUnits = task.totalQty || 0;
 
       tooltip.innerHTML = `
         <div class="tooltip-title">
           <span style="width:10px;height:10px;border-radius:2px;background:${color};display:inline-block;"></span>
           ${task.title}
         </div>
-        <div class="tooltip-row"><span class="tooltip-label">类型</span><span class="tooltip-value">${task.type}</span></div>
+        <div class="tooltip-row"><span class="tooltip-label">类别</span><span class="tooltip-value">${category ? '<span class="status-badge ' + catClass + '">' + category + '</span>' : task.type}</span></div>
         <div class="tooltip-row"><span class="tooltip-label">状态</span><span class="tooltip-value"><span class="status-badge ${statusClass}">${task.status}</span></span></div>
         <div class="tooltip-row"><span class="tooltip-label">优先级</span><span class="tooltip-value"><span class="priority-badge ${priorityClass}">${task.priority}</span></span></div>
         <div class="tooltip-row"><span class="tooltip-label">负责人</span><span class="tooltip-value">${task.assignee}</span></div>
@@ -1102,6 +1315,11 @@
         <div class="tooltip-row"><span class="tooltip-label">车间</span><span class="tooltip-value">${task.area}区</span></div>
         <div class="tooltip-row"><span class="tooltip-label">开始</span><span class="tooltip-value">${task.startDate.split(' ')[0]}</span></div>
         <div class="tooltip-row"><span class="tooltip-label">结束</span><span class="tooltip-value">${task.endDate.split(' ')[0]}</span></div>
+        <div class="tooltip-section">
+          <div class="tooltip-section-title">项目信息</div>
+          <div class="tooltip-row"><span class="tooltip-label">项目编号</span><span class="tooltip-value" style="font-family:monospace;">${task.id}</span></div>
+          <div class="tooltip-row"><span class="tooltip-label">总装台数</span><span class="tooltip-value"><strong style="color:${color};">${totalUnits}</strong> 台</span></div>
+        </div>
         <div class="tooltip-progress">
           <div class="tooltip-row"><span class="tooltip-label">完成度</span><span class="tooltip-value">${task.progress}%</span></div>
           <div class="progress-bar-large" style="margin-top:6px;">
@@ -1130,6 +1348,8 @@
       const color = getTaskColor(task);
       const priorityClass = PRIORITY_MAP[task.priority];
       const statusClass = STATUS_MAP[task.status];
+      const category = task.category || TYPE_CATEGORY_MAP[task.type];
+      const catClass = category ? 'cat-badge-' + category.toLowerCase().replace('类', '') : '';
 
       document.getElementById('modalTitle').textContent = task.title;
 
@@ -1141,14 +1361,22 @@
         <div class="detail-section">
           <div class="detail-section-title"><i data-lucide="info"></i>基本信息</div>
           <div class="detail-grid">
-            <div class="detail-item"><span class="label">任务编号</span><span class="value" style="font-family:monospace;color:var(--brand-light);">${task.id}</span></div>
-            <div class="detail-item"><span class="label">任务类型</span><span class="value" style="color:${color};font-weight:600;">${task.type}</span></div>
+            <div class="detail-item"><span class="label">项目编号</span><span class="value" style="font-family:monospace;color:var(--brand-light);">${task.id}</span></div>
+            <div class="detail-item"><span class="label">任务类别</span><span class="value">${category ? '<span class="status-badge ' + catClass + '">' + category + '</span>' : task.type}</span></div>
             <div class="detail-item"><span class="label">优先级</span><span class="value"><span class="priority-badge ${priorityClass}">${task.priority}</span></span></div>
             <div class="detail-item"><span class="label">状态</span><span class="value"><span class="status-badge ${statusClass}">${task.status}</span></span></div>
             <div class="detail-item"><span class="label">负责人</span><span class="value">${task.assignee}</span></div>
             <div class="detail-item"><span class="label">车间</span><span class="value">${task.area}区</span></div>
             <div class="detail-item"><span class="label">设备</span><span class="value" style="font-family:monospace;">${task.device}</span></div>
             <div class="detail-item"><span class="label">创建时间</span><span class="value">${task.createdAt.split(' ')[0]}</span></div>
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title"><i data-lucide="package"></i>项目概况</div>
+          <div class="detail-grid">
+            <div class="detail-item"><span class="label">项目名称</span><span class="value">${task.name || task.title}</span></div>
+            <div class="detail-item"><span class="label">总装台数</span><span class="value" style="color:${color};font-weight:600;">${task.totalQty || 0} 台</span></div>
+            ${task.description ? '<div class="detail-item" style="grid-column:1fr 1fr;"><span class="label">描述</span><span class="value">' + task.description + '</span></div>' : ''}
           </div>
         </div>
         <div class="detail-section">
@@ -1192,26 +1420,29 @@
 
     function buildSidebarFilters() {
       const tasks = allTasks;
-      const types = [...new Set(tasks.map(t => t.type))];
-      const statuses = [...new Set(tasks.map(t => t.status))];
-      const priorities = ['低', '中', '高', '紧急'];
 
-      const typeContainer = document.getElementById('typeFilter');
-      typeContainer.innerHTML = `<div class="filter-item active" data-type="">
-        <span class="filter-dot" style="background:linear-gradient(135deg,#8B5CF6,#06B6D4,#1677FF);"></span>
-        <span>全部类型</span>
+      const categoryContainer = document.getElementById('categoryFilter');
+      const cats = [
+        { key: 'A类', color: '#FF4D4F' },
+        { key: 'B类', color: '#FA8C16' },
+        { key: 'C类', color: '#1677FF' }
+      ];
+
+      categoryContainer.innerHTML = `<div class="filter-item active" data-category="">
+        <span class="filter-dot" style="background:linear-gradient(135deg,#FF4D4F,#FA8C16,#1677FF);"></span>
+        <span>全部类别</span>
         <span class="filter-count">${tasks.length}</span>
       </div>`;
-      types.forEach(type => {
-        const color = TYPE_COLORS[type] || '#8B95A8';
-        const count = tasks.filter(t => t.type === type).length;
-        typeContainer.innerHTML += `<div class="filter-item" data-type="${type}">
-          <span class="filter-dot" style="background:${color};"></span>
-          <span>${type}</span>
+      cats.forEach(cat => {
+        const count = tasks.filter(t => (t.category || TYPE_CATEGORY_MAP[t.type]) === cat.key).length;
+        categoryContainer.innerHTML += `<div class="filter-item" data-category="${cat.key}">
+          <span class="filter-dot" style="background:${cat.color};"></span>
+          <span>${cat.key}</span>
           <span class="filter-count">${count}</span>
         </div>`;
       });
 
+      const statuses = [...new Set(tasks.map(t => t.status))];
       const statusContainer = document.getElementById('statusFilter');
       statusContainer.innerHTML = `<div class="filter-item active" data-status="">
         <span>全部状态</span>
@@ -1225,6 +1456,7 @@
         </div>`;
       });
 
+      const priorities = ['低', '中', '高', '紧急'];
       const priorityContainer = document.getElementById('priorityFilter');
       priorityContainer.innerHTML = `<div class="filter-item active" data-priority="">
         <span>全部优先级</span>
@@ -1238,11 +1470,12 @@
         </div>`;
       });
 
-      typeContainer.querySelectorAll('.filter-item').forEach(item => {
+      categoryContainer.querySelectorAll('.filter-item').forEach(item => {
         item.addEventListener('click', () => {
-          typeContainer.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+          categoryContainer.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
           item.classList.add('active');
-          currentFilters.type = item.dataset.type || null;
+          currentFilters.category = item.dataset.category || null;
+          document.getElementById('toolbarTypeFilter').value = item.dataset.category || '';
           renderGantt();
         });
       });
@@ -1272,6 +1505,30 @@
       document.getElementById('currentTime').textContent = `${hh}:${mm}:${ss}`;
     }
 
+    function renderStatsCards() {
+      const projects = MockData.data.REAL_DATA.projects;
+      const stats = MockData.data.REAL_DATA.stats;
+
+      const catAProjects = projects.filter(p => p.category === 'A类');
+      const catBProjects = projects.filter(p => p.category === 'B类');
+      const catCProjects = projects.filter(p => p.category === 'C类');
+
+      const unitsA = catAProjects.reduce((sum, p) => sum + p.totalQty, 0);
+      const unitsB = catBProjects.reduce((sum, p) => sum + p.totalQty, 0);
+      const unitsC = catCProjects.reduce((sum, p) => sum + p.totalQty, 0);
+      const unitsTotal = unitsA + unitsB + unitsC;
+
+      document.getElementById('countA').textContent = catAProjects.length;
+      document.getElementById('countB').textContent = catBProjects.length;
+      document.getElementById('countC').textContent = catCProjects.length;
+      document.getElementById('countTotal').textContent = projects.length;
+
+      document.getElementById('unitsA').textContent = unitsA;
+      document.getElementById('unitsB').textContent = unitsB;
+      document.getElementById('unitsC').textContent = unitsC;
+      document.getElementById('unitsTotal').textContent = unitsTotal;
+    }
+
     function initNav() {
       document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -1293,13 +1550,12 @@
     function init() {
       allTasks = MockData.data.tasks;
 
-      const today = getToday();
+      renderStatsCards();
+
       const startInput = document.getElementById('startDate');
       const endInput = document.getElementById('endDate');
-      const defaultStart = new Date(today);
-      defaultStart.setDate(defaultStart.getDate() - 30);
-      const defaultEnd = new Date(today);
-      defaultEnd.setDate(defaultEnd.getDate() + 90);
+      const defaultStart = new Date(2026, 6, 1);
+      const defaultEnd = new Date(2026, 11, 31);
       startInput.value = formatDate(defaultStart);
       endInput.value = formatDate(defaultEnd);
       dateRangeStart = defaultStart;
@@ -1325,9 +1581,9 @@
 
       document.getElementById('toolbarTypeFilter').addEventListener('change', (e) => {
         const v = e.target.value;
-        currentFilters.type = v || null;
-        document.querySelectorAll('#typeFilter .filter-item').forEach(i => {
-          i.classList.toggle('active', (i.dataset.type || '') === v);
+        currentFilters.category = v || null;
+        document.querySelectorAll('#categoryFilter .filter-item').forEach(i => {
+          i.classList.toggle('active', (i.dataset.category || '') === v);
         });
         renderGantt();
       });
@@ -1370,10 +1626,13 @@
           alert('请输入任务名称');
           return;
         }
+        const category = document.getElementById('newCategory').value;
         const newTask = {
           id: 'TASK-NEW-' + Date.now(),
           title: title,
-          type: document.getElementById('newType').value,
+          name: title,
+          type: CATEGORY_TYPE_MAP[category],
+          category: category,
           priority: document.getElementById('newPriority').value,
           status: '待执行',
           progress: 0,
@@ -1382,7 +1641,8 @@
           device: 'DEV-000',
           startDate: document.getElementById('newStart').value + ' 08:00:00',
           endDate: document.getElementById('newEnd').value + ' 18:00:00',
-          createdAt: formatDate(getToday()) + ' 08:00:00'
+          createdAt: formatDate(getToday()) + ' 08:00:00',
+          totalQty: 0
         };
         allTasks.push(newTask);
         buildSidebarFilters();

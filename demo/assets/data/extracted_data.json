@@ -1,0 +1,1478 @@
+{
+  "areas": [
+    {
+      "id": "SZA",
+      "name": "装配一期车间",
+      "lifts": "试制岛产线",
+      "capacity": "2个项目或\n单项目B类当量40台",
+      "monthly_data": {}
+    },
+    {
+      "id": "SZC",
+      "name": "仓库装配区",
+      "lifts": "5台",
+      "capacity": "单项目B类当量20台",
+      "monthly_data": {}
+    },
+    {
+      "id": "SZB",
+      "name": "装配二期车间",
+      "lifts": "6台",
+      "capacity": "2个项目或\n单项目B类当量24台",
+      "monthly_data": {}
+    },
+    {
+      "id": "JP1",
+      "name": "竞品装配一区",
+      "lifts": "3台",
+      "capacity": "单项目B类当量12台",
+      "monthly_data": {}
+    },
+    {
+      "id": "JP2",
+      "name": "竞品装配二区",
+      "lifts": "4台",
+      "capacity": "单项目B类当量16台",
+      "monthly_data": {}
+    },
+    {
+      "id": "LH",
+      "name": "联合装配区",
+      "lifts": "3台",
+      "capacity": "单项目B类当量12台",
+      "monthly_data": {}
+    },
+    {
+      "id": "CX1",
+      "name": "外委装配区（畅行正东和泰）",
+      "lifts": "13台",
+      "capacity": "2个项目或单项目B类当量52台",
+      "monthly_data": {}
+    },
+    {
+      "id": "CX2",
+      "name": "外委装配区（畅行交石）",
+      "lifts": "11台（总共13台）",
+      "capacity": "2个项目或单项目B类当量44台",
+      "monthly_data": {}
+    }
+  ],
+  "projects": [
+    {
+      "name": "S33ET0",
+      "code": "S33ET0",
+      "category": "A类",
+      "type": "试制",
+      "totalQty": 71,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "SZA",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "10台",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "30台",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "DH3",
+      "code": "DH3",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 3,
+      "summerQty": 3,
+      "status": "进行中",
+      "location": "SZC",
+      "weeks": {
+        "w1": "",
+        "w2": "3台",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "DH1 BEV",
+      "code": "DH1 BEV",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 17,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "SZC",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "17台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": ""
+      }
+    },
+    {
+      "name": "S3R",
+      "code": "S3R",
+      "category": "B类",
+      "type": "试制",
+      "totalQty": 13,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "SZC",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "13台",
+        "w10": ""
+      }
+    },
+    {
+      "name": "S595bH",
+      "code": "S595bH",
+      "category": "B类",
+      "type": "试制",
+      "totalQty": 4,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "SZB",
+      "weeks": {
+        "w1": "4台",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "乐高骡子车",
+      "code": "乐高骡子车",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 3,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "SZB",
+      "weeks": {
+        "w1": "",
+        "w2": "3台",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "E70换代",
+      "code": "E70换代",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 12,
+      "summerQty": 6,
+      "status": "进行中",
+      "location": "SZB",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "12台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "P4J",
+      "code": "P4J",
+      "category": "A类",
+      "type": "试制",
+      "totalQty": 11,
+      "summerQty": 2,
+      "status": "进行中",
+      "location": "SZB",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "7月2台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "8月9台",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "S-P（NX1）",
+      "code": "S-P（NX1）",
+      "category": "B类",
+      "type": "试制",
+      "totalQty": 5,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "SZB",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "5台",
+        "w10": ""
+      }
+    },
+    {
+      "name": "DH1BEV",
+      "code": "DH1BEV",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 8,
+      "summerQty": 4,
+      "status": "进行中",
+      "location": "JP1",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "4台",
+        "w5": "",
+        "w6": "4台",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "S597",
+      "code": "S597",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 4,
+      "summerQty": 4,
+      "status": "进行中",
+      "location": "JP2",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "4台",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": ""
+      }
+    },
+    {
+      "name": "轮毂电机",
+      "code": "轮毂电机",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 26,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "LH",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "7月8台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "8月10台",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "NX1（MPV）",
+      "code": "NX1（MPV）",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 8,
+      "summerQty": 6,
+      "status": "进行中",
+      "location": "LH",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "8台",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "M18-3b",
+      "code": "M18-3b",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 10,
+      "summerQty": 3,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "7月4台",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "M18-3RHW(右舵)",
+      "code": "M18-3RHW(右舵)",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 3,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "3台",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "J4J",
+      "code": "J4J",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 3,
+      "summerQty": 3,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "3台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "DH1海外",
+      "code": "DH1海外",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 7,
+      "summerQty": 7,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "7台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "P57巴西海外",
+      "code": "P57巴西海外",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 4,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "4台",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "S596b",
+      "code": "S596b",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 1,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "1台",
+        "w6": "",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": "Y"
+      }
+    },
+    {
+      "name": "G59 ICE年型海外",
+      "code": "G59 ICE年型海外",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 4,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "4台",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": ""
+      }
+    },
+    {
+      "name": "S73b换电版",
+      "code": "S73b换电版",
+      "category": "B类",
+      "type": "试制",
+      "totalQty": 12,
+      "summerQty": 2,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "12台",
+        "w7": "",
+        "w8": "",
+        "w9": "",
+        "w10": ""
+      }
+    },
+    {
+      "name": "G35海外",
+      "code": "G35海外",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 10,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "10台",
+        "w9": "",
+        "w10": ""
+      }
+    },
+    {
+      "name": "P57巴西海外",
+      "code": "P57巴西海外",
+      "category": "C类",
+      "type": "试制",
+      "totalQty": 10,
+      "summerQty": 0,
+      "status": "进行中",
+      "location": "外委装配区",
+      "weeks": {
+        "w1": "",
+        "w2": "",
+        "w3": "",
+        "w4": "",
+        "w5": "",
+        "w6": "",
+        "w7": "",
+        "w8": "10台",
+        "w9": "",
+        "w10": ""
+      }
+    }
+  ],
+  "projectList": [
+    {
+      "name": "P59a",
+      "category": "C类",
+      "pm": "郑雄文",
+      "monthly": {}
+    },
+    {
+      "name": "M18-3年型",
+      "category": "B类",
+      "pm": "刘佳",
+      "monthly": {}
+    },
+    {
+      "name": "S73b",
+      "category": "C类",
+      "pm": "蔡志伟",
+      "monthly": {}
+    },
+    {
+      "name": "DH-3",
+      "category": "C类",
+      "pm": "陈兵",
+      "monthly": {
+        "1月": "2"
+      }
+    },
+    {
+      "name": "DH-2",
+      "category": "C类",
+      "pm": "暂定",
+      "monthly": {}
+    },
+    {
+      "name": "DH-2",
+      "category": "B类",
+      "pm": "暂定",
+      "monthly": {}
+    },
+    {
+      "name": "DH-3",
+      "category": "B类",
+      "pm": "陈兵",
+      "monthly": {
+        "10月": "20",
+        "11月": "SZC/SZA",
+        "12月": "5"
+      }
+    },
+    {
+      "name": "S33",
+      "category": "A类",
+      "pm": "陈寅",
+      "monthly": {}
+    },
+    {
+      "name": "S33",
+      "category": "A类",
+      "pm": "陈寅",
+      "monthly": {
+        "1月": "7",
+        "2月": "30",
+        "3月": "SZA",
+        "4月": "产线",
+        "5月": "28",
+        "6月": "31",
+        "7月": "SZA",
+        "8月": "试制岛",
+        "9月": "28"
+      }
+    },
+    {
+      "name": "S33",
+      "category": "A类",
+      "pm": "陈寅",
+      "monthly": {
+        "10月": "20",
+        "11月": "SZA",
+        "12月": "产线"
+      }
+    },
+    {
+      "name": "S59B MT-6样车",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S-P平台XY项目",
+      "category": "A类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S31aL3准入",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S597骡子车mule-1",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S596b ET0",
+      "category": "B类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "L3级智能驾驶关键算法开发与应用(S59bL2.9智驾骡子车)",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S596b-H",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "MMPR(S32)",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S31b",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "G44",
+      "category": "C类",
+      "pm": "吴小兵",
+      "monthly": {}
+    },
+    {
+      "name": "G64",
+      "category": "C类",
+      "pm": "吴小兵",
+      "monthly": {}
+    },
+    {
+      "name": "DH-1",
+      "category": "A类",
+      "pm": "陈文都",
+      "monthly": {}
+    },
+    {
+      "name": "S596b-H",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S596b-H",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "M18-3先导改挂车（名称待定）",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "华电无人车/有人车项目",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "DH1 长续航",
+      "category": "B类",
+      "pm": "陈文都",
+      "monthly": {}
+    },
+    {
+      "name": "DH1 长续航",
+      "category": "B类",
+      "pm": "陈文都",
+      "monthly": {}
+    },
+    {
+      "name": "DH1 BEV",
+      "category": "C类",
+      "pm": "陈文都",
+      "monthly": {
+        "1月": "2",
+        "2月": "4",
+        "3月": "JP1",
+        "4月": "3",
+        "5月": "2"
+      }
+    },
+    {
+      "name": "DH1 BEV",
+      "category": "C类",
+      "pm": "陈文都",
+      "monthly": {
+        "1月": "8"
+      }
+    },
+    {
+      "name": "DH1 L3",
+      "category": "B类",
+      "pm": "李尚成",
+      "monthly": {}
+    },
+    {
+      "name": "M18-3年型",
+      "category": "C类",
+      "pm": "刘佳",
+      "monthly": {}
+    },
+    {
+      "name": "M18-3高性能",
+      "category": "C类",
+      "pm": "谢宇",
+      "monthly": {}
+    },
+    {
+      "name": "XY长续航",
+      "category": "C类",
+      "pm": "吴小龙",
+      "monthly": {}
+    },
+    {
+      "name": "S59-右舵版",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {
+        "6月": "1",
+        "7月": "CX",
+        "8月": "4",
+        "9月": "1"
+      }
+    },
+    {
+      "name": "S59-欧洲版",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {
+        "6月": "7",
+        "7月": "CX",
+        "8月": "4"
+      }
+    },
+    {
+      "name": "P59欧盟",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "P57欧七",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "S73REV",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "S73BEV 右舵",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "S73bH",
+      "category": "C类",
+      "pm": "蔡志伟",
+      "monthly": {}
+    },
+    {
+      "name": "P59a",
+      "category": "C类",
+      "pm": "郑雄文",
+      "monthly": {}
+    },
+    {
+      "name": "P57A2",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "P57A2",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "P59a",
+      "category": "C类",
+      "pm": "郑雄文",
+      "monthly": {}
+    },
+    {
+      "name": "S597",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S3R",
+      "category": "B类",
+      "pm": "何建宁",
+      "monthly": {
+        "2月": "13",
+        "3月": "SZC",
+        "4月": "3",
+        "5月": "10"
+      }
+    },
+    {
+      "name": "S3R",
+      "category": "B类",
+      "pm": "何建宁",
+      "monthly": {}
+    },
+    {
+      "name": "S595b",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S595b",
+      "category": "B类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S597",
+      "category": "B类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S73b（固态电池T500）",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S32f",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S3K",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S32b",
+      "category": "B类",
+      "pm": "",
+      "monthly": {
+        "10月": "9",
+        "11月": "CX",
+        "12月": "3"
+      }
+    },
+    {
+      "name": "S32b",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "M18-2C",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "M18-3b",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "1月": "1",
+        "6月": "3",
+        "7月": "SZC",
+        "8月": "3",
+        "9月": "3",
+        "10月": "3",
+        "11月": "JP1",
+        "12月": "3"
+      }
+    },
+    {
+      "name": "M18-3b",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "P4J",
+      "category": "A类",
+      "pm": "肖高峰",
+      "monthly": {
+        "1月": "2",
+        "2月": "9",
+        "3月": "SZB",
+        "4月": "3",
+        "5月": "8"
+      }
+    },
+    {
+      "name": "P4J（SUV）",
+      "category": "A类",
+      "pm": "肖高峰",
+      "monthly": {
+        "10月": "15",
+        "11月": "SZB",
+        "12月": "5"
+      }
+    },
+    {
+      "name": "P4J海外",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "P4J海外",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "P4L-W（Wagon）",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "NX1(MPV)",
+      "category": "C类",
+      "pm": "盛俏",
+      "monthly": {
+        "1月": "4"
+      }
+    },
+    {
+      "name": "NX1(MPV)",
+      "category": "A类",
+      "pm": "盛俏",
+      "monthly": {}
+    },
+    {
+      "name": "NX2(SUV)",
+      "category": "C类",
+      "pm": "/",
+      "monthly": {
+        "6月": "10",
+        "7月": "CX",
+        "8月": "3",
+        "9月": "1",
+        "10月": "10",
+        "11月": "CX",
+        "12月": "3"
+      }
+    },
+    {
+      "name": "NX2(SUV)",
+      "category": "A类",
+      "pm": "/",
+      "monthly": {}
+    },
+    {
+      "name": "NX3(SED)",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "J4J",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "1月": "1"
+      }
+    },
+    {
+      "name": "J4J",
+      "category": "B类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "轮毂电机",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "1月": "4",
+        "2月": "10",
+        "3月": "LH",
+        "4月": "3",
+        "5月": "5",
+        "6月": "8",
+        "7月": "LH",
+        "8月": "2",
+        "9月": "4"
+      }
+    },
+    {
+      "name": "车路云",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "G59新HEV",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "G35新HEV",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "M57新HEV",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "C65中改",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "G59 ICE年型",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {
+        "2月": "4",
+        "3月": "CX",
+        "4月": "2",
+        "5月": "1"
+      }
+    },
+    {
+      "name": "S37",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "乐高车",
+      "category": "B类",
+      "pm": "屈新田",
+      "monthly": {
+        "1月": "2"
+      }
+    },
+    {
+      "name": "S73b",
+      "category": "C类",
+      "pm": "蔡志伟",
+      "monthly": {}
+    },
+    {
+      "name": "S73bH",
+      "category": "C类",
+      "pm": "蔡志伟",
+      "monthly": {}
+    },
+    {
+      "name": "S-P线控车",
+      "category": "C类",
+      "pm": "吴小龙",
+      "monthly": {}
+    },
+    {
+      "name": "P57海外动力电池迭代",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "M18-3先导车",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S32 欧盟二阶段",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "G35b白俄DKD项目",
+      "category": "C类",
+      "pm": "赵宁",
+      "monthly": {}
+    },
+    {
+      "name": "G59新HEV",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "E70换代",
+      "category": "C类",
+      "pm": "马宏滨",
+      "monthly": {
+        "1月": "5"
+      }
+    },
+    {
+      "name": "M18-3RHW(右舵)",
+      "category": "C类",
+      "pm": "刘佳",
+      "monthly": {}
+    },
+    {
+      "name": "P57 REV",
+      "category": "C类",
+      "pm": "赵宁",
+      "monthly": {
+        "10月": "3",
+        "11月": "CX",
+        "12月": "3"
+      }
+    },
+    {
+      "name": "P57海外动力电池迭代",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "S32英国",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "S595b华为版",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S595b华为版",
+      "category": "B类",
+      "pm": "黎睿",
+      "monthly": {
+        "1月": "2"
+      }
+    },
+    {
+      "name": "M57新HEV南美独联体",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "M57新HEV GCC",
+      "category": "C类",
+      "pm": "刘小杰",
+      "monthly": {}
+    },
+    {
+      "name": "P57动力电池迭代巴西",
+      "category": "C类",
+      "pm": "李清平",
+      "monthly": {}
+    },
+    {
+      "name": "S73b换电版",
+      "category": "B类",
+      "pm": "蔡志伟",
+      "monthly": {
+        "2月": "12",
+        "3月": "CX",
+        "4月": "6",
+        "5月": "1",
+        "6月": "6",
+        "7月": "CX",
+        "8月": "6",
+        "9月": "1"
+      }
+    },
+    {
+      "name": "S2中改",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "DH1海外",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "1月": "1"
+      }
+    },
+    {
+      "name": "S595b华为版",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "S595b华为版",
+      "category": "C类",
+      "pm": "黎睿",
+      "monthly": {}
+    },
+    {
+      "name": "DH1 L3（REV）",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "6月": "18",
+        "7月": "JP",
+        "8月": "6",
+        "9月": "9"
+      }
+    },
+    {
+      "name": "DH1 L3（BEV）",
+      "category": "B类",
+      "pm": "",
+      "monthly": {
+        "6月": "26",
+        "7月": "SZB",
+        "8月": "5",
+        "9月": "17"
+      }
+    },
+    {
+      "name": "S32a1",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "6月": "6",
+        "7月": "CX",
+        "8月": "2"
+      }
+    },
+    {
+      "name": "C68中改",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "Model-B",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "10月": "5",
+        "11月": "JP2",
+        "12月": "3"
+      }
+    },
+    {
+      "name": "G35",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "2月": "10",
+        "3月": "CX",
+        "4月": "5",
+        "5月": "1"
+      }
+    },
+    {
+      "name": "P59巴西",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "2月": "10",
+        "3月": "CX",
+        "4月": "5"
+      }
+    },
+    {
+      "name": "S596b",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S01欧洲",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "10月": "19",
+        "11月": "CX",
+        "12月": "5"
+      }
+    },
+    {
+      "name": "S01中东",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "10月": "9",
+        "11月": "CX",
+        "12月": "4"
+      }
+    },
+    {
+      "name": "S01南美",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "10月": "2",
+        "11月": "CX",
+        "12月": "2"
+      }
+    },
+    {
+      "name": "P57巴西",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "ModelA EV",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "S597",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "2月": "4",
+        "3月": "JP2",
+        "4月": "4",
+        "5月": "2"
+      }
+    },
+    {
+      "name": "S-P（NX1）",
+      "category": "B类",
+      "pm": "",
+      "monthly": {
+        "2月": "5",
+        "3月": "SZB",
+        "4月": "3",
+        "5月": "4"
+      }
+    },
+    {
+      "name": "在此行上面插入行",
+      "category": "C类",
+      "pm": "",
+      "monthly": {}
+    },
+    {
+      "name": "零星任务",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "1月": "13",
+        "2月": "215",
+        "3月": "HM/CX",
+        "4月": "8",
+        "5月": "5",
+        "6月": "215",
+        "7月": "HM/CX",
+        "8月": "8",
+        "9月": "3",
+        "10月": "215",
+        "11月": "HM/CX",
+        "12月": "8"
+      }
+    },
+    {
+      "name": "ABC类项目数量合计",
+      "category": "C类",
+      "pm": "",
+      "monthly": {
+        "1月": "41",
+        "2月": "111",
+        "5月": "62",
+        "6月": "116",
+        "9月": "64",
+        "10月": "115"
+      }
+    }
+  ]
+}

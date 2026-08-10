@@ -24,6 +24,7 @@ from backend.delivery.router import router as delivery_router
 from backend.critical_parts.router import router as critical_router
 from backend.scheduling.router import router as scheduling_router
 from backend.system.router import router as system_router
+from backend.modules.resource.router import router as resource_router
 
 app = FastAPI(
     title="spiderV5 PBOM 智能装配系统",
@@ -79,6 +80,7 @@ app.include_router(delivery_router, prefix="/api/delivery", tags=["多源去重�
 app.include_router(critical_router, prefix="/api/critical", tags=["关键件评分"])
 app.include_router(scheduling_router, prefix="/api/schedule", tags=["BFWS排程"], include_in_schema=False)
 app.include_router(system_router, prefix="/api/system", tags=["系统设置"])
+app.include_router(resource_router, prefix="/api/resource", tags=["试制资源"])
 
 # 全局异常处理
 @app.exception_handler(BusinessError)

@@ -1,9 +1,13 @@
 window.MockData = (function () {
   const AREAS = [
-    { id: 'A', name: 'A车间', fullName: 'A区装配车间', location: '1号厂房1层', manager: '张伟' },
-    { id: 'B', name: 'B车间', fullName: 'B区焊接车间', location: '1号厂房2层', manager: '李强' },
-    { id: 'C', name: 'C车间', fullName: 'C区喷涂车间', location: '2号厂房1层', manager: '王芳' },
-    { id: 'D', name: 'D车间', fullName: 'D区总装车间', location: '2号厂房2层', manager: '刘洋' }
+    { id: 'SZA', name: '装配一期车间', fullName: '装配一期车间(试制岛产线)', location: '总院A区', lifts: '试制岛产线', capacity: '2个项目或单项目B类当量40台', manager: '范潇' },
+    { id: 'SZB', name: '装配二期车间', fullName: '装配二期车间', location: '总院B区', lifts: '6台举升机', capacity: '2个项目或单项目B类当量24台', manager: '邢浩然' },
+    { id: 'SZC', name: '仓库装配区', fullName: '仓库装配区', location: '总院仓库', lifts: '5台举升机', capacity: '单项目B类当量20台', manager: '王鹏' },
+    { id: 'JP1', name: '竞品装配一区', fullName: '竞品装配一区', location: '竞品区1', lifts: '3台举升机', capacity: '单项目B类当量12台', manager: '李思贤' },
+    { id: 'JP2', name: '竞品装配二区', fullName: '竞品装配二区', location: '竞品区2', lifts: '4台举升机', capacity: '单项目B类当量16台', manager: '李思贤' },
+    { id: 'LH', name: '联合装配区', fullName: '联合装配区', location: '联合区', lifts: '3-5台举升机', capacity: '单项目B类当量12台', manager: '金执' },
+    { id: 'CX1', name: '外委装配区(畅行正东和泰)', fullName: '外委装配区', location: '外委区1', lifts: '13台举升机', capacity: '2个项目或单项目B类当量52台', manager: '外委' },
+    { id: 'CX2', name: '外委装配区(畅行交石)', fullName: '外委装配区', location: '外委区2', lifts: '11台举升机', capacity: '2个项目或单项目B类当量44台', manager: '外委' }
   ];
 
   const STATUS_MAP = {
@@ -45,7 +49,7 @@ window.MockData = (function () {
     const devices = [];
     const statuses = ['online', 'online', 'online', 'online', 'online', 'idle', 'warning', 'maintenance', 'fault', 'offline'];
     for (let i = 1; i <= 50; i++) {
-      const areaIndex = i < 15 ? 0 : (i < 28 ? 1 : (i < 40 ? 2 : 3));
+      const areaIndex = i < 10 ? 0 : (i < 20 ? 1 : (i < 30 ? 2 : (i < 38 ? 3 : (i < 44 ? 4 : (i < 48 ? 5 : (i < 50 ? 6 : 7))))));
       const status = statuses[Math.floor(Math.random() * statuses.length)];
       const lastMaintain = randomDate(new Date(2025, 0, 1), new Date(2026, 6, 30));
       const nextMaintain = randomDate(new Date(2026, 7, 1), new Date(2026, 12, 31));
@@ -96,36 +100,83 @@ window.MockData = (function () {
   const TASK_TYPES = ['零星任务', 'ABC类任务', '试制岛任务'];
   const TASK_PRIORITIES = ['低', '中', '高', '紧急'];
   const TASK_STATUS_LIST = ['待执行', '执行中', '已完成', '已延期', '已取消'];
-  const TASK_TITLES = [
-    '零部件CNC加工', '外壳焊接组装', '表面喷涂处理', '整体装配', '成品检测',
-    '备件更换', '日常保养', '设备维修', '模具调试', '工艺验证',
-    '样品试制', '小批量生产', '质量整改', '技术改造', '紧急订单',
-    '来料加工', '包装发运', '退货返工', '升级改造', '临时支援'
+
+  const REAL_PROJECTS = [
+    { id: 'PRJ-001', name: 'S33ET0', code: 'S33ET0', category: 'A类', totalQty: 71, status: '执行中', location: 'SZA', progress: 60, startDate: '2026-07-01', endDate: '2026-10-31', assignee: '陈寅', description: 'S33平台ET0试制项目，总装71台' },
+    { id: 'PRJ-002', name: 'DH3', code: 'DH3', category: 'C类', totalQty: 3, status: '执行中', location: 'SZC', progress: 30, startDate: '2026-07-15', endDate: '2026-08-31', assignee: '陈兵', description: 'DH3车型试制，共3台' },
+    { id: 'PRJ-003', name: 'DH1 BEV', code: 'DH1 BEV', category: 'C类', totalQty: 17, status: '执行中', location: 'SZC', progress: 10, startDate: '2026-07-20', endDate: '2026-09-30', assignee: '陈文都', description: 'DH1纯电动版试制，共17台' },
+    { id: 'PRJ-004', name: 'S3R', code: 'S3R', category: 'B类', totalQty: 13, status: '执行中', location: 'SZC', progress: 15, startDate: '2026-08-01', endDate: '2026-10-31', assignee: '何建宁', description: 'S3R改款试制，共13台' },
+    { id: 'PRJ-005', name: 'S595bH', code: 'S595bH', category: 'B类', totalQty: 4, status: '已完成', location: 'SZB', progress: 100, startDate: '2026-06-01', endDate: '2026-07-15', assignee: '黎睿', description: 'S595bH华为版试制，共4台' },
+    { id: 'PRJ-006', name: '乐高骡子车', code: '乐高骡子车', category: 'C类', totalQty: 3, status: '已完成', location: 'SZB', progress: 100, startDate: '2026-06-15', endDate: '2026-07-31', assignee: '屈新田', description: '乐高平台骡子车试制，共3台' },
+    { id: 'PRJ-007', name: 'E70换代', code: 'E70换代', category: 'C类', totalQty: 12, status: '已完成', location: 'SZB', progress: 100, startDate: '2026-07-01', endDate: '2026-08-31', assignee: '马宏滨', description: 'E70换代车型试制，共12台' },
+    { id: 'PRJ-008', name: 'P4J', code: 'P4J', category: 'A类', totalQty: 11, status: '执行中', location: 'SZB', progress: 45, startDate: '2026-07-15', endDate: '2026-10-31', assignee: '肖高峰', description: 'P4J平台试制，共11台' },
+    { id: 'PRJ-009', name: 'S-P（NX1）', code: 'S-P（NX1）', category: 'B类', totalQty: 5, status: '执行中', location: 'SZB', progress: 20, startDate: '2026-08-01', endDate: '2026-10-31', assignee: '待定', description: 'S-P平台NX1项目试制，共5台' },
+    { id: 'PRJ-010', name: 'DH1BEV', code: 'DH1BEV', category: 'C类', totalQty: 8, status: '已完成', location: 'JP1', progress: 100, startDate: '2026-06-15', endDate: '2026-08-31', assignee: '陈文都', description: 'DH1纯电动版竞品区试制，共8台' },
+    { id: 'PRJ-011', name: 'S597', code: 'S597', category: 'C类', totalQty: 4, status: '执行中', location: 'JP2', progress: 25, startDate: '2026-07-15', endDate: '2026-09-30', assignee: '黎睿', description: 'S597车型试制，共4台' },
+    { id: 'PRJ-012', name: '轮毂电机', code: '轮毂电机', category: 'C类', totalQty: 26, status: '执行中', location: 'LH', progress: 50, startDate: '2026-07-01', endDate: '2026-10-31', assignee: '待定', description: '轮毂电机项目试制，共26台' },
+    { id: 'PRJ-013', name: 'NX1（MPV）', code: 'NX1（MPV）', category: 'C类', totalQty: 8, status: '已完成', location: 'LH', progress: 100, startDate: '2026-06-01', endDate: '2026-07-31', assignee: '盛俏', description: 'NX1 MPV车型试制，共8台' },
+    { id: 'PRJ-014', name: 'M18-3b', code: 'M18-3b', category: 'C类', totalQty: 10, status: '已延期', location: 'CX1', progress: 35, startDate: '2026-07-01', endDate: '2026-08-31', assignee: '待定', description: 'M18-3b车型外委试制，共10台' },
+    { id: 'PRJ-015', name: 'M18-3RHW(右舵)', code: 'M18-3RHW(右舵)', category: 'C类', totalQty: 3, status: '已完成', location: 'CX1', progress: 100, startDate: '2026-07-15', endDate: '2026-08-31', assignee: '刘佳', description: 'M18-3右舵版外委试制，共3台' },
+    { id: 'PRJ-016', name: 'J4J', code: 'J4J', category: 'C类', totalQty: 3, status: '已完成', location: 'CX1', progress: 100, startDate: '2026-06-15', endDate: '2026-07-31', assignee: '待定', description: 'J4J车型外委试制，共3台' },
+    { id: 'PRJ-017', name: 'DH1海外', code: 'DH1海外', category: 'C类', totalQty: 7, status: '已完成', location: 'CX1', progress: 100, startDate: '2026-06-15', endDate: '2026-07-31', assignee: '待定', description: 'DH1海外版外委试制，共7台' },
+    { id: 'PRJ-018', name: 'P57巴西海外', code: 'P57巴西海外', category: 'C类', totalQty: 4, status: '已完成', location: 'CX1', progress: 100, startDate: '2026-07-01', endDate: '2026-08-15', assignee: '待定', description: 'P57巴西版外委试制，共4台' },
+    { id: 'PRJ-019', name: 'S596b', code: 'S596b', category: 'C类', totalQty: 1, status: '已延期', location: 'CX2', progress: 40, startDate: '2026-07-01', endDate: '2026-08-15', assignee: '待定', description: 'S596b车型外委试制，共1台' },
+    { id: 'PRJ-020', name: 'G59 ICE年型海外', code: 'G59 ICE年型海外', category: 'C类', totalQty: 4, status: '执行中', location: 'CX2', progress: 30, startDate: '2026-07-15', endDate: '2026-09-15', assignee: '李清平', description: 'G59 ICE年型海外版外委试制，共4台' },
+    { id: 'PRJ-021', name: 'S73b换电版', code: 'S73b换电版', category: 'B类', totalQty: 12, status: '执行中', location: 'CX2', progress: 35, startDate: '2026-07-15', endDate: '2026-09-30', assignee: '蔡志伟', description: 'S73b换电版外委试制，共12台' },
+    { id: 'PRJ-022', name: 'G35海外', code: 'G35海外', category: 'C类', totalQty: 10, status: '已延期', location: 'CX2', progress: 55, startDate: '2026-06-15', endDate: '2026-08-31', assignee: '刘小杰', description: 'G35海外版外委试制，共10台' },
+    { id: 'PRJ-023', name: 'P57巴西海外(第二批)', code: 'P57巴西海外', category: 'C类', totalQty: 10, status: '执行中', location: 'CX2', progress: 20, startDate: '2026-08-01', endDate: '2026-10-31', assignee: '待定', description: 'P57巴西海外版第二批外委试制，共10台' }
   ];
+
+  const REAL_STATS = {
+    totalProjects: 23,
+    categoryA: 2,
+    categoryB: 4,
+    categoryC: 17,
+    totalUnits: 241,
+    inProgress: 12,
+    completed: 8,
+    delayed: 3
+  };
 
   function generateTasks() {
     const tasks = [];
-    for (let i = 1; i <= 30; i++) {
-      const typeIndex = i <= 10 ? 0 : (i <= 20 ? 1 : 2);
-      const statusIndex = Math.floor(Math.random() * TASK_STATUS_LIST.length);
-      const progress = TASK_STATUS_LIST[statusIndex] === '已完成' ? 100 :
-        TASK_STATUS_LIST[statusIndex] === '待执行' ? 0 :
-          Math.floor(Math.random() * 80) + 10;
-      const startDate = randomDate(new Date(2026, 5, 1), new Date(2026, 6, 30));
-      const endDate = randomDate(new Date(2026, 7, 1), new Date(2026, 11, 31));
+    for (let i = 0; i < REAL_PROJECTS.length; i++) {
+      const p = REAL_PROJECTS[i];
+      let taskType;
+      if (p.category === 'A类') taskType = 'A类任务';
+      else if (p.category === 'B类') taskType = 'B类任务';
+      else taskType = 'C类任务';
+
+      let priority;
+      if (p.category === 'A类') priority = '紧急';
+      else if (p.category === 'B类') priority = '高';
+      else priority = '中';
+
+      let status;
+      if (p.status === '已完成') status = '已完成';
+      else if (p.status === '已延期') status = '已延期';
+      else if (p.progress >= 100) status = '已完成';
+      else if (p.progress <= 0) status = '待执行';
+      else status = '执行中';
+
       tasks.push({
-        id: 'TASK-' + padZero(i),
-        title: TASK_TITLES[i % TASK_TITLES.length] + ' - ' + padZero(i),
-        type: TASK_TYPES[typeIndex],
-        priority: TASK_PRIORITIES[Math.floor(Math.random() * TASK_PRIORITIES.length)],
-        status: TASK_STATUS_LIST[statusIndex],
-        progress: progress,
-        area: AREAS[Math.floor(Math.random() * AREAS.length)].id,
-        assignee: PERSON_NAMES[Math.floor(Math.random() * PERSON_NAMES.length)],
+        id: 'TASK-' + padZero(i + 1),
+        code: p.code,
+        name: p.name,
+        title: p.name,
+        type: taskType,
+        priority: priority,
+        status: status,
+        progress: p.progress,
+        area: p.location,
+        assignee: p.assignee,
         device: 'DEV-' + padZero(Math.floor(Math.random() * 50) + 1),
-        startDate: startDate,
-        endDate: endDate,
-        createdAt: randomDate(new Date(2026, 3, 1), new Date(2026, 5, 31))
+        startDate: p.startDate,
+        endDate: p.endDate,
+        createdAt: p.startDate + ' 09:00:00',
+        description: p.description,
+        totalQty: p.totalQty,
+        category: p.category
       });
     }
     return tasks;
@@ -188,11 +239,11 @@ window.MockData = (function () {
         maintenanceDevices: 5,
         faultDevices: 2,
         avgUtilization: 73.5,
-        totalTasks: 30,
-        completedTasks: 12,
-        inProgressTasks: 10,
-        pendingTasks: 6,
-        delayedTasks: 2,
+        totalTasks: REAL_PROJECTS.length,
+        completedTasks: REAL_STATS.completed,
+        inProgressTasks: REAL_STATS.inProgress,
+        pendingTasks: 0,
+        delayedTasks: REAL_STATS.delayed,
         totalAlerts: 15,
         unresolvedAlerts: 8,
         personnelCount: 20,
@@ -209,8 +260,8 @@ window.MockData = (function () {
         values: [35, 8, 5, 5, 2, 3]
       },
       taskType: {
-        labels: ['零星任务', 'ABC类任务', '试制岛任务'],
-        values: [10, 20, 10]
+        labels: ['A类任务', 'B类任务', 'C类任务'],
+        values: [REAL_STATS.categoryA, REAL_STATS.categoryB, REAL_STATS.categoryC]
       },
       alertLevel: {
         labels: ['严重', '高', '中', '低'],
@@ -218,9 +269,9 @@ window.MockData = (function () {
       },
       areaComparison: {
         areas: AREAS.map(a => a.name),
-        devices: [15, 13, 12, 10],
-        utilization: [78, 72, 70, 74],
-        tasks: [8, 7, 8, 7]
+        devices: [10, 10, 10, 8, 6, 4, 4, 4],
+        utilization: [78, 72, 70, 74, 68, 65, 70, 72],
+        tasks: [3, 3, 3, 2, 1, 2, 3, 3]
       },
       weeklyOutput: {
         days: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
@@ -237,7 +288,12 @@ window.MockData = (function () {
     tasks: generateTasks(),
     alerts: generateAlerts(),
     stats: generateStats(),
-    statusMap: STATUS_MAP
+    statusMap: STATUS_MAP,
+    REAL_DATA: {
+      projects: REAL_PROJECTS,
+      stats: REAL_STATS,
+      areas: AREAS
+    }
   };
 
   return {
@@ -248,6 +304,11 @@ window.MockData = (function () {
       data.tasks = generateTasks();
       data.alerts = generateAlerts();
       data.stats = generateStats();
+      data.REAL_DATA = {
+        projects: REAL_PROJECTS,
+        stats: REAL_STATS,
+        areas: AREAS
+      };
       return data;
     }
   };

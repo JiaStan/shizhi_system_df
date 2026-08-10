@@ -249,23 +249,36 @@
               <i data-lucide="layout-grid" class="card-title-icon"></i>
               车间实时布局
             </div>
-            <div class="legend">
-              <div class="legend-item">
-                <span class="legend-color" style="background:var(--brand-primary);opacity:0.7;"></span>
-                运行中
+            <div class="workshop-controls">
+              <div class="legend">
+                <div class="legend-item">
+                  <span class="legend-color" style="background:var(--brand-primary);opacity:0.7;"></span>
+                  运行中
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background:var(--success);opacity:0.7;"></span>
+                  空闲
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background:var(--danger);opacity:0.8;"></span>
+                  故障
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background:var(--text-muted);opacity:0.6;"></span>
+                  维护中
+                </div>
               </div>
-              <div class="legend-item">
-                <span class="legend-color" style="background:var(--success);opacity:0.7;"></span>
-                空闲
+              <div class="layout-edit-controls" id="layoutEditControls" style="display:none;gap:8px;margin-left:12px;">
+                <button class="btn btn-sm btn-outline" id="resetLayoutBtn" style="padding:4px 10px;font-size:12px;">
+                  <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> 重置
+                </button>
+                <button class="btn btn-sm btn-primary" id="saveLayoutBtn" style="padding:4px 10px;font-size:12px;">
+                  <i data-lucide="save" style="width:14px;height:14px;"></i> 保存
+                </button>
               </div>
-              <div class="legend-item">
-                <span class="legend-color" style="background:var(--danger);opacity:0.8;"></span>
-                故障
-              </div>
-              <div class="legend-item">
-                <span class="legend-color" style="background:var(--text-muted);opacity:0.6;"></span>
-                维护中
-              </div>
+              <button class="btn btn-sm btn-outline" id="editLayoutBtn" style="padding:4px 10px;font-size:12px;margin-left:8px;">
+                <i data-lucide="settings-2" style="width:14px;height:14px;"></i> 编辑布局
+              </button>
             </div>
           </div>
           <div class="workshop-grid" id="workshopGrid"></div>
@@ -344,6 +357,10 @@
       let currentAlarmFilter = 'all';
       let currentTaskFilter = 'all';
       let charts = {};
+      let layoutEditMode = false;
+      let savedLayoutOrder = JSON.parse(localStorage.getItem('workshopLayoutOrder') || 'null');
+      let savedGridCols = parseInt(localStorage.getItem('workshopGridCols') || '0');
+      let draggedZone = null;
 
       function fmtTime(d) {
         const pad = n => String(n).padStart(2, '0');
@@ -634,11 +651,19 @@
 
       function renderWorkshop() {
         const container = document.getElementById('workshopGrid');
-        const areas = currentAreaFilter === 'all' ? d.areas : d.areas.filter(a => a.id === currentAreaFilter);
+        let areas = currentAreaFilter === 'all' ? d.areas : d.areas.filter(a => a.id === currentAreaFilter);
 
-        container.style.gridTemplateColumns = areas.length === 1 ? '1fr' : areas.length === 2 ? '1fr 1fr' : areas.length === 4 ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)';
+        if (savedLayoutOrder && savedLayoutOrder.length === areas.length) {
+          areas.sort((a, b) => savedLayoutOrder.indexOf(a.id) - savedLayoutOrder.indexOf(b.id));
+        }
 
-        const html = areas.map(area => {
+        if (layoutEditMode && savedGridCols >= 2 && savedGridCols <= 6) {
+          container.style.gridTemplateColumns = `repeat(${savedGridCols}, 1fr)`;
+        } else {
+          container.style.gridTemplateColumns = areas.length === 1 ? '1fr' : areas.length === 2 ? '1fr 1fr' : areas.length <= 3 ? `repeat(${areas.length}, 1fr)` : 'repeat(4, 1fr)';
+        }
+
+        const html = areas.map((area, idx) => {
           const devices = d.devices.filter(dev => dev.area === area.id);
           const onlineCount = devices.filter(dev => ['online', 'idle'].includes(dev.status)).length;
           const cellCount = Math.max(devices.length, 10);
@@ -653,21 +678,131 @@
             }
           }
           return `
-            <div class="zone-card">
+            <div class="zone-card ${layoutEditMode ? 'edit-mode' : ''}" draggable="${layoutEditMode}" data-zone-id="${area.id}" data-zone-index="${idx}">
               <div class="zone-header">
-                <span class="zone-name">${area.name}</span>
+                <span class="zone-name">${layoutEditMode ? '<i data-lucide="grip-vertical" style="width:14px;height:14px;margin-right:4px;cursor:grab;"></i>' : ''}${area.name}</span>
                 <span class="zone-stats">${onlineCount}/${devices.length} 在线</span>
               </div>
-              <div class="device-grid">${cellsHtml}</div>
+              <div class="device-grid" style="${layoutEditMode ? 'grid-template-columns:repeat(4,1fr);' : ''}">${cellsHtml}</div>
             </div>
           `;
         }).join('');
         container.innerHTML = html;
 
+        if (layoutEditMode) {
+          container.querySelectorAll('.zone-card').forEach(card => {
+            card.addEventListener('dragstart', onZoneDragStart);
+            card.addEventListener('dragend', onZoneDragEnd);
+            card.addEventListener('dragover', onZoneDragOver);
+            card.addEventListener('dragleave', onZoneDragLeave);
+            card.addEventListener('drop', onZoneDrop);
+          });
+        }
+
         container.querySelectorAll('.device-cell[data-dev-id]').forEach(cell => {
           cell.addEventListener('mouseenter', onDeviceHover);
           cell.addEventListener('mousemove', onDeviceMove);
           cell.addEventListener('mouseleave', onDeviceLeave);
+        });
+
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function onZoneDragStart(e) {
+        draggedZone = this;
+        this.style.opacity = '0.5';
+        this.style.cursor = 'grabbing';
+        e.dataTransfer.effectAllowed = 'move';
+      }
+
+      function onZoneDragEnd(e) {
+        this.style.opacity = '1';
+        this.style.cursor = '';
+        const grid = document.getElementById('workshopGrid');
+        grid.querySelectorAll('.zone-card').forEach(c => c.style.borderColor = '');
+        const zones = Array.from(grid.querySelectorAll('.zone-card'));
+        const newOrder = zones.map(z => z.dataset.zoneId);
+        savedLayoutOrder = newOrder;
+      }
+
+      function onZoneDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        this.style.borderColor = 'var(--brand-primary)';
+      }
+
+      function onZoneDragLeave(e) {
+        this.style.borderColor = '';
+      }
+
+      function onZoneDrop(e) {
+        e.preventDefault();
+        this.style.borderColor = '';
+        if (!draggedZone || draggedZone === this) return;
+
+        const grid = document.getElementById('workshopGrid');
+        const zones = Array.from(grid.querySelectorAll('.zone-card'));
+        const draggedIdx = zones.indexOf(draggedZone);
+        const targetIdx = zones.indexOf(this);
+
+        if (draggedIdx < targetIdx) {
+          this.parentNode.insertBefore(draggedZone, this.nextSibling);
+        } else {
+          this.parentNode.insertBefore(draggedZone, this);
+        }
+      }
+
+      function initLayoutEditMode() {
+        const editBtn = document.getElementById('editLayoutBtn');
+        const controls = document.getElementById('layoutEditControls');
+        const saveBtn = document.getElementById('saveLayoutBtn');
+        const resetBtn = document.getElementById('resetLayoutBtn');
+
+        if (!editBtn) return;
+
+        editBtn.addEventListener('click', () => {
+          layoutEditMode = !layoutEditMode;
+          if (layoutEditMode) {
+            editBtn.innerHTML = '<i data-lucide="eye-off" style="width:14px;height:14px;"></i> 退出编辑';
+            editBtn.style.background = 'var(--brand-primary)';
+            editBtn.style.color = '#fff';
+            controls.style.display = 'flex';
+            App.toast('已进入布局编辑模式，拖拽区域卡片调整顺序', 'info', '编辑模式');
+          } else {
+            editBtn.innerHTML = '<i data-lucide="settings-2" style="width:14px;height:14px;"></i> 编辑布局';
+            editBtn.style.background = '';
+            editBtn.style.color = '';
+            controls.style.display = 'none';
+            renderWorkshop();
+            App.toast('已退出编辑模式', 'success');
+            return;
+          }
+          renderWorkshop();
+          if (window.lucide) lucide.createIcons();
+        });
+
+        saveBtn.addEventListener('click', () => {
+          const cols = prompt('设置网格列数 (1-6):', savedGridCols || 4);
+          if (cols !== null) {
+            const numCols = parseInt(cols);
+            if (numCols >= 1 && numCols <= 6) {
+              savedGridCols = numCols;
+              localStorage.setItem('workshopGridCols', numCols);
+            }
+          }
+          if (savedLayoutOrder) {
+            localStorage.setItem('workshopLayoutOrder', JSON.stringify(savedLayoutOrder));
+          }
+          if (window.App) App.toast('布局已保存', 'success');
+        });
+
+        resetBtn.addEventListener('click', () => {
+          localStorage.removeItem('workshopLayoutOrder');
+          localStorage.removeItem('workshopGridCols');
+          savedLayoutOrder = null;
+          savedGridCols = 0;
+          renderWorkshop();
+          if (window.App) App.toast('布局已重置为默认', 'success');
         });
       }
 
@@ -838,18 +973,6 @@
       }
 
       function bindNav() {
-        document.querySelectorAll('.nav-item').forEach(item => {
-          item.addEventListener('click', () => {
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            if (item.dataset.page !== 'dashboard') {
-              App.toast(`跳转到 ${item.textContent} 页面`, 'info');
-              document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-              document.querySelector('[data-page="dashboard"]').classList.add('active');
-            }
-          });
-        });
-
         document.getElementById('syncBtn').addEventListener('click', () => {
           App.toast('正在同步数据...', 'info');
           setTimeout(() => {
@@ -897,6 +1020,8 @@
         updateLastTime();
         renderAll();
         initCharts();
+        bindNav();
+        initLayoutEditMode();
         if (window.lucide) lucide.createIcons();
       });
     })();

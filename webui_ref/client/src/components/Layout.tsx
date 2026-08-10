@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboardIcon, SettingsIcon, ChevronUpIcon, FactoryIcon, PackageIcon, SearchIcon, BellIcon, FileTextIcon, ChevronRightIcon } from 'lucide-react';
+import { 
+  LayoutDashboardIcon, SettingsIcon, ChevronUpIcon, FactoryIcon, PackageIcon, 
+  SearchIcon, BellIcon, FileTextIcon, ChevronRightIcon,
+  MonitorIcon, CpuIcon, MapIcon, BarChart3Icon, UsersIcon,
+  CalendarIcon, TrendingUpIcon, AlertTriangleIcon, ClipboardListIcon,
+  BuildingIcon
+} from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -9,6 +15,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
@@ -23,13 +30,6 @@ import {
 import { useCurrentUserProfile } from '@lark-apaas/client-toolkit/hooks/useCurrentUserProfile';
 import { getDataloom } from '@lark-apaas/client-toolkit/dataloom';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
 import GlobalSearch from './GlobalSearch';
 import NotificationCenter from './NotificationCenter';
 import projectsData from '@shared/static/projects.json';
@@ -44,12 +44,35 @@ const NAV_ITEMS = [
   { path: '/settings', label: '系统设置', icon: SettingsIcon },
 ];
 
+// 试制资源模块导航项
+const RESOURCE_NAV_ITEMS = [
+  { path: '/resource/dashboard', label: '综合驾驶舱', icon: MonitorIcon },
+  { path: '/resource/equipment', label: '设备台账', icon: CpuIcon },
+  { path: '/resource/zones', label: '园区地图', icon: MapIcon },
+  { path: '/resource/utilization', label: '资源占用', icon: BarChart3Icon },
+  { path: '/resource/personnel', label: '人员看板', icon: UsersIcon },
+  { path: '/resource/gantt', label: '甘特排程', icon: CalendarIcon },
+  { path: '/resource/efficiency', label: '人效分析', icon: TrendingUpIcon },
+  { path: '/resource/alerts', label: '异常预警', icon: AlertTriangleIcon },
+  { path: '/resource/tasks', label: '任务管理', icon: ClipboardListIcon },
+];
+
 /* ── 面包屑标题映射（路由 → 页面名称） ── */
 const BC: Record<string, string> = {
   '/': '项目概览',
   '/all-parts': '仓库到货',
   '/audit-log': '操作日志',
   '/settings': '系统设置',
+  // 试制资源模块
+  '/resource/dashboard': '综合驾驶舱',
+  '/resource/equipment': '设备台账',
+  '/resource/zones': '园区地图',
+  '/resource/utilization': '资源占用',
+  '/resource/personnel': '人员看板',
+  '/resource/gantt': '甘特排程',
+  '/resource/efficiency': '人效分析',
+  '/resource/alerts': '异常预警',
+  '/resource/tasks': '任务管理',
 };
 
 function Breadcrumb() {
@@ -75,6 +98,20 @@ function Breadcrumb() {
   const segs = pathname.split('/').filter(Boolean); // e.g. ['projects', '1', 'assembly-plan']
   const isProjectRoute = segs[0] === 'projects';
   const currentLabel = BC[pathname];
+
+  /* ── 试制资源模块路由 ── */
+  const isResourceRoute = segs[0] === 'resource';
+  if (isResourceRoute && currentLabel) {
+    return (
+      <nav className="flex items-center gap-2 text-sm">
+        <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">首页</Link>
+        <ChevronRightIcon className="size-3.5 text-border shrink-0" />
+        <Link to="/resource/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">试制资源</Link>
+        <ChevronRightIcon className="size-3.5 text-border shrink-0" />
+        <span className="font-medium text-foreground">{currentLabel}</span>
+      </nav>
+    );
+  }
 
   /* ── 项目详情页 或 项目子页面（统一显示两级） ── */
   if (isProjectRoute && segs.length >= 2) {
@@ -151,6 +188,18 @@ function LayoutContent() {
       </SidebarMenuItem>
     ));
 
+  const renderResourceNavItems = () =>
+    RESOURCE_NAV_ITEMS.map((item) => (
+      <SidebarMenuItem key={item.path}>
+        <SidebarMenuButton asChild isActive={pathname === item.path}>
+          <Link to={item.path}>
+            <item.icon className="size-4 shrink-0" />
+            <span>{item.label}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ));
+
   const renderLogo = (collapsed = false) => (
     <>
       <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-2xl bg-[#d6e9e9]">
@@ -188,10 +237,21 @@ function LayoutContent() {
 
         {/* Navigation */}
         <SidebarContent>
+          {/* 主菜单 */}
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
                 {renderNavItems()}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* 试制资源模块 */}
+          <SidebarGroup>
+            <SidebarGroupLabel>试制资源</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderResourceNavItems()}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -287,6 +347,40 @@ function LayoutContent() {
         :global([data-sidebar="trigger"]:hover) {
           background: #f1f5f9 !important;
           color: #1a1a1a !important;
+        }
+        /* 试制资源模块分组标签样式 */
+        :global([data-sidebar="group-label"]) {
+          color: #64748b !important;
+          font-size: 0.75rem !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.05em !important;
+        }
+        /* 深色主题支持 */
+        @media (prefers-color-scheme: dark) {
+          :global([data-sidebar="sidebar"]) {
+            background: #1a1a1a !important;
+            border-right-color: #333333 !important;
+          }
+          :global([data-sidebar="sidebar-inner"]) {
+            background: #1a1a1a !important;
+          }
+          :global([data-slot="sidebar-container"]) {
+            border-right-color: #333333 !important;
+          }
+          :global([data-sidebar="menu-button"]:hover) {
+            background: #333333 !important;
+            color: #ffffff !important;
+          }
+          :global([data-sidebar="menu-button"][data-active="true"]) {
+            background: #e2f163 !important;
+            color: #1a1a1a !important;
+          }
+          :global([data-sidebar="menu-button"][data-active="true"]:hover) {
+            background: #c8d94f !important;
+          }
+          :global([data-sidebar="group-label"]) {
+            color: #94a3b8 !important;
+          }
         }
       `}</style>
     </>

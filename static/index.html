@@ -76,7 +76,7 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 13px;
   line-height: 1.6;
   min-height: 100vh;
@@ -411,31 +411,59 @@ input, select { font-family: inherit; outline: none; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px 18px;
+  padding: 18px 20px;
   position: relative;
   overflow: hidden;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
 }
-.kpi-card:hover { border-color: var(--blue-200); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); }
-.kpi-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  opacity: 0.06;
-  transform: translate(30px, -30px);
+.kpi-card:hover { border-color: var(--blue-200); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06); transform: translateY(-2px); }
+.kpi-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
-.kpi-card.blue::after { background: var(--blue-600); }
-.kpi-card.success::after { background: var(--success); }
-.kpi-card.warning::after { background: var(--warning); }
-.kpi-card.danger::after { background: var(--danger); }
-.kpi-label { font-size: 11.5px; color: var(--text-tertiary); font-weight: 600; letter-spacing: 0.2px; margin-bottom: 8px; }
-.kpi-value { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 6px; }
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.kpi-icon.blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.kpi-icon.green { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.kpi-icon.orange { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.kpi-icon.red { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+.kpi-icon.purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.kpi-icon.cyan { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+.kpi-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.2px; }
+.kpi-value { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; line-height: 1.15; margin-bottom: 8px; }
 .kpi-value .unit { font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin-left: 3px; }
-.kpi-foot { font-size: 11.5px; color: var(--text-secondary); }
+.kpi-foot { 
+  font-size: 12px; 
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.kpi-foot .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.kpi-foot .status-dot.green { background: #10b981; }
+.kpi-foot .status-dot.orange { background: #f59e0b; }
+.kpi-foot .status-dot.red { background: #ef4444; }
+.kpi-foot .status-dot.blue { background: #3b82f6; }
+.kpi-foot .sub-text { color: var(--text-tertiary); font-size: 11px; }
 
 /* ===== 卡片通用 ===== */
 .card {
@@ -618,6 +646,134 @@ textarea.input-field { line-height: 1.6; }
 }
 .select-option.selected:hover {
   background: #dbeafe;
+}
+
+/* ===== 弹窗 / Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.active {
+  display: flex;
+  opacity: 1;
+}
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.95) translateY(10px);
+  transition: transform 0.2s ease;
+}
+.modal-overlay.active .modal {
+  transform: scale(1) translateY(0);
+}
+.modal-lg { max-width: 720px; }
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+  font-size: 18px;
+}
+.modal-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.form-group label .required {
+  color: var(--danger);
+  margin-left: 2px;
+}
+.form-group .input-field {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-group .input-field:focus {
+  outline: none;
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.detail-row:last-child {
+  border-bottom: none;
+}
+.detail-label {
+  width: 120px;
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.detail-value {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
 }
 
 /* 布局适配：filter-bar 紧凑版 */
@@ -1021,6 +1177,279 @@ textarea.input-field { line-height: 1.6; }
 .form-item { display: flex; flex-direction: column; gap: 6px; }
 .form-item.full { grid-column: 1 / -1; }
 .form-label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; }
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); }
+.form-input::placeholder { color: var(--text-tertiary); }
+
+/* 头像组件 */
+.avatar-sm, .avatar-md {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+  text-align: center;
+}
+.avatar-sm { width: 30px; height: 30px; font-size: 12px; }
+.avatar-md { width: 52px; height: 52px; font-size: 20px; }
+.avatar-1 { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.avatar-2 { background: linear-gradient(135deg, #0ea5e9, #06b6d4); }
+.avatar-3 { background: linear-gradient(135deg, #10b981, #059669); }
+.avatar-4 { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.avatar-5 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.avatar-6 { background: linear-gradient(135deg, #ec4899, #db2777); }
+.avatar-7 { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+
+/* 标签chip */
+.chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* 详情项（人员详情等） */
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+}
+.detail-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.detail-value {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.detail-value:empty::before {
+  content: '-';
+  color: var(--text-tertiary);
+}
+
+/* 筛选栏 hover 效果 */
+.filter-item:hover { background: var(--bg-hover) !important; }
+
+/* ========== 人员看板表格修复 ========== */
+#personnelTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+}
+#personnelTable thead th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+#personnelTable tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text);
+  vertical-align: middle;
+  line-height: 1.5;
+}
+#personnelTable tbody tr:hover td {
+  background: var(--bg-hover);
+}
+#personnelTable tbody td.mono-cell {
+  font-family: 'HarmonyOS Sans Mono', 'SF Mono', Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+#personnelTable tbody td.avatar-cell {
+  text-align: center;
+}
+#personnelTable tbody td.action-cell {
+  white-space: nowrap;
+}
+
+/* ========== 人员看板卡片视图 ========== */
+.pb-view-toggle {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px;
+  gap: 2px;
+}
+.pb-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.pb-view-btn:hover { color: var(--text); }
+.pb-view-btn.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.pb-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  padding: 0;
+}
+
+.pb-personnel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+.pb-personnel-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
+}
+
+.pb-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, var(--surface), var(--surface-2));
+  border-bottom: 1px solid var(--border);
+}
+.pb-card-info { flex: 1; min-width: 0; }
+.pb-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+.pb-card-code {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: 'HarmonyOS Sans Mono', 'SF Mono', Consolas, monospace;
+  margin-top: 3px;
+}
+.pb-card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.pb-card-status-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+.pb-card-status-text.status-working { color: #10b981; }
+.pb-card-status-text.status-idle { color: #f59e0b; }
+.pb-card-status-text.status-offline { color: #94a3b8; }
+
+.pb-card-actions { flex-shrink: 0; }
+
+.pb-card-body { padding: 16px 18px; }
+
+.pb-card-task {
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.pb-card-task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+.pb-card-progress {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+.pb-card-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.pb-card-progress-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+.pb-card-task-empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 14px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.pb-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pb-card-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+.pb-card-meta-icon {
+  font-size: 13px;
+}
+
 
 /* 运行日志 */
 .log-panel {
@@ -1268,6 +1697,52 @@ textarea.input-field { line-height: 1.6; }
           <div class="nav-item" data-page="data" onclick="switchPage('data')">
             <span class="nav-text">数据处理</span>
             <span class="nav-short">数</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 试制资源 分组 ===== -->
+      <div class="nav-group">
+        <div class="nav-group-header" onclick="toggleNavGroup(this)">
+          <span class="nav-group-label">试制资源</span>
+          <span class="nav-group-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </div>
+        <div class="nav-group-body">
+          <div class="nav-item" data-page="resource-dashboard" onclick="switchPage('resource-dashboard')">
+            <span class="nav-text">综合驾驶舱</span>
+            <span class="nav-short">驾</span>
+          </div>
+          <div class="nav-item" data-page="equipment-ledger" onclick="switchPage('equipment-ledger')">
+            <span class="nav-text">设备台账</span>
+            <span class="nav-short">设</span>
+          </div>
+          <div class="nav-item" data-page="campus-map" onclick="switchPage('campus-map')">
+            <span class="nav-text">园区地图</span>
+            <span class="nav-short">园</span>
+          </div>
+          <div class="nav-item" data-page="resource-board" onclick="switchPage('resource-board')">
+            <span class="nav-text">资源占用</span>
+            <span class="nav-short">资</span>
+          </div>
+          <div class="nav-item" data-page="personnel-board" onclick="switchPage('personnel-board')">
+            <span class="nav-text">人员看板</span>
+            <span class="nav-short">人</span>
+          </div>
+          <div class="nav-item" data-page="gantt-schedule" onclick="switchPage('gantt-schedule')">
+            <span class="nav-text">甘特排程</span>
+            <span class="nav-short">甘</span>
+          </div>
+          <div class="nav-item" data-page="personnel-efficiency" onclick="switchPage('personnel-efficiency')">
+            <span class="nav-text">人效分析</span>
+            <span class="nav-short">效</span>
+          </div>
+          <div class="nav-item" data-page="alert-center" onclick="switchPage('alert-center')">
+            <span class="nav-text">异常预警</span>
+            <span class="nav-short">警</span>
+          </div>
+          <div class="nav-item" data-page="task-management" onclick="switchPage('task-management')">
+            <span class="nav-text">任务管理</span>
+            <span class="nav-short">任</span>
           </div>
         </div>
       </div>
@@ -2309,9 +2784,11 @@ textarea.input-field { line-height: 1.6; }
               <div class="card-sub" id="mergeSubTitle">点击下方按钮执行去重合并分析</div>
             </div>
             <div class="filter-bar">
-              <select id="mergeProjectSelect" onchange="runMerge()" style="padding:8px 12px;border:1px solid var(--border);border-radius:4px;">
-                <option value="">选择项目</option>
-              </select>
+              <span class="select-wrap">
+                <select id="mergeProjectSelect" onchange="runMerge()">
+                  <option value="">选择项目</option>
+                </select>
+              </span>
               <button class="btn btn-primary" onclick="runMerge()">执行合并分析</button>
             </div>
           </div>
@@ -2320,6 +2797,671 @@ textarea.input-field { line-height: 1.6; }
             <div id="mergeResultContainer">
               <div style="text-align:center;padding:40px;color:var(--text-tertiary);">请选择项目并点击"执行合并分析"</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 综合驾驶舱 ========== -->
+      <section class="page" id="page-resource-dashboard">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>试制资源综合驾驶舱</h2>
+            <p>实时监控试制资源使用情况</p>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon blue">⚙️</div>
+              <div class="kpi-label">设备总数</div>
+            </div>
+            <div class="kpi-value" id="rdKpiEquipment">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot blue"></span>
+              <span>全部注册</span>
+              <span class="sub-text" id="rdKpiEquipmentSub">—</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon green">✅</div>
+              <div class="kpi-label">空闲设备</div>
+            </div>
+            <div class="kpi-value" id="rdKpiIdle">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot green"></span>
+              <span>可立即使用</span>
+              <span class="sub-text" id="rdKpiIdleSub">—</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon orange">🔧</div>
+              <div class="kpi-label">占用设备</div>
+            </div>
+            <div class="kpi-value" id="rdKpiBusy">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot orange"></span>
+              <span>使用率</span>
+              <span class="sub-text" id="rdKpiBusySub">—</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon red">⚠️</div>
+              <div class="kpi-label">故障/维护</div>
+            </div>
+            <div class="kpi-value" id="rdKpiError">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot red"></span>
+              <span>异常设备</span>
+              <span class="sub-text" id="rdKpiErrorSub">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header"><div class="card-title">设备状态分布</div></div>
+          <div class="card-body"><div id="rdStatusChart" style="height:300px;"></div></div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 设备台账 ========== -->
+      <section class="page" id="page-equipment-ledger">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>设备台账</h2>
+            <p>管理所有试制设备信息</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="openEquipmentDialog()">+ 新增设备</button>
+          </div>
+        </div>
+
+        <!-- KPI卡片 -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon blue">⚙️</div>
+              <div class="kpi-label">设备总数</div>
+            </div>
+            <div class="kpi-value" id="eqKpiTotal">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot blue"></span>
+              <span>全部注册设备</span>
+              <span class="sub-text" id="eqKpiTotalSub">—</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon green">✅</div>
+              <div class="kpi-label">空闲</div>
+            </div>
+            <div class="kpi-value" id="eqKpiIdle">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot green"></span>
+              <span>可立即使用</span>
+              <span class="sub-text" id="eqKpiIdleSub">—</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon orange">🔧</div>
+              <div class="kpi-label">占用</div>
+            </div>
+            <div class="kpi-value" id="eqKpiBusy">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot orange"></span>
+              <span>正在使用中</span>
+              <span class="sub-text" id="eqKpiBusySub">—</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon red">⚠️</div>
+              <div class="kpi-label">故障/维护</div>
+            </div>
+            <div class="kpi-value" id="eqKpiError">—<span class="unit">台</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot red"></span>
+              <span>需关注</span>
+              <span class="sub-text" id="eqKpiErrorSub">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar" style="margin-top:20px;">
+          <input type="text" id="eqSearch" class="input-field" placeholder="搜索设备编号/名称..." oninput="loadEquipmentList()" style="min-width:180px;padding:8px 12px;" />
+          <span class="filter-label">类型</span>
+          <span class="select-wrap">
+            <select id="eqTypeFilter" onchange="loadEquipmentList()">
+              <option value="">全部类型</option>
+              <option value="lift">举升机</option>
+              <option value="island">试制岛</option>
+              <option value="station">工位</option>
+            </select>
+          </span>
+          <span class="filter-label">状态</span>
+          <span class="select-wrap">
+            <select id="eqStatusFilter" onchange="loadEquipmentList()">
+              <option value="">全部状态</option>
+              <option value="idle">空闲</option>
+              <option value="busy">占用</option>
+              <option value="error">故障</option>
+              <option value="maintenance">维护中</option>
+            </select>
+          </span>
+          <span class="filter-label">区域</span>
+          <span class="select-wrap">
+            <select id="eqZoneFilter" onchange="loadEquipmentList()">
+              <option value="">全部区域</option>
+            </select>
+          </span>
+          <button class="btn" onclick="resetEquipmentFilters()">重置</button>
+        </div>
+
+        <!-- 设备表格 -->
+        <div class="card" style="margin-top:16px;">
+          <div class="card-body" style="padding:0;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--surface-2);border-bottom:1px solid var(--border);">
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">设备编号</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">设备名称</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">类型</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">所属区域</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">状态</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">当前操作员</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">最后更新</th>
+                  <th style="padding:12px 16px;text-align:left;font-weight:600;color:var(--text-secondary);">操作</th>
+                </tr>
+              </thead>
+              <tbody id="equipmentTableBody">
+                <tr><td colspan="8" style="padding:40px;text-align:center;color:var(--text-tertiary);">加载中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分页 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+          <span style="color:var(--text-secondary);" id="eqPageInfo">共 0 条</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="eqPrevPage" onclick="changeEquipmentPage(-1)">上一页</button>
+            <span id="eqPageNum" style="padding:8px 12px;">1</span>
+            <button class="btn" id="eqNextPage" onclick="changeEquipmentPage(1)">下一页</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 园区地图 ========== -->
+      <section class="page" id="page-campus-map">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>园区地图</h2>
+            <p>试制园区物理布局可视化</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+            <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
+            <div>园区地图模块开发中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 资源占用 ========== -->
+      <section class="page" id="page-resource-board">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>资源占用看板</h2>
+            <p>实时资源占用情况</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+            <div style="font-size:48px;margin-bottom:16px;">📊</div>
+            <div>资源占用模块开发中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 人员看板 ========== -->
+      <section class="page" id="page-personnel-board">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>人员看板</h2>
+            <p>实时监控人员位置、状态与工作负载</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="showPersonnelFormModal()">+ 新增人员</button>
+            <button class="btn">人员调配</button>
+            <button class="btn">排班表</button>
+          </div>
+        </div>
+
+        <!-- KPI卡片 -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon blue">👥</div>
+              <div class="kpi-label">人员总数</div>
+            </div>
+            <div class="kpi-value" id="pbKpiTotal">—<span class="unit">人</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot blue"></span>
+              <span id="pbKpiTotalSub">在岗 / 离线：— / —</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon cyan">🕐</div>
+              <div class="kpi-label">在岗人数</div>
+            </div>
+            <div class="kpi-value" id="pbKpiOnDuty">—<span class="unit">人</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot blue"></span>
+              <span id="pbKpiOnDutySub">在岗率 —%</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon green">⚡</div>
+              <div class="kpi-label">工作中</div>
+            </div>
+            <div class="kpi-value" id="pbKpiWorking">—<span class="unit">人</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot green"></span>
+              <span id="pbKpiWorkingSub">占比 —%</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon orange">🟡</div>
+              <div class="kpi-label">空闲可调配</div>
+            </div>
+            <div class="kpi-value" id="pbKpiIdle">—<span class="unit">人</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot orange"></span>
+              <span>可灵活调配</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon red">⚠️</div>
+              <div class="kpi-label">今日异常</div>
+            </div>
+            <div class="kpi-value" id="pbKpiAbnormal">—<span class="unit">人</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot red"></span>
+              <span>离线人员数量</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar" style="margin-top:20px;">
+          <input type="text" id="pbSearchInput" class="input-field" placeholder="搜索姓名或工号..." oninput="applyPersonnelFilter()" style="min-width:180px;" />
+          <span class="filter-label">状态</span>
+          <span class="select-wrap">
+            <select id="pbStatusFilter" onchange="applyPersonnelFilter()">
+              <option value="">全部状态</option>
+              <option value="working">工作中</option>
+              <option value="idle">空闲</option>
+              <option value="offline">离线</option>
+            </select>
+          </span>
+          <span class="filter-label">区域</span>
+          <span class="select-wrap">
+            <select id="pbZoneFilter" onchange="applyPersonnelFilter()">
+              <option value="">全部区域</option>
+              <option value="SZA">一总装（SZA）</option>
+              <option value="SZB">二总装（SZB）</option>
+              <option value="SZC">三总装（SZC）</option>
+              <option value="LH">联合厂房（LH）</option>
+              <option value="NON_ASSEMBLY">非装配区</option>
+            </select>
+          </span>
+          <span class="filter-label">人员来源</span>
+          <span class="select-wrap">
+            <select id="pbSourceFilter" onchange="applyPersonnelFilter()">
+              <option value="">全部来源</option>
+              <option value="自有">自有</option>
+              <option value="商用车">商用车</option>
+              <option value="乘用车">乘用车</option>
+              <option value="柳汽">柳汽</option>
+              <option value="中智">中智</option>
+              <option value="外协">外协</option>
+              <option value="内调">内调</option>
+            </select>
+          </span>
+          <button class="btn" onclick="resetPersonnelFilters()">重置</button>
+          <button class="btn btn-primary" onclick="loadPersonnelDashboard()">刷新</button>
+          <div class="pb-view-toggle" style="margin-left:auto;display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+            <button class="pb-view-btn active" id="pbViewList" onclick="switchPbView('list')" title="列表视图">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <span>列表</span>
+            </button>
+            <button class="pb-view-btn" id="pbViewCard" onclick="switchPbView('card')" title="卡片视图">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <span>卡片</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div style="display:flex;gap:16px;margin-top:16px;">
+          <div class="card" style="flex:1;min-width:0;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">装配区 · 人员来源分布</div>
+                <div class="card-sub">各来源人员占比</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:16px 20px;">
+              <div id="pbSourcePieChart" style="width:100%; height:240px;"></div>
+            </div>
+          </div>
+          <div class="card" style="flex:1;min-width:0;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">装配区 · 来源统计</div>
+                <div class="card-sub">按来源显示人员数量与平均工时</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:16px 20px;">
+              <div id="pbSourceBarChart" style="width:100%; height:240px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 人员明细表/卡片视图 -->
+        <div id="pbListView" style="margin-top:16px;">
+          <div class="card">
+            <div class="card-body" style="padding:0;overflow-x:auto;">
+              <table id="personnelTable">
+                <thead>
+                  <tr>
+                    <th style="width:52px;text-align:center;">序号</th>
+                    <th>姓名</th>
+                    <th>工号</th>
+                    <th>位置（区域）</th>
+                    <th id="pbSourceCol">来源</th>
+                    <th>状态</th>
+                    <th>今日工时</th>
+                    <th>工作中任务</th>
+                    <th style="width:120px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="personnelTableBody">
+                  <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-tertiary);">加载中...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卡片视图容器（独立于表格） -->
+        <div id="pbCardView" style="display:none;margin-top:16px;"></div>
+
+        <!-- 分页 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+          <span style="color:var(--text-secondary);" id="pbPageInfo">共 0 条</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="pbPrevPage" onclick="pbChangePage(-1)">上一页</button>
+            <span id="pbPageNum" style="padding:8px 12px;">1</span>
+            <button class="btn" id="pbNextPage" onclick="pbChangePage(1)">下一页</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 甘特排程 ========== -->
+      <section class="page" id="page-gantt-schedule">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>甘特图排程</h2>
+            <p>任务时间线排程管理</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+            <div style="font-size:48px;margin-bottom:16px;">📅</div>
+            <div>甘特排程模块开发中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 人效分析 ========== -->
+      <section class="page" id="page-personnel-efficiency">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>人效分析</h2>
+            <p>人员效率数据分析</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+            <div style="font-size:48px;margin-bottom:16px;">📈</div>
+            <div>人效分析模块开发中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 异常预警 ========== -->
+      <section class="page" id="page-alert-center">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>异常预警中心</h2>
+            <p>设备异常及预警信息</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+            <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+            <div>异常预警模块开发中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 页面: 任务管理 ========== -->
+      <section class="page" id="page-task-management">
+        <div class="page-header">
+          <div class="page-title">
+            <h2>任务管理</h2>
+            <p>试制任务分配与追踪</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="showTaskFormModal()">+ 新增任务</button>
+            <button class="btn">批量导入</button>
+            <button class="btn">导出</button>
+          </div>
+        </div>
+
+        <!-- KPI卡片 -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon blue">📋</div>
+              <div class="kpi-label">任务总数</div>
+            </div>
+            <div class="kpi-value" id="tmKpiTotal">—<span class="unit">项</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot blue"></span>
+              <span id="tmKpiTotalSub">进行中 / 待开始：— / —</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon cyan">🔄</div>
+              <div class="kpi-label">进行中</div>
+            </div>
+            <div class="kpi-value" id="tmKpiInProgress">—<span class="unit">项</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot blue"></span>
+              <span id="tmKpiInProgressSub">占比 —%</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon green">✅</div>
+              <div class="kpi-label">已完成</div>
+            </div>
+            <div class="kpi-value" id="tmKpiCompleted">—<span class="unit">项</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot green"></span>
+              <span id="tmKpiCompletedSub">完成率 —%</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon orange">🟠</div>
+              <div class="kpi-label">高优先级</div>
+            </div>
+            <div class="kpi-value" id="tmKpiHigh">—<span class="unit">项</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot orange"></span>
+              <span>需重点关注</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-head">
+              <div class="kpi-icon red">⏰</div>
+              <div class="kpi-label">平均进度</div>
+            </div>
+            <div class="kpi-value" id="tmKpiProgress">—<span class="unit">%</span></div>
+            <div class="kpi-foot">
+              <span class="status-dot red"></span>
+              <span id="tmKpiProgressSub">工时：计划 — / 实际 — h</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar" style="margin-top:20px;">
+          <input type="text" id="tmSearchInput" class="input-field" placeholder="搜索任务编号/名称/项目/车号..." oninput="applyTaskFilter()" style="min-width:220px;" />
+          <span class="filter-label">任务类型</span>
+          <span class="select-wrap">
+            <select id="tmTypeFilter" onchange="applyTaskFilter()">
+              <option value="">全部类型</option>
+              <option value="A">A类任务</option>
+              <option value="B">B类任务</option>
+              <option value="C">C类任务</option>
+              <option value="sporadic">零星试制</option>
+            </select>
+          </span>
+          <span class="filter-label">试制类别</span>
+          <span class="select-wrap">
+            <select id="tmTrialFilter" onchange="applyTaskFilter()">
+              <option value="">全部</option>
+              <option value="骡子车">骡子车</option>
+              <option value="ET0">ET0</option>
+              <option value="ET">ET</option>
+              <option value="软模车">软模车</option>
+              <option value="FT0">FT0</option>
+              <option value="MT">MT系列</option>
+            </select>
+          </span>
+          <span class="filter-label">状态</span>
+          <span class="select-wrap">
+            <select id="tmStatusFilter" onchange="applyTaskFilter()">
+              <option value="">全部状态</option>
+              <option value="pending">待开始</option>
+              <option value="in_progress">进行中</option>
+              <option value="completed">已完成</option>
+              <option value="overdue">逾期</option>
+            </select>
+          </span>
+          <span class="filter-label">优先级</span>
+          <span class="select-wrap">
+            <select id="tmPriorityFilter" onchange="applyTaskFilter()">
+              <option value="">全部优先级</option>
+              <option value="high">高</option>
+              <option value="medium">中</option>
+              <option value="low">低</option>
+            </select>
+          </span>
+          <span class="filter-label">装配场地</span>
+          <span class="select-wrap">
+            <select id="tmZoneFilter" onchange="applyTaskFilter()">
+              <option value="">全部场地</option>
+              <option value="SZA">装配一期（SZA）</option>
+              <option value="SZB">装配二期（SZB）</option>
+              <option value="SZC">仓库装配（SZC）</option>
+              <option value="JP1">竞品一区（JP1）</option>
+              <option value="JP2">竞品二区（JP2）</option>
+              <option value="LH">联合装配（LH）</option>
+              <option value="CX1">外委正东和泰（CX1）</option>
+              <option value="CX2">外委交石（CX2）</option>
+              <option value="CX">外委创高（CX）</option>
+              <option value="HM">环模装配（HM）</option>
+            </select>
+          </span>
+          <button class="btn" onclick="resetTaskFilters()">重置</button>
+          <button class="btn btn-primary" onclick="loadTaskDashboard()">刷新</button>
+        </div>
+
+        <!-- 图表区域 -->
+        <div style="display:flex;gap:16px;margin-top:16px;">
+          <div class="card" style="flex:1;min-width:0;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">任务状态分布</div>
+                <div class="card-sub">各状态任务数量占比</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:16px 20px;">
+              <div id="tmStatusPieChart" style="width:100%; height:240px;"></div>
+            </div>
+          </div>
+          <div class="card" style="flex:1;min-width:0;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">任务类型对比</div>
+                <div class="card-sub">按类型显示数量与平均进度</div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:16px 20px;">
+              <div id="tmTypeBarChart" style="width:100%; height:240px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 任务明细表 -->
+        <div style="margin-top:16px;">
+          <div class="card">
+            <div class="card-body" style="padding:0;overflow-x:auto;">
+              <table id="taskTable" style="width:100%;border-collapse:separate;border-spacing:0;font-family:'HarmonyOS Sans SC','HarmonyOS Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;">
+                <thead>
+                  <tr>
+                    <th style="width:52px;text-align:center;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">序号</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">任务编号</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">任务名称</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">A/B/C类</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">试制</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">项目群/项目</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">装配场地</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">负责人/主管</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">优先级</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">状态</th>
+                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">进度</th>
+                    <th style="width:140px;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="taskTableBody">
+                  <tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-tertiary);">加载中...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分页 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+          <span style="color:var(--text-secondary);" id="tmPageInfo">共 0 条</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" id="tmPrevPage" onclick="tmChangePage(-1)">上一页</button>
+            <span id="tmPageNum" style="padding:8px 12px;">1</span>
+            <button class="btn" id="tmNextPage" onclick="tmChangePage(1)">下一页</button>
           </div>
         </div>
       </section>
@@ -2606,7 +3748,16 @@ const pageConfig = {
   crawler:   { section: '系统管理', title: '爬虫凭证管理' },
   project:   { section: '数据查询', title: '项目管理' },
   'project-detail': { section: '数据查询', title: '项目详情' },
-  data:      { section: '系统管理', title: '数据处理' }
+  data:      { section: '系统管理', title: '数据处理' },
+  'resource-dashboard': { section: '试制资源', title: '综合驾驶舱' },
+  'equipment-ledger':   { section: '试制资源', title: '设备台账' },
+  'campus-map':         { section: '试制资源', title: '园区地图' },
+  'resource-board':     { section: '试制资源', title: '资源占用' },
+  'personnel-board':    { section: '试制资源', title: '人员看板' },
+  'gantt-schedule':     { section: '试制资源', title: '甘特排程' },
+  'personnel-efficiency': { section: '试制资源', title: '人效分析' },
+  'alert-center':       { section: '试制资源', title: '异常预警' },
+  'task-management':    { section: '试制资源', title: '任务管理' }
 };
 
 function switchPage(pageKey) {
@@ -2630,6 +3781,10 @@ function switchPage(pageKey) {
     setTimeout(function() { ensureCredentialCacheLoaded(); loadCredentials(); refreshCrawlerStatus(); }, 150);
   }
   if (pageKey === 'project') setTimeout(loadProjectList, 150);
+  if (pageKey === 'equipment-ledger') setTimeout(initEquipmentLedger, 150);
+  if (pageKey === 'resource-dashboard') setTimeout(initResourceDashboard, 150);
+  if (pageKey === 'personnel-board') setTimeout(initPersonnelBoard, 150);
+  if (pageKey === 'task-management') setTimeout(loadTaskDashboard, 150);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -3870,6 +5025,15 @@ function initCustomSelects() {
       const isOpen = wrap.classList.contains('open');
       closeAllSelectPanels();
       if (!isOpen) wrap.classList.add('open');
+    });
+    // 原生 select 值变化时同步更新自定义 UI
+    select.addEventListener('change', function() {
+      const options = Array.from(select.options);
+      const selectedOption = options.find(o => o.value === select.value) || options[0];
+      trigger.querySelector('.label').textContent = selectedOption ? selectedOption.text : '';
+      panel.querySelectorAll('.select-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === select.value);
+      });
     });
     wrap.dataset.inited = '1';
   });
@@ -5662,6 +6826,1978 @@ function exportToExcel(headers, data, fileName) {
     console.error('导出失败:', e);
     alert('导出失败，请检查浏览器控制台获取详细信息');
   }
+}
+
+/* =========================
+ * 设备台账模块
+ * ========================= */
+let eqCurrentPage = 1;
+const eqPageSize = 10;
+let eqTotalCount = 0;
+let eqZonesLoaded = false;
+
+const typeMap = { lift: '举升机', island: '试制岛', station: '工位' };
+const statusMap = { idle: '空闲', busy: '占用', error: '故障', maintenance: '维护中' };
+const statusColorMap = {
+  idle: 'background:#d1fae5;color:#059669;',
+  busy: 'background:#fef3c7;color:#d97706;',
+  error: 'background:#fee2e2;color:#dc2626;',
+  maintenance: 'background:#dbeafe;color:#2563eb;'
+};
+
+async function initEquipmentLedger() {
+  if (!eqZonesLoaded) {
+    await loadZoneOptions();
+    eqZonesLoaded = true;
+  }
+  await loadEquipmentList();
+  await loadEquipmentStats();
+  if (typeof initCustomSelects === 'function') {
+    setTimeout(() => initCustomSelects(), 50);
+  }
+}
+
+async function loadZoneOptions() {
+  try {
+    const res = await apiGet('/resource/zones');
+    if (!res._error) {
+      const select = document.getElementById('eqZoneFilter');
+      if (select && res.data) {
+        res.data.forEach(zone => {
+          const opt = document.createElement('option');
+          opt.value = zone.zone_code;
+          opt.textContent = zone.zone_name;
+          select.appendChild(opt);
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('加载区域列表失败，使用默认数据');
+  }
+}
+
+async function loadEquipmentStats() {
+  try {
+    const res = await apiGet('/resource/equipment/stats');
+    if (!res._error && res.data) {
+      const total = res.data.total || 0;
+      const idle = res.data.by_status?.idle || 0;
+      const busy = res.data.by_status?.busy || 0;
+      const errorCount = (res.data.by_status?.error || 0) + (res.data.by_status?.maintenance || 0);
+      document.getElementById('eqKpiTotal').innerHTML = total + '<span class="unit">台</span>';
+      document.getElementById('eqKpiIdle').innerHTML = idle + '<span class="unit">台</span>';
+      document.getElementById('eqKpiBusy').innerHTML = busy + '<span class="unit">台</span>';
+      document.getElementById('eqKpiError').innerHTML = errorCount + '<span class="unit">台</span>';
+      const idleRate = total > 0 ? ((idle / total) * 100).toFixed(0) : 0;
+      const busyRate = total > 0 ? ((busy / total) * 100).toFixed(0) : 0;
+      document.getElementById('eqKpiTotalSub').textContent = '共 ' + total + ' 台设备';
+      document.getElementById('eqKpiIdleSub').textContent = '占比 ' + idleRate + '%';
+      document.getElementById('eqKpiBusySub').textContent = '占比 ' + busyRate + '%';
+      document.getElementById('eqKpiErrorSub').textContent = '需处理 ' + errorCount + ' 台';
+    }
+  } catch (e) {
+    console.warn('加载设备统计失败，使用默认数据');
+    loadEquipmentStatsMock();
+  }
+}
+
+function loadEquipmentStatsMock() {
+  document.getElementById('eqKpiTotal').innerHTML = '10<span class="unit">台</span>';
+  document.getElementById('eqKpiIdle').innerHTML = '5<span class="unit">台</span>';
+  document.getElementById('eqKpiBusy').innerHTML = '3<span class="unit">台</span>';
+  document.getElementById('eqKpiError').innerHTML = '2<span class="unit">台</span>';
+  document.getElementById('eqKpiTotalSub').textContent = '共 10 台设备';
+  document.getElementById('eqKpiIdleSub').textContent = '占比 50%';
+  document.getElementById('eqKpiBusySub').textContent = '占比 30%';
+  document.getElementById('eqKpiErrorSub').textContent = '需处理 2 台';
+}
+
+async function loadEquipmentList() {
+  const search = document.getElementById('eqSearch')?.value || '';
+  const type = document.getElementById('eqTypeFilter')?.value || '';
+  const status = document.getElementById('eqStatusFilter')?.value || '';
+  const zone = document.getElementById('eqZoneFilter')?.value || '';
+
+  const params = new URLSearchParams({
+    page: eqCurrentPage,
+    page_size: eqPageSize
+  });
+  if (search) params.append('keyword', search);
+  if (type) params.append('equipment_type', type);
+  if (status) params.append('status', status);
+  if (zone) params.append('zone_code', zone);
+
+  try {
+    const res = await apiGet('/resource/equipment?' + params.toString());
+    if (!res._error && res.data) {
+      renderEquipmentTable(res.data);
+    } else {
+      renderEquipmentTableMock();
+    }
+  } catch (e) {
+    console.warn('加载设备列表失败，使用默认数据');
+    renderEquipmentTableMock();
+  }
+}
+
+function renderEquipmentTable(data) {
+  const tbody = document.getElementById('equipmentTableBody');
+  if (!tbody) return;
+
+  eqTotalCount = data.total || 0;
+  updatePagination();
+
+  if (!data.data || data.data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:40px;text-align:center;color:var(--text-tertiary);">暂无数据</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.data.map(eq => `
+    <tr style="border-bottom:1px solid var(--border);hover:background:var(--surface-2);" data-code="${escapeHtml(eq.equipment_code)}" data-type="${escapeHtml(eq.equipment_type)}" data-status="${escapeHtml(eq.status)}" data-zone="${escapeHtml(eq.zone_code || '')}" data-name="${escapeHtml(eq.equipment_name)}" data-operator="${escapeHtml(eq.current_operator || '')}" data-zone-name="${escapeHtml(eq.zone_name || '')}">
+      <td style="padding:12px 16px;font-weight:500;color:var(--blue-700);">${escapeHtml(eq.equipment_code)}</td>
+      <td style="padding:12px 16px;">${escapeHtml(eq.equipment_name)}</td>
+      <td style="padding:12px 16px;color:var(--text-secondary);">${typeMap[eq.equipment_type] || eq.equipment_type}</td>
+      <td style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(eq.zone_name || eq.zone_code || '-')}</td>
+      <td style="padding:12px 16px;">
+        <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;${statusColorMap[eq.status] || ''}">
+          ${statusMap[eq.status] || eq.status}
+        </span>
+      </td>
+      <td style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(eq.current_operator || '-')}</td>
+      <td style="padding:12px 16px;color:var(--text-tertiary);font-size:12px;">${escapeHtml(eq.last_update_time || '-')}</td>
+      <td style="padding:12px 16px;">
+        <button onclick="viewEquipmentDetail('${eq.equipment_code}')" style="color:var(--blue-600);margin-right:8px;">详情</button>
+        <button onclick="editEquipment('${eq.equipment_code}')" style="color:var(--blue-600);margin-right:8px;">编辑</button>
+        <button onclick="deleteEquipment('${eq.equipment_code}')" style="color:var(--danger);">删除</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderEquipmentTableMock() {
+  const mockData = {
+    total: 10,
+    page: 1,
+    page_size: 10,
+    data: [
+      { equipment_code: 'SZC-01', equipment_name: '1号举升机', equipment_type: 'lift', zone_code: 'ZONE-A', zone_name: 'A区', status: 'idle', current_task_id: null, current_operator: null, last_update_time: '2026-07-31 08:00:00' },
+      { equipment_code: 'SZC-02', equipment_name: '2号举升机', equipment_type: 'lift', zone_code: 'ZONE-A', zone_name: 'A区', status: 'busy', current_task_id: 1, current_operator: '张三', last_update_time: '2026-07-31 09:30:00' },
+      { equipment_code: 'SZD-01', equipment_name: '试制岛1号', equipment_type: 'island', zone_code: 'ZONE-B', zone_name: 'B区', status: 'idle', current_task_id: null, current_operator: null, last_update_time: '2026-07-31 07:00:00' },
+      { equipment_code: 'SZD-02', equipment_name: '试制岛2号', equipment_type: 'island', zone_code: 'ZONE-B', zone_name: 'B区', status: 'error', current_task_id: null, current_operator: null, last_update_time: '2026-07-30 18:00:00' },
+      { equipment_code: 'WS-01', equipment_name: '工位1号', equipment_type: 'station', zone_code: 'ZONE-C', zone_name: 'C区', status: 'maintenance', current_task_id: null, current_operator: '李四', last_update_time: '2026-07-31 10:00:00' }
+    ]
+  };
+  renderEquipmentTable(mockData);
+}
+
+function updatePagination() {
+  const totalPages = Math.ceil(eqTotalCount / eqPageSize) || 1;
+  document.getElementById('eqPageInfo').textContent = `共 ${eqTotalCount} 条`;
+  document.getElementById('eqPageNum').textContent = `${eqCurrentPage} / ${totalPages}`;
+}
+
+function changeEquipmentPage(delta) {
+  const totalPages = Math.ceil(eqTotalCount / eqPageSize) || 1;
+  eqCurrentPage = Math.max(1, Math.min(totalPages, eqCurrentPage + delta));
+  loadEquipmentList();
+}
+
+function resetEquipmentFilters() {
+  document.getElementById('eqSearch').value = '';
+  const typeSel = document.getElementById('eqTypeFilter');
+  const statusSel = document.getElementById('eqStatusFilter');
+  const zoneSel = document.getElementById('eqZoneFilter');
+  typeSel.value = '';
+  statusSel.value = '';
+  zoneSel.value = '';
+  // 触发 change 事件以更新自定义下拉框 UI
+  [typeSel, statusSel, zoneSel].forEach(sel => {
+    const evt = document.createEvent('HTMLEvents');
+    evt.initEvent('change', true, true);
+    sel.dispatchEvent(evt);
+  });
+  eqCurrentPage = 1;
+  loadEquipmentList();
+}
+
+/* =========================
+ * 综合驾驶舱模块
+ * ========================= */
+let rdChartInited = false;
+
+async function initResourceDashboard() {
+  await loadResourceDashboardData();
+  if (!rdChartInited) {
+    setTimeout(initRdStatusChart, 200);
+    rdChartInited = true;
+  }
+}
+
+async function loadResourceDashboardData() {
+  try {
+    const res = await apiGet('/resource/equipment/stats');
+    if (!res._error && res.data) {
+      const total = res.data.total || 0;
+      const idle = res.data.by_status?.idle || 0;
+      const busy = res.data.by_status?.busy || 0;
+      const errorCount = (res.data.by_status?.error || 0) + (res.data.by_status?.maintenance || 0);
+      document.getElementById('rdKpiEquipment').innerHTML = total + '<span class="unit">台</span>';
+      document.getElementById('rdKpiIdle').innerHTML = idle + '<span class="unit">台</span>';
+      document.getElementById('rdKpiBusy').innerHTML = busy + '<span class="unit">台</span>';
+      document.getElementById('rdKpiError').innerHTML = errorCount + '<span class="unit">台</span>';
+      const busyRate = total > 0 ? ((busy / total) * 100).toFixed(0) : 0;
+      document.getElementById('rdKpiEquipmentSub').textContent = '全部设备';
+      document.getElementById('rdKpiIdleSub').textContent = '空闲率 ' + (total > 0 ? ((idle / total) * 100).toFixed(0) : 0) + '%';
+      document.getElementById('rdKpiBusySub').textContent = busyRate + '%';
+      document.getElementById('rdKpiErrorSub').textContent = errorCount + ' 台';
+    }
+  } catch (e) {
+    console.warn('加载驾驶舱数据失败，使用默认数据');
+    loadResourceDashboardMock();
+  }
+}
+
+function loadResourceDashboardMock() {
+  document.getElementById('rdKpiEquipment').innerHTML = '10<span class="unit">台</span>';
+  document.getElementById('rdKpiIdle').innerHTML = '5<span class="unit">台</span>';
+  document.getElementById('rdKpiBusy').innerHTML = '3<span class="unit">台</span>';
+  document.getElementById('rdKpiError').innerHTML = '2<span class="unit">台</span>';
+  document.getElementById('rdKpiEquipmentSub').textContent = '全部设备';
+  document.getElementById('rdKpiIdleSub').textContent = '空闲率 50%';
+  document.getElementById('rdKpiBusySub').textContent = '30%';
+  document.getElementById('rdKpiErrorSub').textContent = '2 台';
+}
+
+function initRdStatusChart() {
+  const chartDom = document.getElementById('rdStatusChart');
+  if (!chartDom || typeof echarts === 'undefined') return;
+  
+  const chart = echarts.init(chartDom);
+  chart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: { bottom: '0%' },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+      label: { show: false, position: 'center' },
+      emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+      labelLine: { show: false },
+      data: [
+        { value: 5, name: '空闲', itemStyle: { color: '#10b981' } },
+        { value: 3, name: '占用', itemStyle: { color: '#f59e0b' } },
+        { value: 1, name: '故障', itemStyle: { color: '#ef4444' } },
+        { value: 1, name: '维护中', itemStyle: { color: '#3b82f6' } }
+      ]
+    }]
+  });
+
+  window.addEventListener('resize', () => chart.resize());
+}
+
+/* =========================
+ * 设备详情弹窗
+ * ========================= */
+function viewEquipmentDetail(code) {
+  const tbody = document.getElementById('equipmentTableBody');
+  const row = tbody.querySelector(`tr[data-code="${code}"]`);
+  let eqData = null;
+  if (row) {
+    eqData = {
+      equipment_code: row.dataset.code,
+      equipment_name: row.dataset.name,
+      equipment_type: row.dataset.type,
+      zone_code: row.dataset.zone,
+      zone_name: row.dataset.zoneName,
+      status: row.dataset.status,
+      current_operator: row.dataset.operator,
+      last_update_time: row.children[6]?.textContent.trim() || '—'
+    };
+  }
+  if (!eqData) {
+    apiGet('/resource/equipment/' + code).then(res => {
+      if (!res._error && res.data) {
+        showEquipmentDetailModal(res.data);
+      } else {
+        alert('未找到设备详情');
+      }
+    });
+    return;
+  }
+  showEquipmentDetailModal(eqData);
+}
+
+function showEquipmentDetailModal(eq) {
+  const typeMap = { lift: '举升机', island: '试制岛', station: '工位' };
+  const statusMap = { idle: '空闲', busy: '占用', error: '故障', maintenance: '维护中' };
+  const statusColorMap = { idle: '#10b981', busy: '#f59e0b', error: '#ef4444', maintenance: '#3b82f6' };
+  
+  const typeValue = typeMap[eq.equipment_type] || eq.equipment_type;
+  const statusValue = statusMap[eq.status] || eq.status;
+  const statusColor = statusColorMap[eq.status] || '#6b7280';
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">设备详情</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
+          <div class="detail-row">
+            <div class="detail-label">设备编号</div>
+            <div class="detail-value" style="font-weight:600;color:var(--blue-700);">${escapeHtml(eq.equipment_code)}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">设备名称</div>
+            <div class="detail-value">${escapeHtml(eq.equipment_name)}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">设备类型</div>
+            <div class="detail-value">${typeValue}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">所属区域</div>
+            <div class="detail-value">${escapeHtml(eq.zone_name || eq.zone_code || '-')}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">当前状态</div>
+            <div class="detail-value">
+              <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${statusColor}1a;color:${statusColor};">${statusValue}</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">当前操作员</div>
+            <div class="detail-value">${escapeHtml(eq.current_operator || '—')}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">当前任务ID</div>
+            <div class="detail-value">${eq.current_task_id || '—'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">最后更新</div>
+            <div class="detail-value">${escapeHtml(eq.last_update_time || '—')}</div>
+          </div>
+          ${eq.created_at ? `
+          <div class="detail-row">
+            <div class="detail-label">创建时间</div>
+            <div class="detail-value">${escapeHtml(eq.created_at)}</div>
+          </div>` : ''}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove();editEquipment('${eq.equipment_code}')">编辑设备</button>
+      </div>
+    </div>
+  `;
+  overlay.onclick = function() { overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+/* =========================
+ * 新增/编辑设备弹窗
+ * ========================= */
+let eqEditingCode = null;
+
+function openEquipmentDialog() {
+  eqEditingCode = null;
+  showEquipmentFormModal(null);
+}
+
+function editEquipment(code) {
+  eqEditingCode = code;
+  const tbody = document.getElementById('equipmentTableBody');
+  const row = tbody.querySelector(`tr[data-code="${code}"]`);
+  let eqData = null;
+  if (row) {
+    eqData = {
+      equipment_code: row.dataset.code,
+      equipment_name: row.dataset.name,
+      equipment_type: row.dataset.type,
+      zone_code: row.dataset.zone,
+      status: row.dataset.status,
+      current_operator: row.dataset.operator
+    };
+  }
+  showEquipmentFormModal(eqData);
+}
+
+function showEquipmentFormModal(eqData) {
+  const isEdit = !!eqData;
+  const title = isEdit ? '编辑设备' : '新增设备';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">${title}</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+          <div class="form-group">
+            <label>设备编号 <span class="required">*</span></label>
+            <input type="text" id="eqFormCode" class="input-field" placeholder="如：SZC-01" value="${escapeHtml(eqData?.equipment_code || '')}" ${isEdit ? 'readonly' : ''} />
+          </div>
+          <div class="form-group">
+            <label>设备名称 <span class="required">*</span></label>
+            <input type="text" id="eqFormName" class="input-field" placeholder="如：1号举升机" value="${escapeHtml(eqData?.equipment_name || '')}" />
+          </div>
+          <div class="form-group">
+            <label>设备类型 <span class="required">*</span></label>
+            <span class="select-wrap">
+              <select id="eqFormType">
+                <option value="lift" ${eqData?.equipment_type === 'lift' ? 'selected' : ''}>举升机</option>
+                <option value="island" ${eqData?.equipment_type === 'island' ? 'selected' : ''}>试制岛</option>
+                <option value="station" ${eqData?.equipment_type === 'station' ? 'selected' : ''}>工位</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>所属区域</label>
+            <span class="select-wrap">
+              <select id="eqFormZone">
+                <option value="">请选择区域</option>
+                <option value="ZONE-A" ${eqData?.zone_code === 'ZONE-A' ? 'selected' : ''}>A区 - 外委畅行车间</option>
+                <option value="ZONE-B" ${eqData?.zone_code === 'ZONE-B' ? 'selected' : ''}>B区 - 外委交自行车间</option>
+                <option value="ZONE-C" ${eqData?.zone_code === 'ZONE-C' ? 'selected' : ''}>C区 - 内部调试车间</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>状态</label>
+            <span class="select-wrap">
+              <select id="eqFormStatus">
+                <option value="idle" ${(!eqData || eqData?.status === 'idle') ? 'selected' : ''}>空闲</option>
+                <option value="busy" ${eqData?.status === 'busy' ? 'selected' : ''}>占用</option>
+                <option value="error" ${eqData?.status === 'error' ? 'selected' : ''}>故障</option>
+                <option value="maintenance" ${eqData?.status === 'maintenance' ? 'selected' : ''}>维护中</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>当前操作员</label>
+            <input type="text" id="eqFormOperator" class="input-field" placeholder="操作员姓名" value="${escapeHtml(eqData?.current_operator || '')}" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="btn btn-primary" id="eqFormSubmit">${isEdit ? '保存修改' : '创建设备'}</button>
+      </div>
+    </div>
+  `;
+  overlay.onclick = function() { overlay.remove(); };
+
+  document.body.appendChild(overlay);
+
+  // 初始化弹窗内的自定义下拉框
+  setTimeout(() => {
+    if (typeof initCustomSelects === 'function') {
+      initCustomSelects();
+    }
+  }, 10);
+
+  // Bind submit
+  setTimeout(() => {
+    const submitBtn = overlay.querySelector('#eqFormSubmit');
+    submitBtn.addEventListener('click', function() {
+      const code = overlay.querySelector('#eqFormCode').value.trim();
+      const name = overlay.querySelector('#eqFormName').value.trim();
+      const type = overlay.querySelector('#eqFormType').value;
+      const zone = overlay.querySelector('#eqFormZone').value;
+      const status = overlay.querySelector('#eqFormStatus').value;
+      const operator = overlay.querySelector('#eqFormOperator').value.trim();
+      
+      if (!code || !name) {
+        alert('请填写设备编号和设备名称');
+        return;
+      }
+      
+      const payload = {
+        equipment_code: code,
+        equipment_name: name,
+        equipment_type: type,
+        zone_code: zone,
+        status: status,
+        current_operator: operator || null
+      };
+      
+      const apiUrl = isEdit ? '/resource/equipment/' + eqEditingCode : '/resource/equipment';
+      const apiMethod = isEdit ? apiPut : apiPost;
+      
+      apiMethod(apiUrl, payload).then(res => {
+        if (!res._error) {
+          alert(isEdit ? '更新成功' : '创建成功');
+          overlay.remove();
+          loadEquipmentList();
+          loadEquipmentStats();
+        } else {
+          alert('操作失败: ' + (res.detail || '未知错误'));
+        }
+      }).catch(() => {
+        // Mock mode
+        alert(isEdit ? '更新成功（模拟）' : '创建成功（模拟）');
+        overlay.remove();
+        loadEquipmentList();
+        loadEquipmentStats();
+      });
+    });
+  }, 50);
+  
+  document.body.appendChild(overlay);
+}
+
+/* =========================
+ * 删除设备确认
+ * ========================= */
+function deleteEquipment(code) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:400px;" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">确认删除</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:30px 24px;">
+        <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+        <div style="font-size:14px;color:var(--text);margin-bottom:8px;">确定要删除设备 <strong>${escapeHtml(code)}</strong> 吗？</div>
+        <div style="font-size:12px;color:var(--text-tertiary);">此操作不可撤销，请谨慎操作。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="btn" style="background:var(--danger);color:white;" id="eqConfirmDelete">确认删除</button>
+      </div>
+    </div>
+  `;
+  overlay.onclick = function() { overlay.remove(); };
+  
+  setTimeout(() => {
+    overlay.querySelector('#eqConfirmDelete').addEventListener('click', function() {
+      apiDelete('/resource/equipment/' + code).then(res => {
+        if (!res._error) {
+          alert('删除成功');
+          overlay.remove();
+          loadEquipmentList();
+          loadEquipmentStats();
+        } else {
+          alert('删除失败: ' + (res.detail || '未知错误'));
+        }
+      }).catch(() => {
+        alert('删除成功（模拟）');
+        overlay.remove();
+        loadEquipmentList();
+        loadEquipmentStats();
+      });
+    });
+  }, 50);
+  
+  document.body.appendChild(overlay);
+}
+
+/* =========================
+ * 人员看板模块
+ * ========================= */
+const ASSEMBLY_ZONES = ['SZA', 'SZB', 'SZC', 'LH'];
+const SOURCE_COLORS = {
+  '自有': '#6366f1',
+  '商用车': '#0ea5e9',
+  '乘用车': '#10b981',
+  '柳汽': '#f59e0b',
+  '中智': '#8b5cf6',
+  '外协': '#ef4444',
+  '内调': '#06b6d4',
+  '未标注': '#94a3b8'
+};
+let pbPage = 1;
+const pbPageSize = 10;
+let pbSourcePieChart = null;
+let pbSourceBarChart = null;
+let pbEditingCode = null;
+window._pbViewMode = window._pbViewMode || 'list';
+
+function getStatusBadge(status) {
+  const map = {
+    working: { text: '工作中', cls: 'status-working' },
+    idle:    { text: '空闲',   cls: 'status-idle' },
+    offline: { text: '离线',   cls: 'status-offline' }
+  };
+  const s = map[status] || map.offline;
+  return `<span class="status-badge ${s.cls}">${s.text}</span>`;
+}
+
+// 页面入口：人员看板初始化
+async function loadPersonnelDashboard() {
+  await Promise.all([
+    loadPbKpiAndStats(),
+    loadPbSourceDistribution(),
+    loadPersonnelList()
+  ]);
+  // 初始化自定义下拉组件
+  if (typeof initCustomSelects === 'function') initCustomSelects();
+  // resize 图表
+  setTimeout(() => {
+    if (pbSourcePieChart) pbSourcePieChart.resize();
+    if (pbSourceBarChart) pbSourceBarChart.resize();
+  }, 100);
+}
+
+async function loadPbKpiAndStats() {
+  let stats = null;
+  try {
+    const res = await apiGet('/resource/personnel/stats');
+    if (res && !res._error && res.data) stats = res.data;
+  } catch (e) {}
+  // Mock数据回退
+  if (!stats) {
+    const total = MOCK_PERSONNEL.length;
+    const working = MOCK_PERSONNEL.filter(r => r.status === 'working').length;
+    const idle = MOCK_PERSONNEL.filter(r => r.status === 'idle').length;
+    const offline = MOCK_PERSONNEL.filter(r => r.status === 'offline').length;
+    stats = { total, on_duty: working + idle, working, idle, idle_available: idle, offline, today_abnormal: offline };
+  }
+  const total = stats.total || 0;
+  const onDuty = stats.on_duty || (stats.working + stats.idle) || 0;
+  const working = stats.working || 0;
+  const idle = stats.idle_available != null ? stats.idle_available : (stats.idle || 0);
+  const offline = stats.offline || 0;
+  const abnormal = stats.today_abnormal != null ? stats.today_abnormal : offline;
+
+  document.getElementById('pbKpiTotal').innerHTML = total + '<span class="unit">人</span>';
+  document.getElementById('pbKpiOnDuty').innerHTML = onDuty + '<span class="unit">人</span>';
+  document.getElementById('pbKpiWorking').innerHTML = working + '<span class="unit">人</span>';
+  document.getElementById('pbKpiIdle').innerHTML = idle + '<span class="unit">人</span>';
+  document.getElementById('pbKpiAbnormal').innerHTML = abnormal + '<span class="unit">人</span>';
+
+  document.getElementById('pbKpiTotalSub').textContent = `在岗 / 离线：${onDuty} / ${offline}`;
+  document.getElementById('pbKpiOnDutySub').textContent = `在岗率 ${total > 0 ? ((onDuty/total)*100).toFixed(0) : 0}%`;
+  document.getElementById('pbKpiWorkingSub').textContent = `占比 ${total > 0 ? ((working/total)*100).toFixed(0) : 0}%`;
+}
+
+async function loadPbSourceDistribution() {
+  let data = null;
+  try {
+    const res = await apiGet('/resource/personnel/source-distribution');
+    if (res && !res._error && res.data) data = res.data;
+  } catch (e) {}
+  // Mock数据回退
+  if (!data) {
+    const assembly = MOCK_PERSONNEL.filter(r => ASSEMBLY_ZONES.includes(r.current_zone));
+    const bySource = {};
+    assembly.forEach(r => {
+      const s = r.department || '未标注';
+      if (!bySource[s]) bySource[s] = { source: s, count: 0, working_count: 0 };
+      bySource[s].count++;
+      if (r.status === 'working') bySource[s].working_count++;
+    });
+    const mockPieData = Object.values(bySource);
+    const mockBarData = mockPieData.map(it => ({
+      source: it.source,
+      personnel_count: it.count,
+      avg_hours: it.count > 0 ? Math.round((it.working_count / it.count) * 8 * 10) / 10 : 0
+    }));
+    data = { assembly_source_pie: mockPieData, assembly_source_bar: mockBarData };
+  }
+
+  // 饼图
+  const pieData = (data.assembly_source_pie || []).map(it => ({
+    name: it.source,
+    value: it.count
+  }));
+  if (pieData.length === 0) pieData.push({ name: '暂无数据', value: 0 });
+
+  // 柱状图
+  const barSources = (data.assembly_source_bar || []).map(it => it.source);
+  const barCount = (data.assembly_source_bar || []).map(it => it.personnel_count);
+  const barAvgH = (data.assembly_source_bar || []).map(it => it.avg_hours);
+
+  // 渲染饼图
+  if (window.echarts) {
+    const pieDom = document.getElementById('pbSourcePieChart');
+    if (pieDom) {
+      if (!pbSourcePieChart) pbSourcePieChart = echarts.init(pieDom);
+      pbSourcePieChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
+        legend: { bottom: 0, textStyle: { color: 'var(--text-secondary)', fontSize: 11 }, itemWidth: 10, itemHeight: 10 },
+        color: Object.values(SOURCE_COLORS),
+        series: [{
+          type: 'pie',
+          radius: ['40%', '65%'],
+          center: ['50%', '42%'],
+          avoidLabelOverlap: true,
+          itemStyle: { borderColor: 'var(--surface)', borderWidth: 2 },
+          label: { show: true, color: 'var(--text-secondary)', fontSize: 11, formatter: '{b}\n{d}%' },
+          labelLine: { length: 8, length2: 6 },
+          data: pieData
+        }]
+      });
+      pbSourcePieChart.resize();
+    }
+    const barDom = document.getElementById('pbSourceBarChart');
+    if (barDom) {
+      if (!pbSourceBarChart) pbSourceBarChart = echarts.init(barDom);
+      pbSourceBarChart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { bottom: 0, textStyle: { color: 'var(--text-secondary)', fontSize: 11 }, itemWidth: 10, itemHeight: 10 },
+        grid: { top: 20, left: 40, right: 40, bottom: 40 },
+        color: ['#6366f1', '#10b981'],
+        xAxis: {
+          type: 'category', data: barSources.length ? barSources : ['暂无数据'],
+          axisLabel: { color: 'var(--text-secondary)', fontSize: 11, rotate: barSources.length > 6 ? 20 : 0 },
+          axisLine: { lineStyle: { color: 'var(--border)' } }
+        },
+        yAxis: [
+          {
+            type: 'value', name: '人数',
+            axisLabel: { color: 'var(--text-secondary)', fontSize: 11 },
+            splitLine: { lineStyle: { color: 'var(--border)', type: 'dashed' } }
+          },
+          {
+            type: 'value', name: '平均工时',
+            axisLabel: { color: 'var(--text-secondary)', fontSize: 11, formatter: '{value}h' },
+            splitLine: { show: false }
+          }
+        ],
+        series: [
+          { name: '人员数量', type: 'bar', data: barCount.length ? barCount : [0], barWidth: 24,
+            itemStyle: { borderRadius: [4,4,0,0] } },
+          { name: '平均工时(h)', type: 'line', yAxisIndex: 1, smooth: true,
+            data: barAvgH.length ? barAvgH : [0], symbolSize: 7,
+            lineStyle: { width: 2 }, itemStyle: { borderWidth: 2, borderColor: 'var(--surface)' } }
+        ]
+      });
+      pbSourceBarChart.resize();
+    }
+  }
+}
+
+function applyPersonnelFilter() {
+  pbPage = 1;
+  loadPersonnelList();
+}
+
+function resetPersonnelFilters() {
+  document.getElementById('pbSearchInput').value = '';
+  document.getElementById('pbStatusFilter').value = '';
+  document.getElementById('pbZoneFilter').value = '';
+  document.getElementById('pbSourceFilter').value = '';
+  // 触发下拉UI同步
+  document.getElementById('pbStatusFilter').dispatchEvent(new Event('change'));
+  document.getElementById('pbZoneFilter').dispatchEvent(new Event('change'));
+  document.getElementById('pbSourceFilter').dispatchEvent(new Event('change'));
+  if (typeof initCustomSelects === 'function') initCustomSelects();
+  applyPersonnelFilter();
+}
+
+// Mock数据（后端不可用时使用）
+const MOCK_PERSONNEL = [
+  { personnel_code:'EMP-001', name:'张伟', avatar_text:'张', department:'自有', status:'working', current_zone:'SZA', zone_name:'一总装（SZA）', current_task_name:'CNC精密零件加工', today_work_hours:6.5, task_progress:65 },
+  { personnel_code:'EMP-002', name:'李强', avatar_text:'李', department:'商用车', status:'working', current_zone:'SZA', zone_name:'一总装（SZA）', current_task_name:'外壳焊接组装作业', today_work_hours:7.0, task_progress:70 },
+  { personnel_code:'EMP-003', name:'王芳', avatar_text:'王', department:'乘用车', status:'working', current_zone:'SZB', zone_name:'二总装（SZB）', current_task_name:'表面喷涂处理', today_work_hours:6.7, task_progress:67 },
+  { personnel_code:'EMP-004', name:'刘洋', avatar_text:'刘', department:'柳汽', status:'idle', current_zone:'SZB', zone_name:'二总装（SZB）', current_task_name:'', today_work_hours:0, task_progress:0 },
+  { personnel_code:'EMP-005', name:'陈静', avatar_text:'陈', department:'中智', status:'idle', current_zone:'SZC', zone_name:'三总装（SZC）', current_task_name:'', today_work_hours:0, task_progress:0 },
+  { personnel_code:'EMP-006', name:'杨帆', avatar_text:'杨', department:'外协', status:'working', current_zone:'SZC', zone_name:'三总装（SZC）', current_task_name:'电气维修', today_work_hours:6.2, task_progress:45 },
+  { personnel_code:'EMP-007', name:'赵磊', avatar_text:'赵', department:'内调', status:'offline', current_zone:'LH', zone_name:'联合厂房（LH）', current_task_name:'机械维修', today_work_hours:0, task_progress:0 },
+  { personnel_code:'EMP-008', name:'黄敏', avatar_text:'黄', department:'自有', status:'working', current_zone:'LH', zone_name:'联合厂房（LH）', current_task_name:'机械设备保养', today_work_hours:7.5, task_progress:25 },
+  { personnel_code:'EMP-009', name:'周涛', avatar_text:'周', department:'商用车', status:'working', current_zone:'SZA', zone_name:'一总装（SZA）', current_task_name:'底盘装配', today_work_hours:8.0, task_progress:80 },
+  { personnel_code:'EMP-010', name:'吴霞', avatar_text:'吴', department:'乘用车', status:'idle', current_zone:'SZB', zone_name:'二总装（SZB）', current_task_name:'', today_work_hours:0, task_progress:0 },
+  { personnel_code:'EMP-011', name:'孙浩', avatar_text:'孙', department:'柳汽', status:'working', current_zone:'SZA', zone_name:'一总装（SZA）', current_task_name:'发动机安装', today_work_hours:5.5, task_progress:55 },
+  { personnel_code:'EMP-012', name:'郑雪', avatar_text:'郑', department:'中智', status:'offline', current_zone:'', zone_name:'未分配', current_task_name:'', today_work_hours:0, task_progress:0 },
+];
+
+function _getMockPersonnelFiltered(status, zone, department, keyword, page, pageSize) {
+  let filtered = [...MOCK_PERSONNEL];
+  if (status) filtered = filtered.filter(r => r.status === status);
+  if (zone && zone !== 'NON_ASSEMBLY') filtered = filtered.filter(r => r.current_zone === zone);
+  if (zone === 'NON_ASSEMBLY') filtered = filtered.filter(r => !ASSEMBLY_ZONES.includes(r.current_zone));
+  if (department) filtered = filtered.filter(r => r.department === department);
+  if (keyword) filtered = filtered.filter(r => r.name.includes(keyword) || r.personnel_code.includes(keyword));
+  const total = filtered.length;
+  const start = (page - 1) * pageSize;
+  return { total, data: filtered.slice(start, start + pageSize) };
+}
+
+async function loadPersonnelList() {
+  const status = document.getElementById('pbStatusFilter').value;
+  let zone = document.getElementById('pbZoneFilter').value;
+  const department = document.getElementById('pbSourceFilter').value;
+  const keyword = document.getElementById('pbSearchInput').value.trim();
+
+  let zoneFilter = zone;
+  let isNonAssemblyOnly = false;
+  if (zone === 'NON_ASSEMBLY') { zoneFilter = ''; isNonAssemblyOnly = true; }
+
+  // 构建查询参数（和设备台账一致的写法）
+  const params = new URLSearchParams();
+  params.append('page', pbPage);
+  params.append('page_size', pbPageSize);
+  if (status) params.append('status', status);
+  if (zoneFilter) params.append('current_zone', zoneFilter);
+  if (department) params.append('department', department);
+  if (keyword) params.append('keyword', keyword);
+
+  let listData = null;
+  try {
+    const res = await apiGet('/resource/personnel?' + params.toString());
+    if (res && !res._error && res.data && res.data.data && res.data.data.length > 0) {
+      listData = res.data;
+    }
+  } catch (e) {}
+
+  // API不可用或返回空时使用mock数据
+  if (!listData || !listData.data || listData.data.length === 0) {
+    listData = _getMockPersonnelFiltered(status, zone, department, keyword, pbPage, pbPageSize);
+  }
+
+  let rows = listData.data || [];
+  let total = listData.total || 0;
+  if (isNonAssemblyOnly) {
+    rows = rows.filter(r => !ASSEMBLY_ZONES.includes(r.current_zone));
+    total = rows.length;
+  }
+
+  // 保存数据到全局供卡片视图使用
+  window._pbCurrentData = { rows, total };
+
+  renderPersonnelList(rows);
+  updatePbPagination(total);
+}
+
+function renderPersonnelList(rows) {
+  const viewMode = window._pbViewMode || 'list';
+  const isCard = viewMode === 'card';
+
+  if (isCard) {
+    renderPersonnelCards(rows);
+  } else {
+    renderPersonnelTable(rows);
+  }
+}
+
+function renderPersonnelTable(rows) {
+  const tbody = document.getElementById('personnelTableBody');
+  const offset = (pbPage - 1) * pbPageSize;
+
+  // 显示列表视图，隐藏卡片视图
+  document.getElementById('pbListView').style.display = '';
+  document.getElementById('pbCardView').style.display = 'none';
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+      <div style="font-size:40px;margin-bottom:8px;">👥</div>
+      <div>暂无人员数据</div>
+    </td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map((r, i) => {
+      const idx = offset + i + 1;
+      const avatar = `<div class="avatar-sm avatar-${(i % 7) + 1}">${escapeHtml(r.avatar_text || (r.name || '').slice(0,1) || '?')}</div>`;
+      const isAsm = ASSEMBLY_ZONES.includes(r.current_zone);
+      const sourceColor = SOURCE_COLORS[r.department] || '#94a3b8';
+      const sourceCell = isAsm ? `<span class="chip" style="background:${sourceColor}15;color:${sourceColor};border:1px solid ${sourceColor}30;">${escapeHtml(r.department || '-')}</span>` : `<span style="color:var(--text-tertiary);">-</span>`;
+      const zoneLabel = r.zone_name || r.current_zone || '未分配';
+      const workHours = typeof r.today_work_hours === 'number' ? r.today_work_hours : (r.status === 'working' ? 8 : 0);
+      const taskLabel = r.current_task_name
+        ? `<span style="color:var(--text);">${escapeHtml(r.current_task_name)}</span>`
+        : `<span style="color:var(--text-tertiary);">无</span>`;
+      return `<tr>
+        <td style="text-align:center;color:var(--text-tertiary);">${idx}</td>
+        <td><div style="display:flex;align-items:center;gap:10px;">${avatar}<span>${escapeHtml(r.name)}</span></div></td>
+        <td class="mono-cell">${escapeHtml(r.personnel_code)}</td>
+        <td>${escapeHtml(zoneLabel)}</td>
+        <td>${sourceCell}</td>
+        <td>${getStatusBadge(r.status)}</td>
+        <td>${workHours.toFixed(1)} h</td>
+        <td>${taskLabel}</td>
+        <td class="action-cell">
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-sm" onclick="viewPersonnelDetail('${escapeHtml(r.personnel_code)}')">详情</button>
+            <button class="btn btn-sm" onclick="editPersonnel('${escapeHtml(r.personnel_code)}')">编辑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+function renderPersonnelCards(rows) {
+  // 显示卡片视图，隐藏列表视图
+  document.getElementById('pbListView').style.display = 'none';
+  const cardView = document.getElementById('pbCardView');
+  cardView.style.display = '';
+
+  if (!rows.length) {
+    cardView.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-tertiary);">
+      <div style="font-size:40px;margin-bottom:8px;">👥</div>
+      <div>暂无人员数据</div>
+    </div>`;
+    return;
+  }
+
+  const statusMap = { working: { text:'工作中', cls:'status-working' }, idle: { text:'空闲', cls:'status-idle' }, offline: { text:'离线', cls:'status-offline' } };
+
+  cardView.innerHTML = `<div class="pb-card-grid">` + rows.map((r, i) => {
+    const s = statusMap[r.status] || statusMap.offline;
+    const avatarColor = (i % 7) + 1;
+    const initial = escapeHtml(r.avatar_text || (r.name || '').slice(0,1) || '?');
+    const zoneLabel = r.zone_name || r.current_zone || '未分配';
+    const workHours = typeof r.today_work_hours === 'number' ? r.today_work_hours : (r.status === 'working' ? 8 : 0);
+    const progress = r.task_progress || 0;
+    const sourceColor = SOURCE_COLORS[r.department] || '#94a3b8';
+    const isAsm = ASSEMBLY_ZONES.includes(r.current_zone);
+
+    let taskBlock = '';
+    if (r.current_task_name) {
+      taskBlock = `
+        <div class="pb-card-task">
+          <div class="pb-card-task-name">${escapeHtml(r.current_task_name)}</div>
+          <div class="pb-card-progress">
+            <div class="pb-card-progress-bar" style="width:${progress}%;background:${r.status==='working'?'#10b981':'#6366f1'};"></div>
+          </div>
+          <div class="pb-card-progress-text">${progress}%</div>
+        </div>`;
+    } else {
+      taskBlock = `<div class="pb-card-task-empty">${r.status==='working'?'暂无任务分配':'休息中'}</div>`;
+    }
+
+    return `<div class="pb-personnel-card" data-code="${escapeHtml(r.personnel_code)}">
+      <div class="pb-card-head">
+        <div class="avatar-md avatar-${avatarColor}">${initial}</div>
+        <div class="pb-card-info">
+          <div class="pb-card-name">${escapeHtml(r.name)}</div>
+          <div class="pb-card-code">${escapeHtml(r.personnel_code)}</div>
+          <div class="pb-card-status-row">
+            <span class="status-dot ${r.status==='working'?'green':r.status==='idle'?'orange':''}"></span>
+            <span class="pb-card-status-text ${s.cls}">${s.text}</span>
+          </div>
+        </div>
+        <div class="pb-card-actions">
+          <button class="btn btn-sm" onclick="event.stopPropagation();viewPersonnelDetail('${escapeHtml(r.personnel_code)}')">详情</button>
+        </div>
+      </div>
+      <div class="pb-card-body">
+        ${taskBlock}
+        <div class="pb-card-meta">
+          ${isAsm ? `<span class="chip" style="background:${sourceColor}15;color:${sourceColor};border:1px solid ${sourceColor}30;">${escapeHtml(r.department||'-')}</span>` : ''}
+          <span class="pb-card-meta-item"><span class="pb-card-meta-icon">📍</span>${escapeHtml(zoneLabel)}</span>
+          <span class="pb-card-meta-item"><span class="pb-card-meta-icon">⏱</span>今日 ${workHours.toFixed(1)}h</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+function updatePbPagination(total) {
+  const totalPages = Math.max(1, Math.ceil(total / pbPageSize));
+  if (pbPage > totalPages) pbPage = totalPages;
+  document.getElementById('pbPageInfo').textContent = `共 ${total} 条`;
+  document.getElementById('pbPageNum').textContent = pbPage;
+  document.getElementById('pbPrevPage').disabled = pbPage <= 1;
+  document.getElementById('pbNextPage').disabled = pbPage >= totalPages;
+}
+
+function pbChangePage(delta) {
+  pbPage += delta;
+  if (pbPage < 1) pbPage = 1;
+  loadPersonnelList();
+}
+
+function switchPbView(mode) {
+  window._pbViewMode = mode;
+  document.getElementById('pbViewList').classList.toggle('active', mode === 'list');
+  document.getElementById('pbViewCard').classList.toggle('active', mode === 'card');
+  // 重新渲染当前数据
+  if (window._pbCurrentData) {
+    renderPersonnelList(window._pbCurrentData.rows);
+  }
+}
+
+// ----- 人员详情 / 编辑 / 新增 弹窗 -----
+function _collectRowData(code) {
+  // 优先从当前页数据中获取
+  const curData = window._pbCurrentData;
+  if (curData && curData.rows) {
+    const found = curData.rows.find(r => r.personnel_code === code);
+    if (found) return found;
+  }
+  // 从mock数据中获取
+  const mockFound = MOCK_PERSONNEL.find(r => r.personnel_code === code);
+  if (mockFound) return mockFound;
+  return null;
+}
+
+async function viewPersonnelDetail(code) {
+  let data = null;
+  try { const res = await apiGet('/resource/personnel/' + code); if (!res._error && res.data) data = res.data; } catch (e) {}
+  if (!data) data = _collectRowData(code) || { personnel_code: code };
+  const isAsm = ASSEMBLY_ZONES.includes(data.current_zone);
+  const statusMap = { working: '工作中', idle: '空闲', offline: '离线' };
+  const statusColorMap = { working: '#10b981', idle: '#f59e0b', offline: '#94a3b8' };
+  const workHours = typeof data.today_work_hours === 'number' ? data.today_work_hours : (data.status === 'working' ? 8 : 0);
+  const avatarColor = Math.abs(code.length % 7) + 1;
+  const initial = escapeHtml(data.avatar_text || (data.name || '').slice(0,1) || '?');
+  const statusColor = statusColorMap[data.status] || '#94a3b8';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">人员详情</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:16px;padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:16px;align-items:center;">
+          <div class="avatar-md avatar-${avatarColor}" style="width:56px;height:56px;font-size:20px;">${initial}</div>
+          <div style="flex:1;">
+            <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">${escapeHtml(data.name || '-')}</div>
+            <div style="font-size:12px;color:var(--text-secondary);font-family:'HarmonyOS Sans Mono',monospace;">工号：${escapeHtml(data.personnel_code)}</div>
+          </div>
+          <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:${statusColor}1a;color:${statusColor};">${statusMap[data.status] || data.status || '-'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
+          <div class="detail-row">
+            <div class="detail-label">所在区域</div>
+            <div class="detail-value">${escapeHtml(data.zone_name || data.current_zone || '未分配')}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">人员来源</div>
+            <div class="detail-value">${isAsm ? (escapeHtml(data.department) || '—') : '<span style="color:var(--text-tertiary);">非装配区</span>'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">当前状态</div>
+            <div class="detail-value">${statusMap[data.status] || data.status || '-'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">今日工时</div>
+            <div class="detail-value">${workHours.toFixed(1)} 小时</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">工作中任务</div>
+            <div class="detail-value">${escapeHtml(data.current_task_name) || '—'}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">上班时间</div>
+            <div class="detail-value">${escapeHtml(data.entry_time) || '—'}</div>
+          </div>
+          <div class="detail-row" style="grid-column:span 2;">
+            <div class="detail-label">最后更新时间</div>
+            <div class="detail-value">${escapeHtml(data.last_update_time) || '—'}</div>
+          </div>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:var(--bg-hover);border-radius:8px;font-size:13px;color:var(--text-secondary);line-height:1.8;">
+          <strong style="color:var(--text);font-weight:600;">工作记录摘要</strong><hr style="border:none;border-top:1px dashed var(--border);margin:10px 0;"/>
+          · 完成任务数：${data.completed_tasks != null ? data.completed_tasks : '暂无数据'} 项<br/>
+          · 进行中任务：${data.in_progress_tasks != null ? data.in_progress_tasks : (data.current_task_name ? 1 : 0)} 项<br/>
+          · 平均日工时：${workHours.toFixed(1)} 小时
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove();editPersonnel('${escapeHtml(code)}')">编辑信息</button>
+      </div>
+    </div>`;
+  overlay.onclick = function() { overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function editPersonnel(code) {
+  pbEditingCode = code;
+  const data = _collectRowData(code) || { personnel_code: code };
+  showPersonnelFormModal(data);
+}
+
+function showPersonnelFormModal(initData) {
+  const isEdit = !!(initData && initData.personnel_code) && !!pbEditingCode;
+  const data = initData || {};
+  const sources = ['自有','商用车','乘用车','柳汽','中智','外协','内调'];
+  const zones = [
+    ['SZA','一总装（SZA）'],['SZB','二总装（SZB）'],['SZC','三总装（SZC）'],
+    ['LH','联合厂房（LH）'],['DY','动力区（DY）'],['KP','零部件区（KP）']
+  ];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">${isEdit ? '编辑人员信息' : '新增人员'}</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+          <div class="form-group">
+            <label>工号 ${!isEdit ? '<span class="required">*</span>' : ''}</label>
+            <input type="text" id="pfCode" class="input-field" value="${escapeHtml(data.personnel_code || '')}" ${isEdit ? 'readonly' : ''} placeholder="如：P2024001" ${isEdit ? 'style="background:var(--bg-hover);cursor:not-allowed;"' : ''}/>
+          </div>
+          <div class="form-group">
+            <label>姓名 <span class="required">*</span></label>
+            <input type="text" id="pfName" class="input-field" value="${escapeHtml(data.name || '')}" placeholder="请输入姓名"/>
+          </div>
+          <div class="form-group">
+            <label>头像文字</label>
+            <input type="text" id="pfAvatar" class="input-field" maxlength="2" value="${escapeHtml(data.avatar_text || (data.name || '').slice(0,1) || '')}" placeholder="默认取姓名首字"/>
+          </div>
+          <div class="form-group">
+            <label>人员状态</label>
+            <span class="select-wrap">
+              <select id="pfStatus">
+                <option value="working" ${data.status==='working'?'selected':''}>工作中</option>
+                <option value="idle" ${data.status==='idle'?'selected':''}>空闲</option>
+                <option value="offline" ${data.status==='offline'||!data.status?'selected':''}>离线</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>所在区域</label>
+            <span class="select-wrap">
+              <select id="pfZone">
+                <option value="">未分配</option>
+                ${zones.map(([c,n]) => `<option value="${c}" ${data.current_zone===c?'selected':''}>${n}</option>`).join('')}
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>人员来源 <span style="font-size:10px;color:var(--text-tertiary);font-weight:400;">(装配区才生效)</span></label>
+            <span class="select-wrap">
+              <select id="pfDept">
+                <option value="">请选择</option>
+                ${sources.map(s => `<option value="${s}" ${data.department===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="btn btn-primary" id="pfSubmitBtn">${isEdit ? '保存修改' : '确认新增'}</button>
+      </div>
+    </div>`;
+  overlay.onclick = function() { overlay.remove(); };
+  document.body.appendChild(overlay);
+  if (typeof initCustomSelects === 'function') initCustomSelects(overlay);
+
+  const submit = overlay.querySelector('#pfSubmitBtn');
+  submit.addEventListener('click', async () => {
+    const code = document.getElementById('pfCode').value.trim();
+    const name = document.getElementById('pfName').value.trim();
+    const avatar_text = document.getElementById('pfAvatar').value.trim();
+    const status = document.getElementById('pfStatus').value;
+    const current_zone = document.getElementById('pfZone').value || null;
+    const department = document.getElementById('pfDept').value || null;
+    if (!code || !name) { alert('请填写工号和姓名'); return; }
+
+    const payload = { personnel_code: code, name, avatar_text, status, current_zone, department };
+
+    try {
+      let res;
+      if (isEdit) {
+        const { personnel_code:_, ...updatePayload } = payload;
+        res = await apiPut('/resource/personnel/' + pbEditingCode, updatePayload);
+      } else {
+        res = await apiPost('/resource/personnel', payload);
+      }
+      if (!res._error) {
+        alert(isEdit ? '修改成功' : '新增成功');
+        pbEditingCode = null;
+        overlay.remove();
+        loadPbKpiAndStats();
+        loadPbSourceDistribution();
+        loadPersonnelList();
+      } else {
+        alert((res.detail || '操作失败') + '（将使用模拟结果）');
+        // 模拟成功
+        alert((isEdit ? '修改成功（模拟）' : '新增成功（模拟）'));
+        pbEditingCode = null;
+        overlay.remove();
+        loadPbKpiAndStats();
+        loadPbSourceDistribution();
+        loadPersonnelList();
+      }
+    } catch (e) {
+      alert((isEdit ? '修改成功（模拟）' : '新增成功（模拟）'));
+      pbEditingCode = null;
+      overlay.remove();
+      loadPbKpiAndStats();
+      loadPbSourceDistribution();
+      loadPersonnelList();
+    }
+  });
+}
+
+function initPersonnelBoard() {
+  // 初始化视图切换按钮状态
+  const mode = window._pbViewMode || 'list';
+  document.getElementById('pbViewList').classList.toggle('active', mode === 'list');
+  document.getElementById('pbViewCard').classList.toggle('active', mode === 'card');
+  loadPersonnelDashboard();
+  if (typeof initCustomSelects === 'function') initCustomSelects();
+}
+
+/* =========================
+ * 任务管理模块
+ * ========================= */
+const TASK_TYPE_MAP = { 'A': { text: 'A类任务', color: '#ef4444' }, 'B': { text: 'B类任务', color: '#f59e0b' }, 'C': { text: 'C类任务', color: '#3b82f6' }, 'sporadic': { text: '零星试制', color: '#22c55e' } };
+const TASK_STATUS_MAP = { pending: { text: '待开始', color: '#94a3b8' }, in_progress: { text: '进行中', color: '#3b82f6' }, completed: { text: '已完成', color: '#10b981' }, overdue: { text: '逾期', color: '#ef4444' } };
+const TASK_PRIORITY_MAP = { high: { text: '高', color: '#ef4444' }, medium: { text: '中', color: '#f59e0b' }, low: { text: '低', color: '#94a3b8' } };
+const TASK_TRIAL_TYPES = ['骡子车', 'ET0', 'ET', 'ET1', '软模车', 'FT0', 'MT1', 'MT2', 'MT3', 'MT4', 'MT5'];
+const TASK_ASSEMBLY_SITES = [
+  ['SZA', '装配一期车间（SZA）'],
+  ['SZB', '装配二期车间（SZB）'],
+  ['SZC', '仓库装配区（SZC）'],
+  ['JP1', '竞品装配一区（JP1）'],
+  ['JP2', '竞品装配二区（JP2）'],
+  ['LH', '联合装配区（LH）'],
+  ['CX1', '外委畅行正东和泰（CX1）'],
+  ['CX2', '外委畅行交石（CX2）'],
+  ['CX', '外委畅行创高科技（CX）'],
+  ['HM', '环模装配区（HM）']
+];
+const TASK_ZONES = TASK_ASSEMBLY_SITES;
+const PROJECT_GROUPS = ['奕派', '猛士', '猛士协同', '岚图', '东风风神', '纳米'];
+const MOCK_TASKS = [
+  // ===== A 类任务（平台首款） =====
+  { id: 1, task_code: 'T-A2026-001', task_name: 'S33 软模车试制（16台）', task_type: 'A', trial_type: '软模车', project_group: '奕派', project_code: 'XM-S33', vehicle_code: 'S33-CAR-01~16', vehicle_model: '奕派S33', priority: 'high', status: 'in_progress', zone_code: 'SZA', zone_name: '装配一期车间（SZA）', assembly_site: 'SZA', lift_count: 10, equipment_code: 'SZA-产线', equipment_name: '试制岛（串岛）', planner: '李密/段玉龙', pm_name: '陈寅', cve_name: '骆顺志', trial_supervisor: '程勇', process_supervisor: '姚小川', assembly_supervisor: '熊兵', plan_start_time: '2026-06-01 08:00:00', plan_end_time: '2026-07-15 18:00:00', plan_work_hours: 1280, actual_work_hours: 960, progress: 75, summer_target_count: 5, summer_target_date: '2026-07-11', source: 'operation', created_at: '2026-03-04 10:00:00', progress_manual_override: 0 },
+  { id: 2, task_code: 'T-A2026-002', task_name: 'S33 ET0 试制（71台）', task_type: 'A', trial_type: 'ET0', project_group: '奕派', project_code: 'XM-S33', vehicle_code: 'S33-ET0-01~71', vehicle_model: '奕派S33', priority: 'high', status: 'in_progress', zone_code: 'SZA', zone_name: '装配一期车间（SZA）', assembly_site: 'SZA', lift_count: 28, equipment_code: 'SZA-产线', equipment_name: '试制岛产线', planner: '李密/段玉龙', pm_name: '陈寅', cve_name: '骆顺志', trial_supervisor: '程勇', process_supervisor: '姚小川', assembly_supervisor: '熊兵', plan_start_time: '2026-07-01 08:00:00', plan_end_time: '2026-09-30 18:00:00', plan_work_hours: 5680, actual_work_hours: 1800, progress: 32, summer_target_count: 14, summer_target_date: '2026-07-15', source: 'operation', created_at: '2026-04-24 09:30:00', progress_manual_override: 0 },
+  { id: 3, task_code: 'T-A2026-003', task_name: 'S33 ET 试制（20台）', task_type: 'A', trial_type: 'ET', project_group: '奕派', project_code: 'XM-S33', vehicle_code: 'S33-ET-01~20', vehicle_model: '奕派S33', priority: 'high', status: 'pending', zone_code: 'SZA', zone_name: '装配一期车间（SZA）', assembly_site: 'SZA', lift_count: 16, equipment_code: 'SZA-产线', equipment_name: '试制岛产线', planner: '李密/段玉龙', pm_name: '陈寅', cve_name: '骆顺志', trial_supervisor: '程勇', process_supervisor: '姚小川', assembly_supervisor: '熊兵', plan_start_time: '2026-10-01 08:00:00', plan_end_time: '2026-12-20 18:00:00', plan_work_hours: 1600, actual_work_hours: 0, progress: 0, source: 'operation', created_at: '2026-05-18 14:00:00', progress_manual_override: 0 },
+  { id: 4, task_code: 'T-A2026-004', task_name: 'P4J 软模车试制（11台）', task_type: 'A', trial_type: '软模车', project_group: '奕派', project_code: 'XM-P4J', vehicle_code: 'P4J-01~11', vehicle_model: '奕派P4J', priority: 'high', status: 'in_progress', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 2, equipment_code: 'SZB-LIFT5~6', equipment_name: '5/6号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '程勇', process_supervisor: '姚小川', assembly_supervisor: '熊兵', plan_start_time: '2026-07-20 08:00:00', plan_end_time: '2026-09-10 18:00:00', plan_work_hours: 880, actual_work_hours: 260, progress: 30, summer_target_count: 2, summer_target_date: '2026-07-20', source: 'operation', created_at: '2026-06-30 10:00:00', progress_manual_override: 0 },
+  { id: 5, task_code: 'T-A2026-005', task_name: 'P4J ET0 试制（15台）', task_type: 'A', trial_type: 'ET0', project_group: '奕派', project_code: 'XM-P4J', vehicle_code: 'P4J-ET0-01~15', vehicle_model: '奕派P4J', priority: 'high', status: 'pending', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 2, equipment_code: 'SZB-LIFT5~6', equipment_name: '5/6号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '程勇', process_supervisor: '姚小川', assembly_supervisor: '熊兵', plan_start_time: '2026-08-10 08:00:00', plan_end_time: '2026-11-20 18:00:00', plan_work_hours: 1200, actual_work_hours: 0, progress: 0, source: 'operation', created_at: '2026-06-30 10:05:00', progress_manual_override: 0 },
+  { id: 6, task_code: 'T-A2026-006', task_name: 'S-P平台XY项目 骡子车（16台）', task_type: 'A', trial_type: '骡子车', project_group: '猛士协同', project_code: 'XM-XY', vehicle_code: 'XY-01~16', vehicle_model: '猛士S-P平台', priority: 'high', status: 'completed', zone_code: 'SZA', zone_name: '装配一期车间（SZA）', assembly_site: 'SZA', lift_count: 11, equipment_code: 'SZA-05', equipment_name: '5号举升机', planner: '李冬艳/王强', pm_name: '蔡静', cve_name: '蔡静', trial_supervisor: '赵帅', process_supervisor: '黄流春/苏波', assembly_supervisor: '李召', plan_start_time: '2026-01-01 08:00:00', plan_end_time: '2026-03-30 18:00:00', plan_work_hours: 1408, actual_work_hours: 1408, progress: 100, source: 'operation', created_at: '2025-12-20 09:00:00', progress_manual_override: 0 },
+  // ===== B 类任务（平台次款） =====
+  { id: 7, task_code: 'T-B2026-001', task_name: 'DH-3 ET0 试制（89台）', task_type: 'B', trial_type: 'ET0', project_group: '奕派', project_code: 'XM-DH3', vehicle_code: 'DH3-ET0-01~89', vehicle_model: '奕派DH3', priority: 'medium', status: 'in_progress', zone_code: 'SZC', zone_name: '仓库装配区（SZC）', assembly_site: 'SZA', lift_count: 21, equipment_code: 'SZA-产线+SZC', equipment_name: 'SZA产线/SZC举升机', planner: '胡可意/张应龙', pm_name: '陈兵', cve_name: '王永兴', trial_supervisor: '程勇', process_supervisor: '黄流春', assembly_supervisor: '王波', plan_start_time: '2026-06-01 08:00:00', plan_end_time: '2026-12-31 18:00:00', plan_work_hours: 7120, actual_work_hours: 2800, progress: 39, source: 'operation', created_at: '2026-03-03 11:00:00', progress_manual_override: 0 },
+  { id: 8, task_code: 'T-B2026-002', task_name: 'S595bH ET0 试制（4台）', task_type: 'B', trial_type: 'ET0', project_group: '奕派', project_code: 'XM-S595', vehicle_code: 'S595bH-01~04', vehicle_model: '奕派S595', priority: 'medium', status: 'in_progress', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 4, equipment_code: 'SZB-LIFT1~4', equipment_name: '二期1-4号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '黄莎', process_supervisor: '姚小川', assembly_supervisor: '李耿', plan_start_time: '2026-06-05 08:00:00', plan_end_time: '2026-07-31 18:00:00', plan_work_hours: 320, actual_work_hours: 180, progress: 56, summer_target_count: 0, source: 'operation', created_at: '2026-06-04 15:00:00', progress_manual_override: 0 },
+  { id: 9, task_code: 'T-B2026-003', task_name: 'S3R 骡子车（13台）', task_type: 'B', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-S3R', vehicle_code: 'S3R-01~13', vehicle_model: '奕派S3R', priority: 'medium', status: 'pending', zone_code: 'SZC', zone_name: '仓库装配区（SZC）', assembly_site: 'SZC', lift_count: 2, equipment_code: 'SZC-LIFT1~2', equipment_name: '1/2号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '——', process_supervisor: '——', assembly_supervisor: '——', plan_start_time: '2026-08-17 08:00:00', plan_end_time: '2026-10-10 18:00:00', plan_work_hours: 1040, actual_work_hours: 0, progress: 0, source: 'operation', created_at: '2026-05-10 10:00:00', progress_manual_override: 0 },
+  { id: 10, task_code: 'T-B2026-004', task_name: 'S-P（NX1）平台骡子车（5台）', task_type: 'B', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-SP', vehicle_code: 'SP-01~05', vehicle_model: '奕派S-P/NX1', priority: 'medium', status: 'pending', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 2, equipment_code: 'SZB-LIFT7~8', equipment_name: '7/8号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '——', process_supervisor: '——', assembly_supervisor: '——', plan_start_time: '2026-08-15 08:00:00', plan_end_time: '2026-09-30 18:00:00', plan_work_hours: 400, actual_work_hours: 0, progress: 0, source: 'operation', created_at: '2026-05-12 14:00:00', progress_manual_override: 0 },
+  { id: 11, task_code: 'T-B2026-005', task_name: 'M18-3年型 ET0 试制（7台）', task_type: 'B', trial_type: 'ET0', project_group: '猛士', project_code: 'XM-M18-3', vehicle_code: 'M18-3-01~07', vehicle_model: '猛士M18-3年型', priority: 'medium', status: 'completed', zone_code: 'JP2', zone_name: '竞品装配二区（JP2）', assembly_site: 'JP2', lift_count: 1, equipment_code: 'JP2-LIFT1', equipment_name: '1号举升机', planner: '李思贤/金执', pm_name: '刘佳', cve_name: '秦雨军', trial_supervisor: '范潇', process_supervisor: '邢浩然', assembly_supervisor: '王鹏', plan_start_time: '2026-01-05 08:00:00', plan_end_time: '2026-01-15 18:00:00', plan_work_hours: 56, actual_work_hours: 56, progress: 100, source: 'operation', created_at: '2025-12-28 09:00:00', progress_manual_override: 0 },
+  // ===== C 类任务（基础车型衍生） =====
+  { id: 12, task_code: 'T-C2026-001', task_name: 'DH3 骡子车（3台）', task_type: 'C', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-DH3', vehicle_code: 'DH3-MU-01~03', vehicle_model: '奕派DH3', priority: 'low', status: 'completed', zone_code: 'SZC', zone_name: '仓库装配区（SZC）', assembly_site: 'SZC', lift_count: 3, equipment_code: 'SZC-LIFT1~3', equipment_name: 'SZC 1~3号举升机', planner: '李冬艳/王强', pm_name: '陈兵', cve_name: '王永兴', trial_supervisor: '程勇', process_supervisor: '黄流春', assembly_supervisor: '杨兴园', plan_start_time: '2026-06-20 08:00:00', plan_end_time: '2026-07-10 18:00:00', plan_work_hours: 90, actual_work_hours: 90, progress: 100, summer_target_count: 3, summer_target_date: '2026-07-01', source: 'operation', created_at: '2026-06-05 10:00:00', progress_manual_override: 0 },
+  { id: 13, task_code: 'T-C2026-002', task_name: 'DH1 BEV 骡子车（25台）', task_type: 'C', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-DH1', vehicle_code: 'DH1-BEV-01~25', vehicle_model: '奕派DH1 BEV', priority: 'low', status: 'in_progress', zone_code: 'SZC', zone_name: '仓库装配区（SZC）', assembly_site: 'SZC', lift_count: 4, equipment_code: 'SZC-LIFT4', equipment_name: '4号举升机', planner: '——', pm_name: '陈兵', cve_name: '王永兴', trial_supervisor: '赵帅', process_supervisor: '苏波', assembly_supervisor: '李耿', plan_start_time: '2026-07-10 08:00:00', plan_end_time: '2026-08-30 18:00:00', plan_work_hours: 2000, actual_work_hours: 1360, progress: 68, source: 'operation', created_at: '2026-06-20 11:00:00', progress_manual_override: 0 },
+  { id: 14, task_code: 'T-C2026-003', task_name: 'E70换代 骡子车（12台）', task_type: 'C', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-E70', vehicle_code: 'E70-01~12', vehicle_model: '奕派E70换代', priority: 'low', status: 'in_progress', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 4, equipment_code: 'SZB-LIFT3~4', equipment_name: '3/4号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '——', process_supervisor: '——', assembly_supervisor: '——', plan_start_time: '2026-07-01 08:00:00', plan_end_time: '2026-08-20 18:00:00', plan_work_hours: 960, actual_work_hours: 500, progress: 52, source: 'operation', created_at: '2026-06-10 10:00:00', progress_manual_override: 0 },
+  { id: 15, task_code: 'T-C2026-004', task_name: '乐高平台骡子车（3台）', task_type: 'C', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-LG', vehicle_code: 'LG-01~03', vehicle_model: '乐高平台', priority: 'low', status: 'in_progress', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 2, equipment_code: 'SZB-LIFT8', equipment_name: '8号举升机', planner: '——', pm_name: '——', cve_name: '——', trial_supervisor: '——', process_supervisor: '——', assembly_supervisor: '——', plan_start_time: '2026-06-20 08:00:00', plan_end_time: '2026-08-10 18:00:00', plan_work_hours: 240, actual_work_hours: 60, progress: 25, source: 'operation', created_at: '2026-06-08 15:00:00', progress_manual_override: 0 },
+  { id: 16, task_code: 'T-C2026-005', task_name: 'P59a 骡子车（33台）', task_type: 'C', trial_type: '骡子车', project_group: '奕派', project_code: 'XM-P59a', vehicle_code: 'P59a-01~33', vehicle_model: '奕派P59a', priority: 'low', status: 'completed', zone_code: 'CX1', zone_name: '外委畅行正东和泰（CX1）', assembly_site: 'CX1', lift_count: 5, equipment_code: 'CX1-LIFT1~5', equipment_name: '外委举升机', planner: '——', pm_name: '郑雄文', cve_name: '杨学渊', trial_supervisor: '黄莎', process_supervisor: '邢浩然', assembly_supervisor: '王鹏', plan_start_time: '2026-01-01 08:00:00', plan_end_time: '2026-01-31 18:00:00', plan_work_hours: 1320, actual_work_hours: 1320, progress: 100, source: 'operation', created_at: '2025-12-25 09:00:00', progress_manual_override: 0 },
+  // ===== 零星试制 =====
+  { id: 17, task_code: 'T-S2026-001', task_name: '车轮定位检测校准（零星）', task_type: 'sporadic', trial_type: '', project_group: '', project_code: '', vehicle_code: 'VEH-2305', vehicle_model: '通用', priority: 'low', status: 'completed', zone_code: 'SZB', zone_name: '装配二期车间（SZB）', assembly_site: 'SZB', lift_count: 1, equipment_code: '', equipment_name: '', planner: '王芳', pm_name: '', cve_name: '', trial_supervisor: '', process_supervisor: '', assembly_supervisor: '', plan_start_time: '2026-08-01 13:00:00', plan_end_time: '2026-08-01 17:00:00', plan_work_hours: 4, actual_work_hours: 3.5, progress: 100, source: 'manual', created_at: '2026-08-01 10:00:00', progress_manual_override: 0 },
+  { id: 18, task_code: 'T-S2026-002', task_name: '零部件区Kitting补料（零星）', task_type: 'sporadic', trial_type: '', project_group: '', project_code: 'XM-DH1', vehicle_code: '', vehicle_model: '', priority: 'medium', status: 'overdue', zone_code: 'SZC', zone_name: '仓库装配区（SZC）', assembly_site: '', lift_count: null, equipment_code: '', equipment_name: '', planner: '孙丽', pm_name: '', cve_name: '', trial_supervisor: '', process_supervisor: '', assembly_supervisor: '', plan_start_time: '2026-07-30 08:00:00', plan_end_time: '2026-07-31 17:00:00', plan_work_hours: 12, actual_work_hours: 9, progress: 60, source: 'manual', created_at: '2026-07-29 11:30:00', progress_manual_override: 0 }
+];
+let tmStatusPieChart = null;
+let tmTypeBarChart = null;
+let tmPage = 1;
+const tmPageSize = 10;
+let tmFilters = { keyword: '', task_type: '', status: '', priority: '', zone_code: '' };
+let tmEditingId = null;
+let tmCurrentRows = [];
+
+async function loadTaskDashboard() {
+  await Promise.all([
+    loadTmKpiAndStats(),
+    loadTmCharts(),
+    loadTaskList()
+  ]);
+  if (typeof initCustomSelects === 'function') initCustomSelects();
+  setTimeout(() => {
+    if (tmStatusPieChart) tmStatusPieChart.resize();
+    if (tmTypeBarChart) tmTypeBarChart.resize();
+  }, 100);
+}
+
+async function loadTmKpiAndStats() {
+  let stats = null;
+  try {
+    const res = await apiGet('/resource/tasks/stats');
+    if (res && !res._error && res.data) stats = res.data;
+  } catch (e) {}
+  if (!stats) {
+    const total = MOCK_TASKS.length;
+    const pending = MOCK_TASKS.filter(r => r.status === 'pending').length;
+    const in_progress = MOCK_TASKS.filter(r => r.status === 'in_progress').length;
+    const completed = MOCK_TASKS.filter(r => r.status === 'completed').length;
+    const overdue = MOCK_TASKS.filter(r => r.status === 'overdue').length;
+    const high_priority = MOCK_TASKS.filter(r => r.priority === 'high').length;
+    const medium_priority = MOCK_TASKS.filter(r => r.priority === 'medium').length;
+    const low_priority = MOCK_TASKS.filter(r => r.priority === 'low').length;
+    const total_plan_hours = MOCK_TASKS.reduce((s, r) => s + (r.plan_work_hours || 0), 0);
+    const total_actual_hours = MOCK_TASKS.reduce((s, r) => s + (r.actual_work_hours || 0), 0);
+    const avg_progress = total > 0 ? MOCK_TASKS.reduce((s, r) => s + (r.progress || 0), 0) / total : 0;
+    stats = { total, pending, in_progress, completed, overdue, high_priority, medium_priority, low_priority, total_plan_hours, total_actual_hours, avg_progress };
+  }
+  const total = stats.total || 0;
+  const pending = stats.pending || 0;
+  const inProgress = stats.in_progress || 0;
+  const completed = stats.completed || 0;
+  const overdue = stats.overdue || 0;
+  const high = stats.high_priority || 0;
+  const avgProgress = +(stats.avg_progress || 0).toFixed(0);
+  const planH = +(stats.total_plan_hours || 0).toFixed(1);
+  const actualH = +(stats.total_actual_hours || 0).toFixed(1);
+
+  document.getElementById('tmKpiTotal').innerHTML = total + '<span class="unit">项</span>';
+  document.getElementById('tmKpiInProgress').innerHTML = inProgress + '<span class="unit">项</span>';
+  document.getElementById('tmKpiCompleted').innerHTML = completed + '<span class="unit">项</span>';
+  document.getElementById('tmKpiHigh').innerHTML = high + '<span class="unit">项</span>';
+  document.getElementById('tmKpiProgress').innerHTML = avgProgress + '<span class="unit">%</span>';
+
+  document.getElementById('tmKpiTotalSub').textContent = `进行中 / 待开始：${inProgress} / ${pending}`;
+  document.getElementById('tmKpiInProgressSub').textContent = `占比 ${total > 0 ? ((inProgress/total)*100).toFixed(0) : 0}%`;
+  document.getElementById('tmKpiCompletedSub').textContent = `完成率 ${total > 0 ? ((completed/total)*100).toFixed(0) : 0}%`;
+  document.getElementById('tmKpiProgressSub').textContent = `工时：计划 ${planH} / 实际 ${actualH} h`;
+}
+
+async function loadTmCharts() {
+  let pieData = null, barData = null;
+  try {
+    const [pieRes, barRes] = await Promise.all([
+      apiGet('/resource/tasks/status-distribution'),
+      apiGet('/resource/tasks/type-progress')
+    ]);
+    if (pieRes && !pieRes._error && pieRes.data) pieData = pieRes.data.data;
+    if (barRes && !barRes._error && barRes.data) barData = barRes.data.data;
+  } catch (e) {}
+  // Mock回退
+  if (!pieData) {
+    const byStatus = {};
+    MOCK_TASKS.forEach(r => byStatus[r.status] = (byStatus[r.status] || 0) + 1);
+    pieData = Object.keys(TASK_STATUS_MAP).map(k => ({ name: TASK_STATUS_MAP[k].text, value: byStatus[k] || 0, color: TASK_STATUS_MAP[k].color }));
+  }
+  if (!barData) {
+    const byType = {};
+    MOCK_TASKS.forEach(r => {
+      if (!byType[r.task_type]) byType[r.task_type] = { count: 0, progressSum: 0, planSum: 0, actualSum: 0 };
+      byType[r.task_type].count++;
+      byType[r.task_type].progressSum += r.progress || 0;
+      byType[r.task_type].planSum += r.plan_work_hours || 0;
+      byType[r.task_type].actualSum += r.actual_work_hours || 0;
+    });
+    barData = Object.keys(TASK_TYPE_MAP).map(k => {
+      const d = byType[k] || { count: 0, progressSum: 0 };
+      return { type: TASK_TYPE_MAP[k].text, type_code: k, count: d.count, avg_progress: d.count > 0 ? +(d.progressSum/d.count).toFixed(0) : 0, color: TASK_TYPE_MAP[k].color };
+    });
+  }
+
+  if (window.echarts) {
+    const pieDom = document.getElementById('tmStatusPieChart');
+    if (pieDom) {
+      if (echarts.getInstanceByDom(pieDom)) echarts.getInstanceByDom(pieDom).dispose();
+      const tmStatusPieChart = echarts.init(pieDom);
+      const statusColorMap = {};
+      pieData.forEach(d => { statusColorMap[d.name] = d.color; });
+      const tmPieData = pieData.map(d => ({
+        value: d.value,
+        name: d.name,
+        itemStyle: { color: statusColorMap[d.name] || '#94a3b8', borderRadius: 4 }
+      }));
+      tmStatusPieChart.setOption({
+        tooltip: { trigger: 'item' },
+        legend: { bottom: 0, textStyle: { fontSize: 11 } },
+        series: [{
+          type: 'pie',
+          radius: ['55%', '75%'],
+          center: ['50%', '45%'],
+          itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+          label: { show: true, formatter: '{b}\n{d}%', fontSize: 11 },
+          data: tmPieData
+        }]
+      });
+      [50, 150, 300].forEach(t => setTimeout(() => tmStatusPieChart.resize(), t));
+    }
+    const barDom = document.getElementById('tmTypeBarChart');
+    if (barDom) {
+      if (echarts.getInstanceByDom(barDom)) echarts.getInstanceByDom(barDom).dispose();
+      const tmTypeBarChart = echarts.init(barDom);
+      const xAxis = barData.map(d => d.type);
+      const countData = barData.map(d => d.count);
+      const progressData = barData.map(d => d.avg_progress);
+      tmTypeBarChart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['任务数', '平均进度'], bottom: 0, textStyle: { fontSize: 11 } },
+        grid: { left: 10, right: 30, top: 20, bottom: 40, containLabel: true },
+        xAxis: { type: 'category', data: xAxis, axisLabel: { fontSize: 10 } },
+        yAxis: [
+          { type: 'value', axisLabel: { fontSize: 10 } },
+          { type: 'value', max: 100, axisLabel: { formatter: '{value}%', fontSize: 10 }, splitLine: { show: false } }
+        ],
+        series: [
+          { name: '任务数', type: 'bar', data: countData, itemStyle: { color: '#3b82f6', borderRadius: [4,4,0,0] }, barMaxWidth: 24 },
+          { name: '平均进度', type: 'line', yAxisIndex: 1, data: progressData, smooth: true, lineStyle: { color: '#f59e0b', width: 2 }, itemStyle: { color: '#f59e0b' }, symbol: 'circle', symbolSize: 6 }
+        ]
+      });
+      [50, 150, 300].forEach(t => setTimeout(() => tmTypeBarChart.resize(), t));
+    }
+  }
+}
+
+function applyTaskFilter() {
+  tmFilters.keyword = document.getElementById('tmSearchInput').value.trim();
+  tmFilters.task_type = document.getElementById('tmTypeFilter').value;
+  tmFilters.trial_type = document.getElementById('tmTrialFilter').value;
+  tmFilters.status = document.getElementById('tmStatusFilter').value;
+  tmFilters.priority = document.getElementById('tmPriorityFilter').value;
+  tmFilters.zone_code = document.getElementById('tmZoneFilter').value;
+  tmPage = 1;
+  loadTaskList();
+}
+
+function resetTaskFilters() {
+  document.getElementById('tmSearchInput').value = '';
+  document.getElementById('tmTypeFilter').value = '';
+  document.getElementById('tmTrialFilter').value = '';
+  document.getElementById('tmStatusFilter').value = '';
+  document.getElementById('tmPriorityFilter').value = '';
+  document.getElementById('tmZoneFilter').value = '';
+  tmFilters = { keyword: '', task_type: '', trial_type: '', status: '', priority: '', zone_code: '' };
+  tmPage = 1;
+  loadTaskList();
+}
+
+function tmChangePage(delta) {
+  tmPage += delta;
+  if (tmPage < 1) tmPage = 1;
+  loadTaskList();
+}
+
+async function loadTaskList() {
+  const params = new URLSearchParams({
+    page: tmPage,
+    page_size: tmPageSize
+  });
+  if (tmFilters.keyword) params.set('keyword', tmFilters.keyword);
+  if (tmFilters.task_type) params.set('task_type', tmFilters.task_type);
+  if (tmFilters.trial_type) params.set('trial_type', tmFilters.trial_type);
+  if (tmFilters.status) params.set('status', tmFilters.status);
+  if (tmFilters.priority) params.set('priority', tmFilters.priority);
+  if (tmFilters.zone_code) params.set('zone_code', tmFilters.zone_code);
+  if (tmFilters.zone_code) params.set('assembly_site', tmFilters.zone_code);
+
+  let rows = [];
+  let total = 0;
+  try {
+    const res = await apiGet('/resource/tasks?' + params.toString());
+    if (res && !res._error && res.data && res.data.data) {
+      rows = res.data.data;
+      total = res.data.total || 0;
+    }
+  } catch (e) {}
+  if (!rows || rows.length === 0) {
+    // Mock过滤
+    let list = MOCK_TASKS.slice();
+    if (tmFilters.keyword) {
+      const kw = tmFilters.keyword.toLowerCase();
+      list = list.filter(r => [r.task_code, r.task_name, r.project_code, r.vehicle_code, r.project_group, r.planner].some(v => (v || '').toLowerCase().includes(kw)));
+    }
+    if (tmFilters.task_type) list = list.filter(r => r.task_type === tmFilters.task_type);
+    if (tmFilters.trial_type) list = list.filter(r => {
+      const tt = r.trial_type || '';
+      if (tmFilters.trial_type === 'MT') return tt.startsWith('MT');
+      return tt === tmFilters.trial_type;
+    });
+    if (tmFilters.status) list = list.filter(r => r.status === tmFilters.status);
+    if (tmFilters.priority) list = list.filter(r => r.priority === tmFilters.priority);
+    if (tmFilters.zone_code) list = list.filter(r => r.zone_code === tmFilters.zone_code || r.assembly_site === tmFilters.zone_code);
+    total = list.length;
+    const start = (tmPage - 1) * tmPageSize;
+    rows = list.slice(start, start + tmPageSize);
+  }
+
+  tmCurrentRows = rows;
+  renderTaskTable(rows, total);
+}
+
+function renderTaskTable(rows, total) {
+  const tbody = document.getElementById('taskTableBody');
+  const totalPages = Math.max(1, Math.ceil(total / tmPageSize));
+  if (tmPage > totalPages) tmPage = totalPages;
+
+  document.getElementById('tmPageInfo').textContent = `共 ${total} 条，第 ${tmPage}/${totalPages} 页`;
+  document.getElementById('tmPageNum').textContent = tmPage;
+  document.getElementById('tmPrevPage').disabled = tmPage <= 1;
+  document.getElementById('tmNextPage').disabled = tmPage >= totalPages;
+
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-tertiary);">暂无任务数据</td></tr>`;
+    return;
+  }
+
+  const startIdx = (tmPage - 1) * tmPageSize + 1;
+  tbody.innerHTML = rows.map((r, i) => {
+    const typeMeta = TASK_TYPE_MAP[r.task_type] || { text: r.task_type, color: '#6b7280' };
+    const statusMeta = TASK_STATUS_MAP[r.status] || { text: r.status, color: '#6b7280' };
+    const priorityMeta = TASK_PRIORITY_MAP[r.priority] || { text: r.priority, color: '#6b7280' };
+    const progress = +(r.progress || 0).toFixed(0);
+    const progressColor = r.status === 'completed' ? '#10b981' : (progress > 60 ? '#3b82f6' : '#f59e0b');
+    const trialLabel = r.trial_type ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(99,102,241,0.1);color:#6366f1;">${escapeHtml(r.trial_type)}</span>` : '—';
+    const projGroupLine = r.project_group ? `<div style="font-size:11px;color:var(--text-secondary);">${escapeHtml(r.project_group)}</div>` : '';
+    const projLine = r.project_code ? `<div style="font-size:12px;">${escapeHtml(r.project_code)}</div>` : '';
+    const asSite = r.assembly_site ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(14,165,233,0.12);color:#0ea5e9;">${escapeHtml(r.assembly_site)}</span>` : '—';
+    const asLift = r.lift_count ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">举升机 ${r.lift_count} 台</div>` : '';
+    const pmLine = r.pm_name ? `<div style="font-size:12px;">PM：${escapeHtml(r.pm_name)}</div>` : '';
+    const supervisorLine = r.trial_supervisor || r.process_supervisor ? `<div style="font-size:11px;color:var(--text-secondary);">主管：${escapeHtml(r.trial_supervisor || r.process_supervisor || '')}</div>` : '';
+    const zoneLabel = r.zone_name || (TASK_ZONES.find(z => z[0] === r.zone_code) || [])[1] || r.zone_code || '';
+
+    return `<tr style="transition:background 0.15s;">
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-secondary);vertical-align:middle;">${startIdx + i}</td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;font-family:'HarmonyOS Sans Mono',monospace;">${escapeHtml(r.task_code)}</td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">
+        <div style="font-weight:500;">${escapeHtml(r.task_name)}</div>
+        ${r.plan_start_time ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">计划：${escapeHtml(String(r.plan_start_time).slice(0,16).replace('T',' '))}</div>` : ''}
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+        <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${typeMeta.color}1a;color:${typeMeta.color};">${typeMeta.text}</span>
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">${trialLabel}</td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">
+        ${projGroupLine}
+        ${projLine}
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+        ${asSite}
+        ${asLift}
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">
+        ${pmLine}
+        ${supervisorLine}
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+        <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${priorityMeta.color}1a;color:${priorityMeta.color};">${priorityMeta.text}</span>
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+        <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${statusMeta.color}1a;color:${statusMeta.color};">${statusMeta.text}</span>
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+        <div style="display:flex;align-items:center;gap:8px;min-width:100px;">
+          <div style="flex:1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${progress}%;background:${progressColor};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:12px;color:var(--text-secondary);min-width:34px;text-align:right;">${progress}%</span>
+        </div>
+        ${(r.plan_work_hours != null || r.actual_work_hours != null) ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;font-family:'HarmonyOS Sans Mono',monospace;">${r.actual_work_hours != null ? (+r.actual_work_hours).toFixed(1) : '0'}/${r.plan_work_hours != null ? (+r.plan_work_hours).toFixed(1) : '?'} h</div>` : ''}
+      </td>
+      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+        <button class="btn btn-sm" onclick="viewTaskDetail(${r.id})">详情</button>
+        <button class="btn btn-sm" onclick="editTask(${r.id})">编辑</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // hover效果
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('mouseenter', () => tr.style.background = 'var(--bg-hover)');
+    tr.addEventListener('mouseleave', () => tr.style.background = '');
+  });
+}
+
+function _collectTaskRowData(id) {
+  return tmCurrentRows.find(r => r.id === id) || MOCK_TASKS.find(r => r.id === id) || null;
+}
+
+async function viewTaskDetail(id) {
+  let data = null;
+  try { const res = await apiGet('/resource/tasks/' + id); if (!res._error && res.data) data = res.data; } catch (e) {}
+  if (!data) data = _collectTaskRowData(id) || { id: id };
+
+  const typeMeta = TASK_TYPE_MAP[data.task_type] || { text: data.task_type || '-', color: '#6b7280' };
+  const statusMeta = TASK_STATUS_MAP[data.status] || { text: data.status || '-', color: '#6b7280' };
+  const priorityMeta = TASK_PRIORITY_MAP[data.priority] || { text: data.priority || '-', color: '#6b7280' };
+  const progress = +(data.progress || 0).toFixed(0);
+  const progressColor = data.status === 'completed' ? '#10b981' : (progress > 60 ? '#3b82f6' : '#f59e0b');
+  const zoneLabel = data.zone_name || (TASK_ZONES.find(z => z[0] === data.zone_code) || [])[1] || data.zone_code || '—';
+  const siteLabel = data.assembly_site ? (TASK_ASSEMBLY_SITES.find(s => s[0] === data.assembly_site) || [])[1] || data.assembly_site : '—';
+  const manualOverride = data.progress_manual_override;
+  const sourceMap = { operation: '360运营表', manual: '手工录入', mes: 'MES系统' };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">任务详情</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div style="font-size:18px;font-weight:700;color:var(--text);">${escapeHtml(data.task_name || '-')}</div>
+            <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:${typeMeta.color}1a;color:${typeMeta.color};">${typeMeta.text}</span>
+            ${data.trial_type ? `<span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:rgba(99,102,241,0.1);color:#6366f1;">${escapeHtml(data.trial_type)}</span>` : ''}
+            <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:${statusMeta.color}1a;color:${statusMeta.color};">${statusMeta.text}</span>
+            <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:${priorityMeta.color}1a;color:${priorityMeta.color};">优先级：${priorityMeta.text}</span>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);font-family:'HarmonyOS Sans Mono',monospace;">任务编号：${escapeHtml(data.task_code || '-')}</div>
+          ${progress >= 0 ? `
+          <div style="margin-top:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:12px;color:var(--text-secondary);">任务进度 ${manualOverride ? '<span style="color:#ef4444;">（手动覆盖）</span>' : '<span style="color:var(--text-tertiary);">（工时自动计算）</span>'}</span>
+              <span style="font-size:12px;font-weight:600;color:${progressColor};">${progress}%</span>
+            </div>
+            <div style="height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${progress}%;background:${progressColor};border-radius:4px;"></div>
+            </div>
+            ${(data.plan_work_hours != null || data.actual_work_hours != null) ? `<div style="margin-top:6px;font-size:11px;color:var(--text-tertiary);font-family:'HarmonyOS Sans Mono',monospace;">计划工时 ${data.plan_work_hours != null ? (+data.plan_work_hours).toFixed(1) : '—'} h / 实际工时 ${data.actual_work_hours != null ? (+data.actual_work_hours).toFixed(1) : '—'} h</div>` : ''}
+          </div>` : ''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
+          <div class="detail-row"><div class="detail-label">任务类型</div><div class="detail-value"><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;background:${typeMeta.color}1a;color:${typeMeta.color};">${typeMeta.text}</span></div></div>
+          <div class="detail-row"><div class="detail-label">试制类别</div><div class="detail-value">${escapeHtml(data.trial_type) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">项目群</div><div class="detail-value">${escapeHtml(data.project_group) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">项目编号</div><div class="detail-value">${escapeHtml(data.project_code) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">装配场地</div><div class="detail-value">${escapeHtml(siteLabel)}${data.lift_count ? ' · 举升机 ' + data.lift_count + ' 台' : ''}</div></div>
+          <div class="detail-row"><div class="detail-label">原所在区域</div><div class="detail-value">${zoneLabel || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">PM（项目经理）</div><div class="detail-value">${escapeHtml(data.pm_name) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">CVE</div><div class="detail-value">${escapeHtml(data.cve_name) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">试制主管</div><div class="detail-value">${escapeHtml(data.trial_supervisor) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">工艺主管</div><div class="detail-value">${escapeHtml(data.process_supervisor) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">装配主管</div><div class="detail-value">${escapeHtml(data.assembly_supervisor) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">计划员（负责人）</div><div class="detail-value">${escapeHtml(data.planner) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">车号 / 车型</div><div class="detail-value">${escapeHtml(data.vehicle_code) || '—'} ${data.vehicle_model ? '(' + escapeHtml(data.vehicle_model) + ')' : ''}</div></div>
+          <div class="detail-row"><div class="detail-label">夏标车数量</div><div class="detail-value">${data.summer_target_count != null ? data.summer_target_count + ' 台' : '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">夏标车交付</div><div class="detail-value">${escapeHtml(String(data.summer_target_date || '-').slice(0,10))}</div></div>
+          <div class="detail-row"><div class="detail-label">数据来源</div><div class="detail-value">${sourceMap[data.source] || (data.source || '-')}</div></div>
+          <div class="detail-row"><div class="detail-label">占用设备</div><div class="detail-value">${data.equipment_name ? escapeHtml(data.equipment_name) + (data.equipment_code ? ' <span style="color:var(--text-tertiary);font-family:HarmonyOS Sans Mono">(' + escapeHtml(data.equipment_code) + ')</span>' : '') : '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">计划工时</div><div class="detail-value">${data.plan_work_hours != null ? (+data.plan_work_hours).toFixed(1) + ' 小时' : '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">实际工时</div><div class="detail-value">${data.actual_work_hours != null ? (+data.actual_work_hours).toFixed(1) + ' 小时' : '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">计划开始</div><div class="detail-value">${escapeHtml(String(data.plan_start_time || '-').slice(0,16).replace('T',' '))}</div></div>
+          <div class="detail-row"><div class="detail-label">计划结束</div><div class="detail-value">${escapeHtml(String(data.plan_end_time || '-').slice(0,16).replace('T',' '))}</div></div>
+          <div class="detail-row"><div class="detail-label">创建时间</div><div class="detail-value">${escapeHtml(String(data.created_at || '-').slice(0,16).replace('T',' '))}</div></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove();editTask(${id})">编辑任务</button>
+      </div>
+    </div>`;
+  overlay.onclick = function() { overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function editTask(id) {
+  tmEditingId = id;
+  const data = _collectTaskRowData(id) || { id: id };
+  showTaskFormModal(data);
+}
+
+function showTaskFormModal(initData) {
+  const isEdit = !!tmEditingId;
+  const data = initData || {};
+  const initialProgress = data.progress != null ? +data.progress : ((data.plan_work_hours && data.plan_work_hours > 0 && data.actual_work_hours != null) ? Math.min(100, Math.round(+data.actual_work_hours / +data.plan_work_hours * 100)) : 0);
+  const isManualOverride = !!data.progress_manual_override;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">${isEdit ? '编辑任务' : '新增任务'}</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+          <div class="form-group">
+            <label>任务编号 ${!isEdit ? '<span class="required">*</span>' : ''}</label>
+            <input type="text" id="tfCode" class="input-field" value="${escapeHtml(data.task_code || '')}" ${isEdit ? 'readonly style="background:var(--bg-hover);cursor:not-allowed;"' : ''} placeholder="如：T-A2026-001"/>
+          </div>
+          <div class="form-group">
+            <label>任务名称 <span class="required">*</span></label>
+            <input type="text" id="tfName" class="input-field" value="${escapeHtml(data.task_name || '')}" placeholder="请输入任务名称"/>
+          </div>
+          <div class="form-group">
+            <label>任务类型 <span class="required">*</span></label>
+            <span class="select-wrap">
+              <select id="tfType">
+                <option value="A" ${data.task_type==='A'?'selected':''}>A类任务</option>
+                <option value="B" ${data.task_type==='B'?'selected':''}>B类任务</option>
+                <option value="C" ${data.task_type==='C'?'selected':''}>C类任务</option>
+                <option value="sporadic" ${(!data.task_type || data.task_type==='sporadic')?'selected':''}>零星试制</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>试制类别</label>
+            <span class="select-wrap">
+              <select id="tfTrialType">
+                <option value="">未指定</option>
+                <option value="骡子车" ${data.trial_type==='骡子车'?'selected':''}>骡子车</option>
+                <option value="ET0" ${data.trial_type==='ET0'?'selected':''}>ET0</option>
+                <option value="ET" ${data.trial_type==='ET'?'selected':''}>ET</option>
+                <option value="软模车" ${data.trial_type==='软模车'?'selected':''}>软模车</option>
+                <option value="FT0" ${data.trial_type==='FT0'?'selected':''}>FT0</option>
+                <option value="MT0" ${data.trial_type==='MT0'?'selected':''}>MT0</option>
+                <option value="MT1" ${data.trial_type==='MT1'?'selected':''}>MT1</option>
+                <option value="MT2" ${data.trial_type==='MT2'?'selected':''}>MT2</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>项目群</label>
+            <span class="select-wrap">
+              <select id="tfProjectGroup">
+                <option value="">未指定</option>
+                <option value="奕派" ${data.project_group==='奕派'?'selected':''}>奕派</option>
+                <option value="猛士" ${data.project_group==='猛士'?'selected':''}>猛士</option>
+                <option value="猛士协同" ${data.project_group==='猛士协同'?'selected':''}>猛士协同</option>
+                <option value="岚图" ${data.project_group==='岚图'?'selected':''}>岚图</option>
+                <option value="新能源" ${data.project_group==='新能源'?'selected':''}>新能源</option>
+                <option value="其他" ${data.project_group==='其他'?'selected':''}>其他</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>优先级</label>
+            <span class="select-wrap">
+              <select id="tfPriority">
+                <option value="high" ${data.priority==='high'?'selected':''}>高</option>
+                <option value="medium" ${(!data.priority || data.priority==='medium')?'selected':''}>中</option>
+                <option value="low" ${data.priority==='low'?'selected':''}>低</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>任务状态</label>
+            <span class="select-wrap">
+              <select id="tfStatus">
+                <option value="pending" ${(!data.status || data.status==='pending')?'selected':''}>待开始</option>
+                <option value="in_progress" ${data.status==='in_progress'?'selected':''}>进行中</option>
+                <option value="completed" ${data.status==='completed'?'selected':''}>已完成</option>
+                <option value="overdue" ${data.status==='overdue'?'selected':''}>逾期</option>
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>装配场地</label>
+            <span class="select-wrap">
+              <select id="tfAssemblySite">
+                <option value="">未指定</option>
+                ${TASK_ASSEMBLY_SITES.map(([c,n]) => `<option value="${c}" ${data.assembly_site===c?'selected':''}>${n}</option>`).join('')}
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>占用举升机数量</label>
+            <input type="number" step="1" min="0" id="tfLiftCount" class="input-field" value="${data.lift_count != null ? data.lift_count : ''}" placeholder="如：2"/>
+          </div>
+          <div class="form-group">
+            <label>项目编号</label>
+            <input type="text" id="tfProject" class="input-field" value="${escapeHtml(data.project_code || '')}" placeholder="如：S33/DH-3/S595b"/>
+          </div>
+          <div class="form-group">
+            <label>车号 / 车型</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <input type="text" id="tfVehicleCode" class="input-field" value="${escapeHtml(data.vehicle_code || '')}" placeholder="车号"/>
+              <input type="text" id="tfVehicleModel" class="input-field" value="${escapeHtml(data.vehicle_model || '')}" placeholder="车型"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>PM（项目经理）</label>
+            <input type="text" id="tfPMName" class="input-field" value="${escapeHtml(data.pm_name || '')}" placeholder="PM姓名"/>
+          </div>
+          <div class="form-group">
+            <label>CVE</label>
+            <input type="text" id="tfCVEName" class="input-field" value="${escapeHtml(data.cve_name || '')}" placeholder="CVE姓名"/>
+          </div>
+          <div class="form-group">
+            <label>试制主管</label>
+            <input type="text" id="tfTrialSupervisor" class="input-field" value="${escapeHtml(data.trial_supervisor || '')}" placeholder="试制主管"/>
+          </div>
+          <div class="form-group">
+            <label>工艺主管</label>
+            <input type="text" id="tfProcessSupervisor" class="input-field" value="${escapeHtml(data.process_supervisor || '')}" placeholder="工艺主管"/>
+          </div>
+          <div class="form-group">
+            <label>装配主管</label>
+            <input type="text" id="tfAssemblySupervisor" class="input-field" value="${escapeHtml(data.assembly_supervisor || '')}" placeholder="装配主管"/>
+          </div>
+          <div class="form-group">
+            <label>计划员（负责人）</label>
+            <input type="text" id="tfPlanner" class="input-field" value="${escapeHtml(data.planner || '')}" placeholder="负责人姓名"/>
+          </div>
+          <div class="form-group">
+            <label>原所在区域</label>
+            <span class="select-wrap">
+              <select id="tfZone">
+                <option value="">未分配</option>
+                ${TASK_ZONES.map(([c,n]) => `<option value="${c}" ${data.zone_code===c?'selected':''}>${n}</option>`).join('')}
+              </select>
+            </span>
+          </div>
+          <div class="form-group">
+            <label>占用设备</label>
+            <input type="text" id="tfEquipment" class="input-field" value="${escapeHtml(data.equipment_code || '')}" placeholder="设备编号（如 SZA-01）"/>
+          </div>
+          <div class="form-group">
+            <label>夏标车数量</label>
+            <input type="number" step="1" min="0" id="tfSummerCount" class="input-field" value="${data.summer_target_count != null ? data.summer_target_count : ''}" placeholder="夏标车台数"/>
+          </div>
+          <div class="form-group">
+            <label>夏标车交付日期</label>
+            <input type="date" id="tfSummerDate" class="input-field" value="${data.summer_target_date ? String(data.summer_target_date).slice(0,10) : ''}"/>
+          </div>
+          <div class="form-group">
+            <label>计划开始时间</label>
+            <input type="datetime-local" id="tfPlanStart" class="input-field" value="${data.plan_start_time ? String(data.plan_start_time).slice(0,16) : ''}"/>
+          </div>
+          <div class="form-group">
+            <label>计划结束时间</label>
+            <input type="datetime-local" id="tfPlanEnd" class="input-field" value="${data.plan_end_time ? String(data.plan_end_time).slice(0,16) : ''}"/>
+          </div>
+          <div class="form-group">
+            <label>计划工时（小时）</label>
+            <input type="number" step="0.1" id="tfPlanHours" class="input-field" value="${data.plan_work_hours != null ? data.plan_work_hours : ''}" placeholder="如：160" oninput="recalcTfProgress()"/>
+          </div>
+          <div class="form-group">
+            <label>实际工时（小时）</label>
+            <input type="number" step="0.1" id="tfActualHours" class="input-field" value="${data.actual_work_hours != null ? data.actual_work_hours : ''}" placeholder="如：85.5" oninput="recalcTfProgress()"/>
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>
+              进度百分比（0-100）
+              <label style="display:inline-flex;align-items:center;gap:6px;margin-left:16px;font-weight:400;font-size:12px;color:var(--text-secondary);">
+                <input type="checkbox" id="tfManualOverride" ${isManualOverride?'checked':''} onchange="toggleTfProgressLock()"/>
+                手动覆盖进度（不受工时联动）
+              </label>
+            </label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="range" id="tfProgressRange" min="0" max="100" step="1" value="${initialProgress}" oninput="document.getElementById('tfProgress').value=this.value;manualTouch();" style="flex:1;" ${!isManualOverride?'disabled style="opacity:0.7;cursor:not-allowed;"':''}/>
+              <input type="number" id="tfProgress" min="0" max="100" class="input-field" style="width:90px;" value="${initialProgress}" oninput="document.getElementById('tfProgressRange').value=this.value;manualTouch();" ${!isManualOverride?'readonly style="background:var(--bg-hover);"':''}/>
+              <span style="color:var(--text-secondary);">%</span>
+              <span id="tfProgressHint" style="font-size:11px;color:${isManualOverride?'#ef4444':'var(--text-tertiary)'};">${isManualOverride?'手动模式':'工时自动计算模式'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">取消</button>
+        <button class="btn btn-primary" id="tfSubmitBtn">${isEdit ? '保存修改' : '确认新增'}</button>
+      </div>
+    </div>`;
+  overlay.onclick = function() { overlay.remove(); };
+  document.body.appendChild(overlay);
+  if (typeof initCustomSelects === 'function') initCustomSelects(overlay);
+
+  window.recalcTfProgress = function() {
+    const manual = document.getElementById('tfManualOverride').checked;
+    if (manual) return;
+    const plan = parseFloat(document.getElementById('tfPlanHours').value);
+    const actual = parseFloat(document.getElementById('tfActualHours').value) || 0;
+    let p = 0;
+    if (plan && plan > 0) p = Math.min(100, Math.round(actual / plan * 100));
+    document.getElementById('tfProgress').value = p;
+    document.getElementById('tfProgressRange').value = p;
+  };
+  window.toggleTfProgressLock = function() {
+    const manual = document.getElementById('tfManualOverride').checked;
+    const range = document.getElementById('tfProgressRange');
+    const num = document.getElementById('tfProgress');
+    const hint = document.getElementById('tfProgressHint');
+    if (manual) {
+      range.disabled = false; range.style.opacity = ''; range.style.cursor = '';
+      num.readOnly = false; num.style.background = '';
+      hint.textContent = '手动模式'; hint.style.color = '#ef4444';
+    } else {
+      range.disabled = true; range.style.opacity = '0.7'; range.style.cursor = 'not-allowed';
+      num.readOnly = true; num.style.background = 'var(--bg-hover)';
+      hint.textContent = '工时自动计算模式'; hint.style.color = 'var(--text-tertiary)';
+      recalcTfProgress();
+    }
+  };
+  window.manualTouch = function() {
+    // 手动拖拽进度条时，自动切换为手动覆盖模式
+    const cb = document.getElementById('tfManualOverride');
+    if (!cb.checked) { cb.checked = true; toggleTfProgressLock(); }
+  };
+
+  const submit = overlay.querySelector('#tfSubmitBtn');
+  submit.addEventListener('click', async () => {
+    const code = document.getElementById('tfCode').value.trim();
+    const name = document.getElementById('tfName').value.trim();
+    const task_type = document.getElementById('tfType').value;
+    const trial_type = document.getElementById('tfTrialType').value || null;
+    const project_group = document.getElementById('tfProjectGroup').value || null;
+    const priority = document.getElementById('tfPriority').value;
+    const status = document.getElementById('tfStatus').value;
+    const assembly_site = document.getElementById('tfAssemblySite').value || null;
+    const lift_count_raw = document.getElementById('tfLiftCount').value;
+    const zone_code = document.getElementById('tfZone').value || null;
+    const project_code = document.getElementById('tfProject').value.trim() || null;
+    const vehicle_code = document.getElementById('tfVehicleCode').value.trim() || null;
+    const vehicle_model = document.getElementById('tfVehicleModel').value.trim() || null;
+    const pm_name = document.getElementById('tfPMName').value.trim() || null;
+    const cve_name = document.getElementById('tfCVEName').value.trim() || null;
+    const trial_supervisor = document.getElementById('tfTrialSupervisor').value.trim() || null;
+    const process_supervisor = document.getElementById('tfProcessSupervisor').value.trim() || null;
+    const assembly_supervisor = document.getElementById('tfAssemblySupervisor').value.trim() || null;
+    const planner = document.getElementById('tfPlanner').value.trim() || null;
+    const equipment_code = document.getElementById('tfEquipment').value.trim() || null;
+    const summer_count_raw = document.getElementById('tfSummerCount').value;
+    const summer_target_date = document.getElementById('tfSummerDate').value || null;
+    const plan_start_time = document.getElementById('tfPlanStart').value || null;
+    const plan_end_time = document.getElementById('tfPlanEnd').value || null;
+    const plan_work_hours_raw = document.getElementById('tfPlanHours').value;
+    const actual_work_hours_raw = document.getElementById('tfActualHours').value;
+    const progress_manual_override = document.getElementById('tfManualOverride').checked ? 1 : 0;
+    const progress = parseFloat(document.getElementById('tfProgress').value) || 0;
+
+    if (!code || !name) { alert('请填写任务编号和名称'); return; }
+    if (!task_type) { alert('请选择任务类型'); return; }
+
+    const payload = {
+      task_code: code, task_name: name, task_type, trial_type, project_group,
+      priority, status, assembly_site, zone_code,
+      project_code, vehicle_code, vehicle_model,
+      pm_name, cve_name, trial_supervisor, process_supervisor, assembly_supervisor,
+      planner, equipment_code, progress, progress_manual_override
+    };
+    if (plan_start_time) payload.plan_start_time = plan_start_time.replace('T', ' ') + ':00';
+    if (plan_end_time) payload.plan_end_time = plan_end_time.replace('T', ' ') + ':00';
+    if (plan_work_hours_raw !== '') payload.plan_work_hours = parseFloat(plan_work_hours_raw);
+    if (actual_work_hours_raw !== '') payload.actual_work_hours = parseFloat(actual_work_hours_raw);
+    if (lift_count_raw !== '') payload.lift_count = parseInt(lift_count_raw);
+    if (summer_count_raw !== '') payload.summer_target_count = parseInt(summer_count_raw);
+    if (summer_target_date) payload.summer_target_date = summer_target_date;
+
+    try {
+      let res;
+      if (isEdit) {
+        const { task_code:_, ...updatePayload } = payload;
+        res = await apiPut('/resource/tasks/' + tmEditingId, updatePayload);
+      } else {
+        res = await apiPost('/resource/tasks', payload);
+      }
+      if (!res._error) {
+        alert(isEdit ? '修改成功' : '新增成功');
+        tmEditingId = null;
+        overlay.remove();
+        loadTmKpiAndStats();
+        loadTmCharts();
+        loadTaskList();
+      } else {
+        alert((res.detail || '操作失败') + '（将使用模拟结果）');
+        alert(isEdit ? '修改成功（模拟）' : '新增成功（模拟）');
+        tmEditingId = null;
+        overlay.remove();
+        loadTmKpiAndStats();
+        loadTmCharts();
+        loadTaskList();
+      }
+    } catch (e) {
+      alert(isEdit ? '修改成功（模拟）' : '新增成功（模拟）');
+      tmEditingId = null;
+      overlay.remove();
+      loadTmKpiAndStats();
+      loadTmCharts();
+      loadTaskList();
+    }
+  });
+}
+
+/* =========================
+ * 工具函数
+ * ========================= */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text || '';
+  return div.innerHTML;
 }
 </script>
 

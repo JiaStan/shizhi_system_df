@@ -43,3 +43,28 @@ frontend/dist/
 webui_ref/node_modules/
 webui_ref/node_modules_old/
 webui_ref/dist/
+
+# 数据库本地安装包（开发者需自行安装 MariaDB）
+setup/mariadb-10.11.18-winx64/
+setup/mariadb-10.11.18-winx64.msi
+setup/mariadb.zip
+
+# 数据库运行时文件（本地数据，非源码）
+*.ibd
+*.frm
+*.MAD
+*.MAI
+*.CSM
+*.CSV
+aria_log.*
+ib_logfile*
+ibdata*
+ibtmp1
+multi-master.info
+
+# 系统运行时文件
+*.err
+*.pid
+
+# 本地配置
+my.ini

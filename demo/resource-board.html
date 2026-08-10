@@ -9,938 +9,806 @@
   <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
   <style>
-    .util-matrix {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    .matrix-cell {
-      background: var(--bg-card);
+    .resource-matrix-wrapper {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: calc(100vh - 260px);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
+      background: var(--bg-card);
     }
-    .matrix-cell:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    .matrix-cell .area-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .matrix-cell .area-name-text {
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: 14px;
-    }
-    .matrix-cell .area-util-pct {
-      font-size: 24px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .matrix-cell .area-util-unit {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-left: 2px;
-    }
-    .matrix-cell .sparkline-container {
+    .resource-matrix {
       width: 100%;
-      height: 40px;
-      margin-top: 8px;
+      border-collapse: collapse;
+      min-width: 1800px;
+      font-size: 12px;
     }
-    .matrix-cell .area-count-info {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      font-size: 11px;
-      color: var(--text-muted);
+    .resource-matrix thead {
+      position: sticky;
+      top: 0;
+      z-index: 5;
     }
-    .matrix-cell .capacity-warning {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      display: none;
-    }
-    .matrix-cell.warning-red {
-      border-color: rgba(255, 77, 79, 0.4);
-    }
-    .matrix-cell.warning-red .area-util-pct { color: var(--danger); }
-    .matrix-cell.warning-red .capacity-warning { display: flex; }
-    .matrix-cell.warning-yellow {
-      border-color: rgba(250, 173, 20, 0.4);
-    }
-    .matrix-cell.warning-yellow .area-util-pct { color: var(--warning); }
-    .matrix-cell.warning-green .area-util-pct { color: var(--success); }
-
-    .area-detail-cards {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-    .area-detail-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      scroll-margin-top: 80px;
-    }
-    .area-detail-card .detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .area-detail-card .detail-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      font-size: 15px;
-      color: var(--text-primary);
-    }
-    .area-detail-card .detail-stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    .area-detail-card .stat-mini {
+    .resource-matrix th {
       background: var(--bg-secondary);
-      border-radius: var(--radius);
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-align: left;
       padding: 10px 12px;
-      text-align: center;
-    }
-    .area-detail-card .stat-mini .stat-num {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .area-detail-card .stat-mini .stat-label {
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      white-space: nowrap;
       font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+    .resource-matrix th.week-col {
+      text-align: center;
+      min-width: 72px;
+      padding: 6px 4px;
+    }
+    .resource-matrix th.week-col .week-num {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand-light);
+      margin-bottom: 2px;
+    }
+    .resource-matrix th.week-col .week-date {
+      display: block;
+      font-size: 10px;
       color: var(--text-muted);
-      margin-top: 2px;
+      font-weight: 400;
     }
-    .area-detail-card .util-section {
-      margin-bottom: 14px;
+    .resource-matrix th.sticky-col,
+    .resource-matrix td.sticky-col {
+      position: sticky;
+      z-index: 3;
+      background: var(--bg-card);
     }
-    .area-detail-card .util-section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-    .area-detail-card .util-section-title .util-value {
-      font-weight: 600;
-      font-size: 14px;
-    }
-    .area-detail-card .devices-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .area-detail-card .devices-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 10px;
-      background: var(--bg-secondary);
-      border-radius: 6px;
-      margin-bottom: 6px;
-      font-size: 12px;
-    }
-    .area-detail-card .devices-list .dev-name {
+    .resource-matrix thead th.sticky-col { z-index: 6; background: var(--bg-secondary); }
+    .resource-matrix td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
       color: var(--text-primary);
-      flex: 1;
+      vertical-align: middle;
     }
-    .area-detail-card .devices-list .dev-util {
-      font-weight: 600;
-      margin-right: 10px;
+    .resource-matrix tbody tr:hover td {
+      background: rgba(22, 119, 255, 0.04);
     }
-
-    .time-range-group {
-      display: flex;
-      gap: 4px;
-      background: var(--bg-secondary);
-      border-radius: 6px;
-      padding: 3px;
-    }
-    .time-range-btn {
-      padding: 5px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-    }
-    .time-range-btn:hover {
-      color: var(--text-primary);
-    }
-    .time-range-btn.active {
-      background: var(--brand-primary);
-      color: #fff;
+    .resource-matrix tbody tr:hover td.sticky-col {
+      background: rgba(22, 119, 255, 0.08);
     }
 
-    .filter-group-title {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
-      padding-left: 4px;
-    }
+    .area-id-col { left: 0; width: 64px; min-width: 64px; }
+    .area-name-col { left: 64px; width: 140px; min-width: 140px; }
+    .eq-col { left: 204px; width: 120px; min-width: 120px; }
+    .cap-col { left: 324px; width: 180px; min-width: 180px; }
+    .project-col { left: 504px; width: 110px; min-width: 110px; }
+    .budget-col { left: 614px; width: 80px; min-width: 80px; text-align: right; }
+    .qty-col { left: 694px; width: 70px; min-width: 70px; text-align: right; }
+    .done-col { left: 764px; width: 80px; min-width: 80px; text-align: right; }
+    .mat-col { left: 844px; width: 120px; min-width: 120px; }
 
-    .capacity-badge {
+    .area-tag {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 10px;
-      border-radius: 9999px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(22, 119, 255, 0.15);
+      color: var(--brand-light);
+      font-weight: 700;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 11px;
+    }
+    .area-tag.assembly { background: rgba(22, 119, 255, 0.15); color: #4096FF; }
+    .area-tag.wp { background: rgba(82, 196, 26, 0.15); color: #73D13D; }
+    .area-tag.cx { background: rgba(250, 173, 20, 0.15); color: #FFC53D; }
+
+    .sched-cell {
+      padding: 4px !important;
+      text-align: center;
+      position: relative;
+      min-width: 72px;
+      width: 72px;
+      height: 44px;
+    }
+    .sched-cell .sched-inner {
+      width: 100%;
+      height: 36px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 11px;
       font-weight: 600;
+      color: #0B1226;
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
     }
-    .capacity-badge.normal {
-      background: rgba(82, 196, 26, 0.15);
-      color: var(--success);
+    .sched-cell .sched-inner:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 2;
     }
-    .capacity-badge.warning {
-      background: rgba(250, 173, 20, 0.15);
-      color: var(--warning);
+    .sched-cell .sched-inner:empty { background: transparent; cursor: default; }
+    .sched-cell .sched-inner:empty:hover { transform: none; box-shadow: none; }
+
+    .status-done { background: rgba(82, 196, 26, 0.65); color: #0B2B04; }
+    .status-doing { background: rgba(82, 196, 26, 0.35); border: 1px solid #73D13D; color: #237804; }
+    .status-wait { background: rgba(250, 173, 20, 0.55); color: #5C3B00; }
+    .status-plan { background: rgba(255, 77, 79, 0.55); color: #4A0A0B; }
+
+    .legend-bar {
+      display: flex;
+      gap: 16px;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      align-items: center;
+      flex-wrap: wrap;
     }
-    .capacity-badge.overload {
-      background: rgba(255, 77, 79, 0.15);
-      color: var(--danger);
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .legend-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
     }
 
-    @media (max-width: 1024px) {
-      .util-matrix { grid-template-columns: repeat(2, 1fr); }
-      .area-detail-cards { grid-template-columns: 1fr; }
+    .summary-kpi {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
     }
+    .summary-kpi .kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+    }
+    .summary-kpi .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .summary-kpi .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .summary-kpi .kpi-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap; font-family: inherit;
+    }
+    .btn-primary { background: var(--brand-primary); color: #fff; }
+    .btn-primary:hover { background: var(--brand-light); box-shadow: 0 4px 12px rgba(22,119,255,0.3); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 4px;
+      background: var(--bg-secondary); border: 1px solid var(--border-color); font-size: 12px;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--brand-primary); color: var(--brand-light); }
+    .chip.active { background: rgba(22, 119, 255, 0.15); border-color: var(--brand-primary); color: var(--brand-light); }
+
+    .budget-num, .qty-num {
+      font-family: 'SF Mono', Consolas, monospace;
+      color: var(--brand-light);
+      font-weight: 600;
+    }
+    .done-num {
+      font-family: 'SF Mono', Consolas, monospace;
+      color: #73D13D;
+      font-weight: 600;
+    }
+    .cat-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .cat-A { background: rgba(255,77,79,0.18); color: #FF7875; }
+    .cat-B { background: rgba(250,173,20,0.18); color: #FFC53D; }
+    .cat-C { background: rgba(82,196,26,0.18); color: #95DE64; }
+
+    .sidebar-section { margin-bottom: 20px; }
+    .sidebar-title {
+      font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 10px; padding-left: 4px;
+    }
+    .filter-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px;
+      cursor: pointer; transition: all 0.2s ease; color: var(--text-secondary); font-size: 13px;
+    }
+    .filter-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .filter-item.active { background: rgba(22,119,255,0.15); color: var(--brand-light); }
+    .filter-dot { width: 8px; height: 8px; border-radius: 50%; }
   </style>
 </head>
 <body>
-  <div class="app-layout">
-    <header class="app-header">
-      <div class="header-left">
-        <div class="logo-container">
-          <div class="logo-icon">
-            <i data-lucide="factory" style="width:18px;height:18px;"></i>
-          </div>
-          <span class="system-title">试制资源数智化管理系统</span>
-        </div>
-        <nav>
-          <ul class="nav-menu">
-            <li class="nav-item" data-page="dashboard">综合驾驶舱</li>
-            <li class="nav-item" data-page="devices">设备台账</li>
-            <li class="nav-item" data-page="resource" style="background:rgba(22,119,255,0.15);color:#4096FF;">资源占用看板</li>
-            <li class="nav-item" data-page="tasks">任务管理</li>
-            <li class="nav-item" data-page="alerts">异常预警中心</li>
-          </ul>
-        </nav>
-      </div>
-      <div class="header-right">
-        <div class="header-action" id="syncBtn">
-          <span class="status-dot sync"></span>
-          <span>同步中</span>
-        </div>
-        <div class="header-action">
-          <span class="status-dot"></span>
-          <span>系统正常</span>
-        </div>
-        <div class="header-action">
-          <i data-lucide="clock" style="width:14px;height:14px;"></i>
-          <span id="currentTime">--:--:--</span>
-        </div>
-        <div class="header-action" id="userBtn">
-          <i data-lucide="user" style="width:14px;height:14px;"></i>
-          <span>管理员</span>
-        </div>
-      </div>
-    </header>
 
-    <aside class="app-sidebar">
-      <div class="sidebar-section">
-        <div class="filter-group-title">车间区域</div>
-        <div id="areaFilters"></div>
+<div class="app-layout" style="grid-template-areas: 'header header' 'sidebar main' 'statusbar statusbar'; grid-template-rows: 56px 1fr 32px; grid-template-columns: 220px 1fr;">
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-container">
+        <div class="logo-icon"><i data-lucide="factory" style="width:18px;height:18px;"></i></div>
+        <span class="system-title">试制资源数智化管理系统</span>
       </div>
-      <div class="sidebar-section">
-        <div class="filter-group-title">资源类型</div>
-        <div id="resourceTypeFilters"></div>
-      </div>
-      <div class="sidebar-section">
-        <div class="filter-group-title">时间范围</div>
-        <div class="time-range-group" id="timeRangeGroup">
-          <button class="time-range-btn active" data-range="today">今日</button>
-          <button class="time-range-btn" data-range="week">本周</button>
-          <button class="time-range-btn" data-range="month">本月</button>
+      <ul class="nav-menu">
+        <li class="nav-item" data-page="dashboard">综合驾驶舱</li>
+        <li class="nav-item" data-page="devices">设备台账</li>
+        <li class="nav-item active" data-page="resource">资源占用看板</li>
+        <li class="nav-item" data-page="gantt">甘特图排程</li>
+        <li class="nav-item" data-page="tasks">任务管理</li>
+        <li class="nav-item" data-page="personnel">人员看板</li>
+        <li class="nav-item" data-page="efficiency">人效分析</li>
+        <li class="nav-item" data-page="campus">园区地图</li>
+        <li class="nav-item" data-page="alerts">异常预警中心</li>
+      </ul>
+    </div>
+    <div class="header-right">
+      <div class="header-action"><div class="status-dot sync"></div><span>同步中</span></div>
+      <div class="header-action"><div class="status-dot"></div><span>系统正常</span></div>
+      <div class="header-action"><i data-lucide="clock" style="width:14px;height:14px;"></i><span id="currentTime">--:--:--</span></div>
+      <div class="header-action"><i data-lucide="user" style="width:14px;height:14px;"></i><span>管理员</span></div>
+    </div>
+  </header>
+
+  <aside class="app-sidebar" style="overflow-y:auto; padding-bottom: 16px;">
+    <div class="sidebar-section">
+      <div class="sidebar-title">场地类型</div>
+      <div id="areaTypeFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">项目类别</div>
+      <div id="catFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">排程状态</div>
+      <div id="schedStatusFilters"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">筛选统计</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:var(--bg-secondary);border-radius:4px;">
+          <span style="color:var(--text-secondary);">场地总数</span><span id="statAreaCount" style="color:var(--brand-light);font-weight:600;">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:var(--bg-secondary);border-radius:4px;">
+          <span style="color:var(--text-secondary);">项目总数</span><span id="statProjectCount" style="color:var(--brand-light);font-weight:600;">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;background:var(--bg-secondary);border-radius:4px;">
+          <span style="color:var(--text-secondary);">总预算(万)</span><span id="statBudget" style="color:var(--brand-light);font-weight:600;">0</span>
         </div>
       </div>
-      <div class="sidebar-section">
-        <div class="filter-group-title">容量阈值</div>
-        <div class="stat-item" style="cursor:default;">
-          <span class="stat-label">绿色 (正常)</span>
-          <span style="color:var(--success);font-weight:600;">≤ 60%</span>
-        </div>
-        <div class="stat-item" style="cursor:default;">
-          <span class="stat-label">黄色 (注意)</span>
-          <span style="color:var(--warning);font-weight:600;">60% - 80%</span>
-        </div>
-        <div class="stat-item" style="cursor:default;">
-          <span class="stat-label">红色 (过载)</span>
-          <span style="color:var(--danger);font-weight:600;">> 80%</span>
-        </div>
+    </div>
+  </aside>
+
+  <main class="app-main" style="padding:16px;">
+    <div class="summary-kpi">
+      <div class="kpi">
+        <div class="kpi-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i>场地总数</div>
+        <div class="kpi-value" id="kpiAreaCount">0</div>
+        <div class="kpi-sub">装配 <span id="kpiAssemblyCount">0</span> · 外委 <span id="kpiCxCount">0</span> · 竞品 <span id="kpiWpCount">0</span></div>
       </div>
-    </aside>
-
-    <main class="app-main">
-      <div class="kpi-grid" id="kpiGrid"></div>
-
-      <div class="util-matrix" id="utilMatrix"></div>
-
-      <div class="charts-row" style="grid-template-columns:1fr 1fr;">
-        <div class="chart-card">
-          <div class="card-header">
-            <div class="card-title">
-              <i data-lucide="trending-up" class="card-title-icon"></i>
-              利用率趋势
-            </div>
-            <div id="chartRangeLabel" style="font-size:12px;color:var(--text-muted);">近7日</div>
-          </div>
-          <div id="trendChart" class="chart-container"></div>
-        </div>
-        <div class="chart-card">
-          <div class="card-header">
-            <div class="card-title">
-              <i data-lucide="bar-chart-3" class="card-title-icon"></i>
-              设备利用率排名
-            </div>
-            <div style="display:flex;gap:4px;">
-              <span class="chip active" data-rank-filter="top">TOP 5</span>
-              <span class="chip" data-rank-filter="bottom">末 5</span>
-            </div>
-          </div>
-          <div id="rankingChart" class="chart-container"></div>
-        </div>
+      <div class="kpi">
+        <div class="kpi-label"><i data-lucide="briefcase" style="width:12px;height:12px;"></i>项目排程</div>
+        <div class="kpi-value" id="kpiProjectCount">0</div>
+        <div class="kpi-sub">已完成 <span style="color:#73D13D;" id="kpiDoneCount">0</span> · 进行中 <span style="color:#1677FF;" id="kpiDoingCount">0</span></div>
       </div>
-
-      <div class="area-detail-cards" id="areaDetailCards"></div>
-    </main>
-
-    <footer class="app-statusbar">
-      <div class="status-group">
-        <div class="status-item">
-          <span class="status-dot"></span>
-          <span id="systemStatus">系统运行正常</span>
-        </div>
-        <div class="status-item">
-          <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i>
-          <span id="syncStatus">数据同步完成</span>
-        </div>
+      <div class="kpi">
+        <div class="kpi-label"><i data-lucide="cpu" style="width:12px;height:12px;"></i>设备/机台数</div>
+        <div class="kpi-value" id="kpiEqCount">0</div>
+        <div class="kpi-sub">举升机 <span id="kpiLiftCount">0</span> 台</div>
       </div>
-      <div class="status-group">
-        <div class="status-item">
-          <i data-lucide="database" style="width:12px;height:12px;"></i>
-          <span>数据库: 已连接</span>
-        </div>
-        <div class="status-item">
-          <i data-lucide="hard-drive" style="width:12px;height:12px;"></i>
-          <span>存储: 正常</span>
-        </div>
-        <div class="status-item">
-          <i data-lucide="clock" style="width:12px;height:12px;"></i>
-          <span id="lastUpdateTime">最后更新: --:--:--</span>
-        </div>
+      <div class="kpi">
+        <div class="kpi-label"><i data-lucide="coins" style="width:12px;height:12px;"></i>预算总额</div>
+        <div class="kpi-value" id="kpiBudget">0</div>
+        <div class="kpi-sub">万元</div>
       </div>
-    </footer>
-  </div>
+      <div class="kpi">
+        <div class="kpi-label"><i data-lucide="package-check" style="width:12px;height:12px;"></i>累计采购(套)</div>
+        <div class="kpi-value" id="kpiQty">0</div>
+        <div class="kpi-sub">已完成 <span style="color:#73D13D;" id="kpiDoneQty">0</span> 套</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><i data-lucide="gauge" style="width:12px;height:12px;"></i>场地占用率</div>
+        <div class="kpi-value" id="kpiUtil" style="color:#1677FF;">0%</div>
+        <div class="kpi-sub">本周 <span id="kpiUtilWeek">0%</span> · 下周 <span id="kpiUtilNext">0%</span></div>
+      </div>
+    </div>
 
-  <script src="./assets/js/mock-data.js"></script>
-  <script src="./assets/js/app.js"></script>
-  <script>
-    (function () {
-      const d = MockData.data;
-      let currentAreaFilter = 'all';
-      let currentResourceFilter = 'all';
-      let currentTimeRange = 'today';
-      let currentRankFilter = 'top';
-      let charts = {};
+    <div class="legend-bar">
+      <span style="font-size:12px;color:var(--text-muted);font-weight:600;letter-spacing:0.5px;">排程状态图例：</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(82,196,26,0.65);"></span>已完成</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(82,196,26,0.35);border:1px solid #73D13D;"></span>进行中</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(250,173,20,0.55);"></span>待排</span>
+      <span class="legend-item"><span class="legend-swatch" style="background:rgba(255,77,79,0.55);"></span>排定中</span>
+      <span style="flex:1;"></span>
+      <span class="legend-item" style="color:var(--text-muted);">资源优先级：</span>
+      <span class="cat-tag cat-A">A类项目</span>
+      <span class="cat-tag cat-B">B类项目</span>
+      <span class="cat-tag cat-C">C类项目</span>
+    </div>
 
-      function fmtTime(d) {
-        const pad = n => String(n).padStart(2, '0');
-        return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-      }
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span id="quickChips"></span>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-ghost" id="btnExpand"><i data-lucide="maximize-2" style="width:14px;height:14px;"></i>全宽显示</button>
+        <button class="btn btn-ghost" id="btnExport"><i data-lucide="download" style="width:14px;height:14px;"></i>导出Excel</button>
+        <button class="btn btn-ghost" id="btnRefresh"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>刷新</button>
+        <button class="btn btn-primary"><i data-lucide="plus" style="width:14px;height:14px;"></i>新增排程</button>
+      </div>
+    </div>
 
-      function updateClock() {
-        const now = new Date();
-        document.getElementById('currentTime').textContent =
-          now.getFullYear() + '-' +
-          String(now.getMonth() + 1).padStart(2, '0') + '-' +
-          String(now.getDate()).padStart(2, '0') + ' ' + fmtTime(now);
-      }
+    <div class="resource-matrix-wrapper">
+      <table class="resource-matrix" id="resourceMatrix">
+        <thead>
+          <tr id="matrixHead"></tr>
+          <tr id="matrixWeekHead"></tr>
+        </thead>
+        <tbody id="matrixBody"></tbody>
+      </table>
+    </div>
+  </main>
 
-      function updateLastTime() {
-        const now = new Date();
-        const pad = n => String(n).padStart(2, '0');
-        document.getElementById('lastUpdateTime').textContent =
-          '最后更新: ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
-      }
+  <footer class="app-statusbar">
+    <div class="status-group">
+      <div class="status-item"><span class="status-dot"></span><span>资源占用看板模块</span></div>
+      <div class="status-item"><span>AB类项目优先试制车间内</span></div>
+    </div>
+    <div class="status-group">
+      <div class="status-item"><i data-lucide="database" style="width:12px;height:12px;"></i><span>数据库: 已连接</span></div>
+      <div class="status-item" id="lastUpdateTime"><i data-lucide="clock" style="width:12px;height:12px;"></i><span>最后更新: --:--:--</span></div>
+    </div>
+  </footer>
+</div>
 
-      function getAreaDevices(areaId) {
-        let devices = d.devices;
-        if (areaId !== 'all') {
-          devices = devices.filter(dev => dev.area === areaId);
-        }
-        if (currentResourceFilter !== 'all') {
-          devices = devices.filter(dev => dev.status === currentResourceFilter);
-        }
-        return devices;
-      }
+<script src="./assets/js/mock-data.js"></script>
+<script src="./assets/js/app.js"></script>
+<script>
+(function () {
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const AREA_CONFIG = [
+    { id: 'SZA', name: '装配一期车间', shortName: '装配一期', type: 'assembly', eqCount: 20, liftCount: 0, capacity: '2个项目或单项目B类当量40台', mat: '试制岛产线',  location: '总院A区', manager: '范潇' },
+    { id: 'SZC', name: '仓库装配区', shortName: '仓库装配', type: 'assembly', eqCount: 20, liftCount: 5, capacity: '单项目B类当量20台', mat: '单排/两排举升机各5台 (共10台)', location: '总院仓库', manager: '王鹏' },
+    { id: 'SZB', name: '装配二期车间', shortName: '装配二期', type: 'assembly', eqCount: 24, liftCount: 6, capacity: '2个项目或单项目B类当量24台', mat: '6台举升机', location: '总院B区', manager: '邢浩然' },
+    { id: 'JP1', name: '竞品装配一区', shortName: '竞品一区', type: 'wp', eqCount: 12, liftCount: 3, capacity: '单项目B类当量12台', mat: '3台举升机', location: '竞品区1', manager: '李思贤' },
+    { id: 'JP2', name: '竞品装配二区', shortName: '竞品二区', type: 'wp', eqCount: 16, liftCount: 4, capacity: '单项目B类当量16台', mat: '4台举升机', location: '竞品区2', manager: '李思贤' },
+    { id: 'LH', name: '联合装配区', shortName: '联合装配', type: 'assembly', eqCount: 12, liftCount: 5, capacity: '单项目B类当量12台', mat: '3-5台举升机', location: '联合区', manager: '金执' },
+    { id: 'CX1', name: '外委装配区(畅行正东和泰)', shortName: '外委畅行', type: 'cx', eqCount: 52, liftCount: 13, capacity: '2个项目或单项目B类当量52台', mat: 'M18-300HEV/BD-515 13台', location: '外委区1', manager: '外委' },
+    { id: 'CX2', name: '外委装配区(畅行交石)', shortName: '外委交石', type: 'cx', eqCount: 44, liftCount: 11, capacity: '2个项目或单项目B类当量44台', mat: 'M18-200HEV/E70-702 11台', location: '外委区2', manager: '外委' }
+  ];
 
-      function getUtilizationColor(util) {
-        if (util < 60) return 'var(--success)';
-        if (util <= 80) return 'var(--warning)';
-        return 'var(--danger)';
-      }
+  const CATEGORIES = ['A', 'B', 'C'];
+  const SCHED_STATUSES = ['done', 'doing', 'wait', 'plan'];
+  const PROJECT_NAMES = [
+    { id: 'S3JET0', name: '试制局(淋雨)', cat: 'B', budget: 71, qty: 71, startOffset: 4, duration: 1, done: 3 },
+    { id: 'DH3', name: '矮车棚', cat: 'C', budget: 56, qty: 10, startOffset: 4, duration: 2, done: 8 },
+    { id: 'S599841', name: '总装装车零件', cat: 'B', budget: 8, qty: 10, startOffset: 5, duration: 3, done: 3 },
+    { id: '乐风翼子车', name: '翼子车', cat: 'C', budget: 7, qty: 12, startOffset: 6, duration: 2, done: 12 },
+    { id: 'DHTMPV', name: 'MPV样车', cat: 'A', budget: 11, qty: 4, startOffset: 7, duration: 2, done: 4 },
+    { id: '7J38E10', name: '整车试装', cat: 'C', budget: 26, qty: 26, startOffset: 5, duration: 3, done: 0 },
+    { id: 'N1F1', name: '长征汽车', cat: 'B', budget: 7, qty: 7, startOffset: 8, duration: 2, done: 0 },
+    { id: 'N356', name: '越野车', cat: 'A', budget: 33, qty: 33, startOffset: 9, duration: 2, done: 0 },
+    { id: 'M18(MPV)', name: 'MPV样车', cat: 'B', budget: 6, qty: 10, startOffset: 5, duration: 1, done: 7 },
+    { id: 'M18-300HEV', name: '300HEV', cat: 'B', budget: 7, qty: 13, startOffset: 6, duration: 1, done: 7 },
+    { id: 'BD-515', name: 'BD-515项目', cat: 'C', budget: 3, qty: 3, startOffset: 6, duration: 1, done: 0 },
+    { id: 'M18-200HEV', name: '200HEV', cat: 'B', budget: 7, qty: 13, startOffset: 8, duration: 1, done: 0 },
+    { id: 'E70-702', name: 'E70-702', cat: 'C', budget: 3, qty: 7, startOffset: 8, duration: 2, done: 0 },
+    { id: 'S596B', name: '矮车棚-2', cat: 'C', budget: 0, qty: 0, startOffset: 9, duration: 1, done: 0 }
+  ];
 
-      function getUtilizationClass(util) {
-        if (util < 60) return 'warning-green';
-        if (util <= 80) return 'warning-yellow';
-        return 'warning-red';
-      }
+  const MAT_PROJECT = {
+    'SZA': 'S3JET0',
+    'SZC': 'DH3',
+    'SZB': 'S599841',
+    'SZB_S2': '乐风翼子车',
+    'JP1': 'DHTMPV',
+    'JP1_S2': '7J38E10',
+    'AGV': '——',
+    'JP2': 'N1F1',
+    'JP2_S2': 'N356',
+    'LH': 'M18(MPV)',
+    'CX1_1': 'M18-300HEV',
+    'CX1_2': 'BD-515',
+    'CX2_1': 'M18-200HEV',
+    'CX2_2': 'E70-702'
+  };
 
-      function getCapacityLabel(util) {
-        if (util < 60) return { text: '正常', cls: 'normal' };
-        if (util <= 80) return { text: '注意', cls: 'warning' };
-        return { text: '过载', cls: 'overload' };
-      }
+  function getWeekLabels(n = 10) {
+    const result = [];
+    const today = new Date('2025-07-21');
+    for (let i = 0; i < n; i++) {
+      const d = new Date(today.getTime() + i * 7 * 24 * 3600 * 1000);
+      const m = d.getMonth() + 1;
+      const w = Math.ceil((d.getDate() - new Date(d.getFullYear(), d.getMonth(), 1).getDate() + 1 + new Date(d.getFullYear(), d.getMonth(), 1).getDay()) / 7);
+      const startDate = (d.getMonth() + 1) + '.' + d.getDate();
+      const end = new Date(d.getTime() + 6 * 24 * 3600 * 1000);
+      const endDate = (end.getMonth() + 1) + '.' + end.getDate();
+      result.push({ key: 'w' + i, label: m + '-W' + w, range: startDate + '~' + endDate });
+    }
+    return result;
+  }
+  const WEEK_LABELS = getWeekLabels(10);
 
-      function calcUtilization(devices) {
-        if (!devices.length) return 0;
-        const total = devices.reduce((s, d) => s + d.utilization, 0);
-        return Math.round(total / devices.length * 10) / 10;
-      }
+  const state = {
+    areaType: '',
+    cat: '',
+    schedStatus: '',
+    showArea: 'all'
+  };
 
-      function calcTurnoverTime(devices) {
-        if (!devices.length) return 0;
-        const avgRuntime = devices.reduce((s, d) => s + d.runtime, 0) / devices.length;
-        return Math.round(avgRuntime / 10) / 10;
-      }
-
-      function getTrendData(days) {
-        const labels = [];
-        const values = [];
-        const now = new Date();
-        for (let i = days - 1; i >= 0; i--) {
-          const date = new Date(now.getTime() - i * 86400000);
-          labels.push((date.getMonth() + 1) + '/' + date.getDate());
-          let base = 65 + Math.sin(i * 0.7) * 10 + (Math.random() - 0.5) * 8;
-          base = Math.max(30, Math.min(95, base));
-          values.push(Math.round(base * 10) / 10);
-        }
-        return { labels, values };
-      }
-
-      function getRankingData() {
-        let devices = getAreaDevices('all');
-        const sorted = [...devices].sort((a, b) =>
-          currentRankFilter === 'top' ? b.utilization - a.utilization : a.utilization - b.utilization
-        );
-        const top = sorted.slice(0, 5);
-        return top.map(d => ({ name: d.name, value: d.utilization, id: d.id }));
-      }
-
-      function renderKPI() {
-        const allDevices = getAreaDevices('all');
-        const onlineDevices = allDevices.filter(d => d.status === 'online');
-        const idleDevices = allDevices.filter(d => d.status === 'idle');
-        const avgUtil = calcUtilization(allDevices);
-        const turnover = calcTurnoverTime(allDevices);
-
-        const items = [
-          {
-            title: '综合利用率',
-            value: avgUtil,
-            unit: '%',
-            icon: 'gauge',
-            trend: avgUtil >= 70 ? 'up' : avgUtil >= 50 ? 'flat' : 'down',
-            trendVal: avgUtil >= 70 ? '+2.3%' : avgUtil >= 50 ? '0.0%' : '-1.5%',
-            sub: '全部设备均值',
-            color: getUtilizationColor(avgUtil)
-          },
-          {
-            title: '在用设备数',
-            value: onlineDevices.length,
-            unit: '台',
-            icon: 'activity',
-            trend: 'up',
-            trendVal: '+3',
-            sub: '在线率 ' + Math.round(onlineDevices.length / (allDevices.length || 1) * 100) + '%',
-            color: 'var(--brand-light)'
-          },
-          {
-            title: '空闲设备数',
-            value: idleDevices.length,
-            unit: '台',
-            icon: 'pause-circle',
-            trend: idleDevices.length > 10 ? 'down' : 'up',
-            trendVal: idleDevices.length > 10 ? '-2' : '+1',
-            sub: '可调度资源',
-            color: 'var(--success)'
-          },
-          {
-            title: '平均周转时间',
-            value: turnover,
-            unit: '天',
-            icon: 'refresh-cw',
-            trend: turnover > 15 ? 'down' : 'up',
-            trendVal: turnover > 15 ? '-0.5' : '+0.3',
-            sub: '设备周转周期',
-            color: 'var(--warning)'
-          }
-        ];
-
-        const html = items.map(it => `
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <div class="kpi-title">
-                <i data-lucide="${it.icon}" class="kpi-icon" style="color:${it.color};"></i>
-                ${it.title}
-              </div>
-              <span class="kpi-trend ${it.trend}">
-                <i data-lucide="${it.trend === 'up' ? 'trending-up' : it.trend === 'down' ? 'trending-down' : 'minus'}" style="width:12px;height:12px;"></i>
-                ${it.trendVal}
-              </span>
-            </div>
-            <div>
-              <span class="kpi-value" style="color:${it.color};">${it.value}</span>
-              <span class="kpi-unit">${it.unit}</span>
-            </div>
-            <div class="kpi-sub">${it.sub}</div>
-          </div>
-        `).join('');
-        document.getElementById('kpiGrid').innerHTML = html;
-      }
-
-      function renderSidebar() {
-        const areaHtml = d.areas.map(a => {
-          const devices = getAreaDevices(a.id);
-          const util = calcUtilization(devices);
-          const cap = getCapacityLabel(util);
-          return `
-            <div class="stat-item ${currentAreaFilter === a.id ? 'active' : ''}" data-area="${a.id}">
-              <span class="stat-label">${a.name}</span>
-              <span style="font-size:12px;font-weight:600;color:${getUtilizationColor(util)};">${util}%</span>
-            </div>
-          `;
-        }).join('');
-        document.getElementById('areaFilters').innerHTML = areaHtml;
-
-        const resourceTypes = [
-          { key: 'all', label: '全部状态', count: getAreaDevices('all').length },
-          { key: 'online', label: '运行中', count: d.devices.filter(d => d.status === 'online').length },
-          { key: 'idle', label: '空闲', count: d.devices.filter(d => d.status === 'idle').length },
-          { key: 'warning', label: '预警', count: d.devices.filter(d => d.status === 'warning').length },
-          { key: 'fault', label: '故障', count: d.devices.filter(d => d.status === 'fault').length },
-          { key: 'maintenance', label: '维护中', count: d.devices.filter(d => d.status === 'maintenance').length }
-        ];
-        const resHtml = resourceTypes.map(r => `
-          <div class="stat-item ${currentResourceFilter === r.key ? 'active' : ''}" data-resource="${r.key}">
-            <span class="stat-label">${r.label}</span>
-            <span class="stat-value">${r.count}</span>
-          </div>
-        `).join('');
-        document.getElementById('resourceTypeFilters').innerHTML = resHtml;
-
-        document.querySelectorAll('#areaFilters .stat-item').forEach(el => {
-          el.addEventListener('click', () => {
-            const area = el.dataset.area;
-            currentAreaFilter = currentAreaFilter === area ? 'all' : area;
-            renderSidebar();
-            renderAll();
-          });
-        });
-
-        document.querySelectorAll('#resourceTypeFilters .stat-item').forEach(el => {
-          el.addEventListener('click', () => {
-            const res = el.dataset.resource;
-            currentResourceFilter = currentResourceFilter === res ? 'all' : res;
-            renderSidebar();
-            renderAll();
-          });
-        });
-
-        document.querySelectorAll('#timeRangeGroup .time-range-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            document.querySelectorAll('#timeRangeGroup .time-range-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentTimeRange = btn.dataset.range;
-            document.getElementById('chartRangeLabel').textContent =
-              currentTimeRange === 'today' ? '今日' :
-              currentTimeRange === 'week' ? '近7日' : '近30日';
-            updateTrendChart();
-          });
-        });
-      }
-
-      function renderMatrix() {
-        const container = document.getElementById('utilMatrix');
-        const areas = d.areas;
-
-        const html = areas.map(area => {
-          const devices = getAreaDevices(area.id);
-          const util = calcUtilization(devices);
-          const cap = getCapacityLabel(util);
-          const totalCount = devices.length;
-          const onlineCount = devices.filter(d => d.status === 'online').length;
-          const idleCount = devices.filter(d => d.status === 'idle').length;
-          const cls = getUtilizationClass(util);
-
-          return `
-            <div class="matrix-cell ${cls}" data-area="${area.id}">
-              <div class="area-header-row">
-                <span class="area-name-text">${area.name}</span>
-                <span class="capacity-badge ${cap.cls}">
-                  <i data-lucide="${cap.cls === 'overload' ? 'alert-octagon' : cap.cls === 'warning' ? 'alert-triangle' : 'check-circle'}" style="width:11px;height:11px;"></i>
-                  ${cap.text}
-                </span>
-              </div>
-              <div>
-                <span class="area-util-pct">${util}</span>
-                <span class="area-util-unit">%</span>
-              </div>
-              <div class="sparkline-container" id="spark-${area.id}"></div>
-              <div class="area-count-info">
-                <span>在用 ${onlineCount}</span>
-                <span>空闲 ${idleCount}</span>
-                <span>共 ${totalCount}</span>
-              </div>
-              <i data-lucide="alert-circle" class="capacity-warning" style="width:16px;height:16px;color:var(--danger);"></i>
-            </div>
-          `;
-        }).join('');
-        container.innerHTML = html;
-
-        areas.forEach(area => {
-          const devices = getAreaDevices(area.id);
-          const sparkEl = document.getElementById('spark-' + area.id);
-          if (sparkEl) {
-            const sparkChart = echarts.init(sparkEl);
-            const sparkData = [];
-            const now = new Date();
-            for (let i = 6; i >= 0; i--) {
-              const base = 50 + Math.sin(i * 0.8 + area.id.charCodeAt(0)) * 15 + (Math.random() - 0.5) * 10;
-              sparkData.push(Math.max(20, Math.min(95, Math.round(base * 10) / 10)));
-            }
-            sparkChart.setOption({
-              grid: { left: 0, right: 0, top: 2, bottom: 2 },
-              xAxis: { type: 'category', show: false, data: sparkData.map((_, i) => i) },
-              yAxis: { type: 'value', show: false, min: 0, max: 100 },
-              tooltip: {
-                trigger: 'axis',
-                backgroundColor: '#151C2C',
-                borderColor: '#1E2A3E',
-                textStyle: { color: '#FFFFFF', fontSize: 11 },
-                formatter: (params) => params[0].value + '%'
-              },
-              series: [{
-                type: 'line',
-                data: sparkData,
-                smooth: true,
-                symbol: 'none',
-                lineStyle: { color: getUtilizationColor(calcUtilization(devices)), width: 2 },
-                areaStyle: {
-                  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: getUtilizationColor(calcUtilization(devices)) },
-                    { offset: 1, color: 'transparent' }
-                  ])
-                }
-              }]
-            });
-            charts['spark-' + area.id] = sparkChart;
-          }
-        });
-
-        container.querySelectorAll('.matrix-cell').forEach(cell => {
-          cell.addEventListener('click', () => {
-            const areaId = cell.dataset.area;
-            const target = document.getElementById('detail-' + areaId);
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              target.style.transition = 'box-shadow 0.3s';
-              target.style.boxShadow = '0 0 0 2px var(--brand-primary)';
-              setTimeout(() => { target.style.boxShadow = ''; }, 1500);
-            }
-          });
-        });
-      }
-
-      function renderAreaDetailCards() {
-        const container = document.getElementById('areaDetailCards');
-        const areas = currentAreaFilter === 'all' ? d.areas : d.areas.filter(a => a.id === currentAreaFilter);
-
-        const html = areas.map(area => {
-          const devices = getAreaDevices(area.id);
-          const util = calcUtilization(devices);
-          const cap = getCapacityLabel(util);
-          const totalCount = devices.length;
-          const onlineCount = devices.filter(d => d.status === 'online').length;
-          const idleCount = devices.filter(d => d.status === 'idle').length;
-          const sorted = [...devices].sort((a, b) => b.utilization - a.utilization);
-          const top3 = sorted.slice(0, 3);
-
-          const top3Html = top3.map(dev => {
-            const devCap = getCapacityLabel(dev.utilization);
-            return `
-              <li>
-                <span class="dev-name">${dev.name}</span>
-                <span class="dev-util" style="color:${getUtilizationColor(dev.utilization)};">${dev.utilization}%</span>
-                <span class="capacity-badge ${devCap.cls}" style="font-size:10px;padding:2px 6px;">${devCap.text}</span>
-              </li>
-            `;
-          }).join('');
-
-          return `
-            <div class="area-detail-card" id="detail-${area.id}">
-              <div class="detail-header">
-                <div class="detail-title">
-                  <span style="width:8px;height:8px;border-radius:50%;background:${getUtilizationColor(util)};display:inline-block;"></span>
-                  ${area.name}
-                  <span class="capacity-badge ${cap.cls}" style="font-size:11px;">${cap.text}</span>
-                </div>
-                <span style="font-size:12px;color:var(--text-muted);">负责人: ${area.manager}</span>
-              </div>
-              <div class="detail-stats-row">
-                <div class="stat-mini">
-                  <div class="stat-num">${totalCount}</div>
-                  <div class="stat-label">设备总数</div>
-                </div>
-                <div class="stat-mini">
-                  <div class="stat-num" style="color:var(--brand-light);">${onlineCount}</div>
-                  <div class="stat-label">在用</div>
-                </div>
-                <div class="stat-mini">
-                  <div class="stat-num" style="color:var(--success);">${idleCount}</div>
-                  <div class="stat-label">空闲</div>
-                </div>
-              </div>
-              <div class="util-section">
-                <div class="util-section-title">
-                  <span>区域利用率</span>
-                  <span class="util-value" style="color:${getUtilizationColor(util)};">${util}%</span>
-                </div>
-                <div class="util-bar" style="width:100%;height:10px;background:var(--bg-hover);border-radius:5px;overflow:hidden;">
-                  <div class="util-fill ${getUtilizationClass(util) === 'warning-green' ? 'high' : getUtilizationClass(util) === 'warning-yellow' ? 'mid' : 'low'}" style="width:${util}%;height:100%;border-radius:5px;transition:width 0.5s;"></div>
-                </div>
-              </div>
-              <div class="util-section">
-                <div class="util-section-title">
-                  <span>TOP 3 高利用率设备</span>
-                </div>
-                <ul class="devices-list">
-                  ${top3Html || '<li style="justify-content:center;color:var(--text-muted);">暂无数据</li>'}
-                </ul>
-              </div>
-            </div>
-          `;
-        }).join('');
-        container.innerHTML = html;
-      }
-
-      function initTrendChart() {
-        const el = document.getElementById('trendChart');
-        charts.trend = echarts.init(el);
-        updateTrendChart();
-      }
-
-      function updateTrendChart() {
-        const days = currentTimeRange === 'today' ? 7 : currentTimeRange === 'week' ? 7 : 30;
-        const data = getTrendData(days);
-
-        const option = {
-          tooltip: {
-            trigger: 'axis',
-            backgroundColor: '#151C2C',
-            borderColor: '#1E2A3E',
-            textStyle: { color: '#FFFFFF', fontSize: 12 },
-            formatter: (params) => {
-              const p = params[0];
-              return `<div style="font-weight:600;margin-bottom:4px;">${p.axisValue}</div>
-                      <div style="color:${p.color};">利用率: <b>${p.value}%</b></div>`;
-            }
-          },
-          grid: { left: 40, right: 20, top: 20, bottom: 30, containLabel: true },
-          xAxis: {
-            type: 'category',
-            data: data.labels,
-            axisLine: { lineStyle: { color: '#1E2A3E' } },
-            axisLabel: { color: '#8B95A8', fontSize: 11, interval: days > 10 ? 3 : 0 },
-            axisTick: { show: false }
-          },
-          yAxis: {
-            type: 'value',
-            min: 0,
-            max: 100,
-            splitLine: { lineStyle: { color: '#1E2A3E', type: 'dashed' } },
-            axisLabel: { color: '#8B95A8', fontSize: 11, formatter: '{value}%' }
-          },
-          series: [{
-            type: 'line',
-            data: data.values,
-            smooth: true,
-            symbol: 'circle',
-            symbolSize: 6,
-            lineStyle: { color: '#1677FF', width: 2.5 },
-            itemStyle: { color: '#1677FF' },
-            areaStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                { offset: 0, color: 'rgba(22, 119, 255, 0.35)' },
-                { offset: 1, color: 'rgba(22, 119, 255, 0.02)' }
-              ])
-            },
-            markLine: {
-              silent: true,
-              symbol: 'none',
-              lineStyle: { color: '#FAAD14', type: 'dashed', width: 1 },
-              data: [{ yAxis: 80, label: { formatter: '警戒线 80%', color: '#FAAD14', fontSize: 10 } }]
-            }
-          }]
-        };
-        charts.trend.setOption(option, true);
-      }
-
-      function initRankingChart() {
-        const el = document.getElementById('rankingChart');
-        charts.ranking = echarts.init(el);
-        updateRankingChart();
-
-        document.querySelectorAll('[data-rank-filter]').forEach(chip => {
-          chip.addEventListener('click', () => {
-            document.querySelectorAll('[data-rank-filter]').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            currentRankFilter = chip.dataset.rankFilter;
-            updateRankingChart();
-          });
-        });
-      }
-
-      function updateRankingChart() {
-        const data = getRankingData();
-        const option = {
-          tooltip: {
-            trigger: 'axis',
-            backgroundColor: '#151C2C',
-            borderColor: '#1E2A3E',
-            textStyle: { color: '#FFFFFF', fontSize: 12 },
-            formatter: (params) => {
-              const p = params[0];
-              return `<div style="font-weight:600;margin-bottom:4px;">${p.name}</div>
-                      <div>利用率: <b style="color:${p.color};">${p.value}%</b></div>`;
-            }
-          },
-          grid: { left: 100, right: 30, top: 10, bottom: 20 },
-          xAxis: {
-            type: 'value',
-            min: 0,
-            max: 100,
-            splitLine: { lineStyle: { color: '#1E2A3E', type: 'dashed' } },
-            axisLabel: { color: '#8B95A8', fontSize: 11, formatter: '{value}%' }
-          },
-          yAxis: {
-            type: 'category',
-            data: data.map(d => d.name).reverse(),
-            axisLine: { lineStyle: { color: '#1E2A3E' } },
-            axisLabel: { color: '#8B95A8', fontSize: 11 },
-            axisTick: { show: false }
-          },
-          series: [{
-            type: 'bar',
-            data: data.map(d => ({
-              value: d.utilization,
-              itemStyle: {
-                borderRadius: [0, 4, 4, 0],
-                color: d.utilization > 80 ? '#FF4D4F' :
-                       d.utilization >= 60 ? '#FAAD14' : '#52C41A'
-              }
-            })).reverse(),
-            barWidth: 18,
-            label: {
-              show: true,
-              position: 'right',
-              color: '#FFFFFF',
-              fontSize: 12,
-              fontWeight: 600,
-              formatter: '{c}%'
-            }
-          }]
-        };
-        charts.ranking.setOption(option, true);
-      }
-
-      function bindNav() {
-        document.querySelectorAll('.nav-item').forEach(item => {
-          item.addEventListener('click', () => {
-            if (item.dataset.page === 'resource') return;
-            const name = item.textContent;
-            App.toast(`跳转到 ${name} 页面`, 'info');
-          });
-        });
-
-        document.getElementById('syncBtn').addEventListener('click', () => {
-          App.toast('正在同步数据...', 'info');
-          setTimeout(() => {
-            MockData.refresh();
-            renderAll();
-            updateLastTime();
-            App.toast('数据同步完成', 'success');
-          }, 800);
-        });
-
-        document.getElementById('userBtn').addEventListener('click', () => {
-          App.toast('管理员账户信息', 'info');
-        });
-      }
-
-      function renderAll() {
-        renderKPI();
-        renderSidebar();
-        renderMatrix();
-        renderAreaDetailCards();
-        updateTrendChart();
-        updateRankingChart();
-        if (window.lucide) lucide.createIcons();
-      }
-
-      function initCharts() {
-        initTrendChart();
-        initRankingChart();
-      }
-
-      window.addEventListener('resize', () => {
-        Object.values(charts).forEach(c => c && c.resize());
+  function buildAreaRows() {
+    const rows = [];
+    AREA_CONFIG.forEach(area => {
+      // Find projects assigned to this area
+      const areaProjects = PROJECT_NAMES.filter((_, idx) => {
+        if (area.id === 'SZA') return idx === 0;
+        if (area.id === 'SZC') return idx === 1;
+        if (area.id === 'SZB') return idx === 2 || idx === 3;
+        if (area.id === 'JP1') return idx === 4 || idx === 5;
+        if (area.id === 'JP2') return idx === 6 || idx === 7;
+        if (area.id === 'LH') return idx === 8;
+        if (area.id === 'CX1') return idx === 9 || idx === 10;
+        if (area.id === 'CX2') return idx === 11 || idx === 12;
+        return false;
       });
+      if (areaProjects.length === 0) {
+        rows.push({ area: area, project: null, rowSpan: 1 });
+      } else {
+        areaProjects.forEach((proj, i) => {
+          rows.push({
+            area: area,
+            project: proj,
+            rowSpan: i === 0 ? areaProjects.length : 0
+          });
+        });
+      }
+    });
+    return rows;
+  }
 
-      document.addEventListener('DOMContentLoaded', () => {
-        updateClock();
-        setInterval(updateClock, 1000);
-        updateLastTime();
+  function renderMatrixHead() {
+    const head = document.getElementById('matrixHead');
+    const weekHead = document.getElementById('matrixWeekHead');
+
+    const infoCols = [
+      { cls: 'area-id-col sticky-col', span: 1, label: '试料料号' },
+      { cls: 'area-name-col sticky-col', span: 1, label: '单元机台 / 设备' },
+      { cls: 'eq-col sticky-col', span: 1, label: '试制能力' },
+      { cls: 'cap-col sticky-col', span: 1, label: '项目' },
+      { cls: 'project-col sticky-col', span: 1, label: '零件费总预算(万)' },
+      { cls: 'budget-col sticky-col', span: 1, label: '采购数量' },
+      { cls: 'qty-col sticky-col', span: 1, label: '累计已完成(套)' },
+      { cls: 'done-col sticky-col', span: 1, label: '具体料号 / 心明资源' }
+    ];
+
+    let row1 = '';
+    infoCols.forEach(col => {
+      row1 += '<th colspan="1" class="' + col.cls + '" style="z-index:7">' + col.label + '</th>';
+    });
+    row1 += '<th colspan="' + WEEK_LABELS.length + '" style="text-align:center; background:rgba(22,119,255,0.1); color:var(--brand-light); z-index:6;">周度排程 (已完成 / 进行中 / 待排 / 排定中)</th>';
+    head.innerHTML = row1;
+
+    let row2 = '';
+    ['', '', '', '', '', '', '', ''].forEach(() => { row2 += '<th style="background:var(--bg-secondary); opacity:0;"></th>'; });
+    WEEK_LABELS.forEach(w => {
+      row2 += '<th class="week-col"><span class="week-num">' + w.label + '</span><span class="week-date">' + w.range + '</span></th>';
+    });
+    weekHead.innerHTML = row2;
+  }
+
+  function getProjectSchedStatus(weekIdx, projStart, projDuration, done, qty) {
+    if (!projStart && projStart !== 0) return '';
+    const end = projStart + projDuration - 1;
+    const ratio = qty > 0 ? (done / qty) : 1;
+    if (weekIdx < projStart) return '';
+    if (weekIdx > end) return '';
+    if (ratio >= 1) return { status: 'done', text: done + '台' };
+    if (weekIdx < projStart + 1 && ratio > 0) return { status: 'doing', text: done + '/' + qty };
+    if (weekIdx === projStart) {
+      if (done > 0) return { status: 'doing', text: done + '/' + qty };
+      return { status: 'plan', text: '月' + (projStart + 6) + '日' };
+    }
+    if (weekIdx === end) return { status: 'wait', text: (qty - done) + '台' };
+    // Mid weeks
+    if (done > 0) return { status: 'doing', text: done + '/' + qty };
+    return { status: 'wait', text: qty + '台' };
+  }
+
+  function getSchedMap(proj) {
+    const result = {};
+    for (let i = 0; i < WEEK_LABELS.length; i++) {
+      if (!proj) continue;
+      const s = getProjectSchedStatus(i, proj.startOffset, proj.duration, proj.done, proj.qty);
+      if (s) result[i] = s;
+    }
+    return result;
+  }
+
+  function renderMatrixBody() {
+    const body = document.getElementById('matrixBody');
+    const rows = buildAreaRows().filter(r => {
+      if (state.areaType && r.area.type !== state.areaType) return false;
+      if (state.cat && r.project && r.project.cat !== state.cat) return false;
+      return true;
+    });
+    let html = '';
+
+    rows.forEach(row => {
+      const area = row.area;
+      const proj = row.project;
+      const span = row.rowSpan;
+      const schedMap = getSchedMap(proj);
+
+      if (state.schedStatus && proj) {
+        const statuses = Object.values(schedMap).map(s => s.status);
+        if (statuses.length && statuses.indexOf(state.schedStatus) === -1) return;
+      }
+
+      html += '<tr>';
+
+      // 试料料号
+      if (span > 0) {
+        html += '<td rowspan="' + span + '" class="sticky-col area-id-col"><div class="area-tag ' + area.type + '">' + area.id + '</div>';
+        if (area.id === 'SZB' || area.id === 'JP1' || area.id === 'JP2' || area.id === 'CX1' || area.id === 'CX2') {
+          html += '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">多项目并行</div>';
+        }
+        html += '</td>';
+
+        // 单元机台设备
+        html += '<td rowspan="' + span + '" class="sticky-col area-name-col">' +
+          '<div style="font-weight:600;color:var(--text-primary);margin-bottom:4px;">' + area.shortName + '</div>' +
+          '<div style="font-size:11px;color:var(--text-secondary);"><i data-lucide="map-pin" style="width:10px;height:10px;display:inline;vertical-align:-1px;margin-right:2px;"></i>' + area.location + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:3px;"><i data-lucide="wrench" style="width:10px;height:10px;display:inline;vertical-align:-1px;margin-right:2px;"></i>' + area.mat + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">设备 <span style="color:var(--brand-light);font-weight:600;">' + area.eqCount + '</span>台</div>' +
+        '</td>';
+
+        // 试制能力
+        html += '<td rowspan="' + span + '" class="sticky-col eq-col">' +
+          '<div style="font-size:11px;color:var(--text-muted);">B类当量</div>' +
+          '<div style="font-size:12px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + area.capacity + '</div>' +
+        '</td>';
+      }
+
+      // 项目
+      if (proj) {
+        html += '<td class="sticky-col cap-col">' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<span class="cat-tag cat-' + proj.cat + '">' + proj.cat + '类</span>' +
+            '<span style="font-weight:600;color:var(--text-primary);">' + proj.id + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">' + proj.name + '</div>' +
+        '</td>';
+        html += '<td class="sticky-col project-col budget-num">' + proj.budget.toFixed(0) + '</td>';
+        html += '<td class="sticky-col qty-col qty-num">' + proj.qty.toLocaleString() + '</td>';
+        html += '<td class="sticky-col done-col done-num">' + proj.done.toLocaleString() + (proj.qty ? ' / ' + proj.qty : '') + '</td>';
+        html += '<td class="sticky-col mat-col">' +
+          (area.id === 'SZA' ? '2台举升机' : '') +
+          (area.id === 'SZC' ? '7月10日 2台举升机' : '') +
+          (area.id === 'SZB' ? (proj.id === 'S599841' ? '4台举升机' : '2台举升机') : '') +
+          (area.id === 'JP1' ? (proj.id === 'DHTMPV' ? '4台举升机' : '2台举升机') : '') +
+          (area.id === 'JP2' ? (proj.id === 'N1F1' ? '3台举升机' : '6台举升机') : '') +
+          (area.id === 'LH' ? '8台举升机' : '') +
+          (area.id === 'CX1' ? (proj.id === 'M18-300HEV' ? '7月3日 3台' : '3台举升机') : '') +
+          (area.id === 'CX2' ? (proj.id === 'M18-200HEV' ? '7月30日 7台' : '1台举升机') : '') +
+        '</td>';
+      } else {
+        html += '<td class="sticky-col cap-col" style="color:var(--text-muted);">——</td>';
+        html += '<td class="sticky-col project-col">——</td>';
+        html += '<td class="sticky-col qty-col">——</td>';
+        html += '<td class="sticky-col done-col">——</td>';
+        html += '<td class="sticky-col mat-col">——</td>';
+      }
+
+      // Week schedule cells
+      for (let i = 0; i < WEEK_LABELS.length; i++) {
+        const sched = schedMap[i];
+        let inner = '';
+        if (sched) inner = '<div class="sched-inner status-' + sched.status + '" title="' + (proj ? proj.id : '') + ' ' + (proj ? proj.name : '') + ' ' + sched.text + '">' + sched.text + '</div>';
+        html += '<td class="sched-cell">' + inner + '</td>';
+      }
+      html += '</tr>';
+    });
+
+    body.innerHTML = html;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderKPIs() {
+    const rows = buildAreaRows();
+    document.getElementById('kpiAreaCount').textContent = AREA_CONFIG.length;
+    document.getElementById('kpiAssemblyCount').textContent = AREA_CONFIG.filter(a => a.type === 'assembly').length;
+    document.getElementById('kpiCxCount').textContent = AREA_CONFIG.filter(a => a.type === 'cx').length;
+    document.getElementById('kpiWpCount').textContent = AREA_CONFIG.filter(a => a.type === 'wp').length;
+    document.getElementById('kpiProjectCount').textContent = PROJECT_NAMES.length;
+    document.getElementById('kpiDoneCount').textContent = PROJECT_NAMES.filter(p => (p.done / p.qty) >= 0.9 && p.qty > 0).length;
+    document.getElementById('kpiDoingCount').textContent = PROJECT_NAMES.filter(p => p.done > 0 && (p.done / p.qty) < 0.9).length;
+    document.getElementById('kpiEqCount').textContent = AREA_CONFIG.reduce((s, a) => s + a.eqCount, 0);
+    document.getElementById('kpiLiftCount').textContent = AREA_CONFIG.reduce((s, a) => s + a.liftCount, 0);
+    const budget = PROJECT_NAMES.reduce((s, p) => s + p.budget, 0);
+    document.getElementById('kpiBudget').textContent = budget.toLocaleString();
+    const qty = PROJECT_NAMES.reduce((s, p) => s + p.qty, 0);
+    const doneQty = PROJECT_NAMES.reduce((s, p) => s + p.done, 0);
+    document.getElementById('kpiQty').textContent = qty.toLocaleString();
+    document.getElementById('kpiDoneQty').textContent = doneQty.toLocaleString();
+
+    // Util
+    const totalSlots = AREA_CONFIG.length * WEEK_LABELS.length;
+    let usedSlots = 0, weekSlots = 0, nextWeekSlots = 0;
+    rows.forEach(r => {
+      const sm = getSchedMap(r.project);
+      const keys = Object.keys(sm);
+      usedSlots += keys.length;
+      if (sm[4]) weekSlots += 1;
+      if (sm[5]) nextWeekSlots += 1;
+    });
+    document.getElementById('kpiUtil').textContent = Math.round(usedSlots / (AREA_CONFIG.length * PROJECT_NAMES.length / 2) * 100) + '%';
+    document.getElementById('kpiUtilWeek').textContent = Math.round(weekSlots / AREA_CONFIG.length * 100) + '%';
+    document.getElementById('kpiUtilNext').textContent = Math.round(nextWeekSlots / AREA_CONFIG.length * 100) + '%';
+
+    document.getElementById('statAreaCount').textContent = AREA_CONFIG.length;
+    document.getElementById('statProjectCount').textContent = PROJECT_NAMES.length;
+    document.getElementById('statBudget').textContent = budget.toLocaleString();
+  }
+
+  function renderSidebar() {
+    const types = [
+      { key: 'assembly', label: '装配区', color: '#1677FF' },
+      { key: 'wp', label: '竞品区', color: '#52C41A' },
+      { key: 'cx', label: '外委区', color: '#FAAD14' }
+    ];
+    const typeContainer = document.getElementById('areaTypeFilters');
+    let html = '';
+    html += '<div class="filter-item ' + (state.areaType === '' ? 'active' : '') + '" data-type=""><span class="filter-dot" style="background:var(--brand-primary);"></span>全部<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + AREA_CONFIG.length + '</span></div>';
+    types.forEach(t => {
+      const cnt = AREA_CONFIG.filter(a => a.type === t.key).length;
+      html += '<div class="filter-item ' + (state.areaType === t.key ? 'active' : '') + '" data-type="' + t.key + '"><span class="filter-dot" style="background:' + t.color + ';"></span>' + t.label + '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + cnt + '</span></div>';
+    });
+    typeContainer.innerHTML = html;
+    typeContainer.querySelectorAll('.filter-item').forEach(el => {
+      el.onclick = () => { state.areaType = el.dataset.type; renderAll(); };
+    });
+
+    const cats = ['A', 'B', 'C'];
+    const catContainer = document.getElementById('catFilters');
+    html = '';
+    html += '<div class="filter-item ' + (state.cat === '' ? 'active' : '') + '" data-cat=""><span>全部类别</span><span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + PROJECT_NAMES.length + '</span></div>';
+    cats.forEach(c => {
+      const cnt = PROJECT_NAMES.filter(p => p.cat === c).length;
+      const colorMap = { A: '#FF4D4F', B: '#FAAD14', C: '#52C41A' };
+      html += '<div class="filter-item ' + (state.cat === c ? 'active' : '') + '" data-cat="' + c + '"><span class="filter-dot" style="background:' + colorMap[c] + ';"></span>' + c + '类项目<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + cnt + '</span></div>';
+    });
+    catContainer.innerHTML = html;
+    catContainer.querySelectorAll('.filter-item').forEach(el => {
+      el.onclick = () => { state.cat = el.dataset.cat; renderAll(); };
+    });
+
+    const statuses = [
+      { key: 'done', label: '已完成', color: '#52C41A' },
+      { key: 'doing', label: '进行中', color: '#1677FF' },
+      { key: 'wait', label: '待排', color: '#FAAD14' },
+      { key: 'plan', label: '排定中', color: '#FF4D4F' }
+    ];
+    const schedContainer = document.getElementById('schedStatusFilters');
+    html = '';
+    html += '<div class="filter-item ' + (state.schedStatus === '' ? 'active' : '') + '" data-sched=""><span>全部状态</span></div>';
+    statuses.forEach(s => {
+      html += '<div class="filter-item ' + (state.schedStatus === s.key ? 'active' : '') + '" data-sched="' + s.key + '"><span class="filter-dot" style="background:' + s.color + ';"></span>' + s.label + '</div>';
+    });
+    schedContainer.innerHTML = html;
+    schedContainer.querySelectorAll('.filter-item').forEach(el => {
+      el.onclick = () => { state.schedStatus = el.dataset.sched; renderAll(); };
+    });
+  }
+
+  function renderQuickChips() {
+    const container = document.getElementById('quickChips');
+    const chips = [
+      { key: 'all', label: '全部场地' },
+      { key: 'assembly', label: '装配车间' },
+      { key: 'wp', label: '竞品区' },
+      { key: 'cx', label: '外委区' },
+      { key: 'A', label: 'A类项目' },
+      { key: 'B', label: 'B类项目' }
+    ];
+    let html = '';
+    chips.forEach(c => {
+      html += '<span class="chip" data-chip="' + c.key + '"><i data-lucide="filter" style="width:11px;height:11px;"></i>' + c.label + '</span>';
+    });
+    container.innerHTML = html;
+    container.querySelectorAll('.chip').forEach(el => {
+      el.onclick = () => {
+        const k = el.dataset.chip;
+        if (k === 'all' || k === 'assembly' || k === 'wp' || k === 'cx') {
+          state.areaType = k === 'all' ? '' : k;
+          state.cat = '';
+        } else {
+          state.cat = k;
+          state.areaType = '';
+        }
         renderAll();
-        initCharts();
-        if (window.lucide) lucide.createIcons();
-      });
-    })();
-  </script>
+      };
+    });
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderAll() {
+    renderSidebar();
+    renderKPIs();
+    renderQuickChips();
+    renderMatrixHead();
+    renderMatrixBody();
+  }
+
+  function updateTime() {
+    const now = new Date();
+    const pad = n => n < 10 ? '0' + n : '' + n;
+    const str = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' +
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    const el = document.getElementById('currentTime');
+    if (el) el.textContent = str;
+    const el2 = document.getElementById('lastUpdateTime');
+    if (el2) el2.innerHTML = '<i data-lucide="clock" style="width:12px;height:12px;"></i><span>最后更新: ' + str + '</span>';
+    if (window.lucide) lucide.createIcons();
+  }
+
+  document.getElementById('btnRefresh').onclick = () => {
+    MockData.refresh(); App.toast('数据已刷新'); renderAll();
+  };
+  document.getElementById('btnExport').onclick = () => App.toast('导出功能开发中...', 'info');
+  document.getElementById('btnExpand').onclick = () => {
+    const el = document.querySelector('.app-sidebar');
+    if (!el) return;
+    if (el.style.display === 'none') { el.style.display = ''; document.getElementById('btnExpand').innerHTML = '<i data-lucide="maximize-2" style="width:14px;height:14px;"></i>全宽显示'; }
+    else { el.style.display = 'none'; document.getElementById('btnExpand').innerHTML = '<i data-lucide="minimize-2" style="width:14px;height:14px;"></i>恢复侧栏'; }
+    if (window.lucide) lucide.createIcons();
+  };
+
+  renderAll();
+  updateTime();
+  setInterval(updateTime, 1000);
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
 </body>
 </html>

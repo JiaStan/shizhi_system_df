@@ -448,12 +448,8 @@
       <div id="areaFilters"></div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">团队筛选</div>
-      <div id="teamFilters"></div>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-title">技能分组</div>
-      <div id="skillFilters"></div>
+      <div class="sidebar-title">人员来源（装配区）</div>
+      <div id="sourceFilters"></div>
     </div>
   </aside>
 
@@ -529,7 +525,7 @@
     <div class="charts-row">
       <div class="chart-card">
         <div class="card-header">
-          <div class="card-title"><i data-lucide="bar-chart-3" class="card-title-icon"></i>工时分布（按团队/区域）</div>
+          <div class="card-title"><i data-lucide="bar-chart-3" class="card-title-icon"></i>工时分布（按区域/来源）</div>
         </div>
         <div id="hoursChart" class="chart-container"></div>
       </div>
@@ -554,7 +550,7 @@
             <tr>
               <th data-sort="name">姓名</th>
               <th data-sort="id">工号</th>
-              <th data-sort="team">团队</th>
+              <th data-sort="source">来源</th>
               <th data-sort="area">区域</th>
               <th data-sort="todayHours">今日工时</th>
               <th data-sort="completed">完成任务</th>
@@ -571,7 +567,7 @@
 
     <div class="team-comparison-card">
       <div class="card-header">
-        <div class="card-title"><i data-lucide="users" class="card-title-icon"></i>团队效率对比</div>
+        <div class="card-title"><i data-lucide="users" class="card-title-icon"></i>人员来源效率对比（装配区）</div>
       </div>
       <div id="teamChart" class="chart-container" style="height:320px;"></div>
     </div>
@@ -608,15 +604,14 @@
 
 <script>
 (function () {
-  const SKILL_GROUPS = ['机械加工', '焊接', '喷涂', '装配', '检测', '物流', '电气维修', '机械维修'];
+  const SOURCES = ['商用车', '乘用车', '柳汽', '中智', '外协', '内调'];
+  const ASSEMBLY_AREAS = ['SZA', 'SZB', 'SZC', 'JP1', 'JP2', 'LH', 'CX1', 'CX2'];
   const AVATAR_COLORS = ['a1','a2','a3','a4','a5','a6','a7','a8'];
-  const AREAS = ['A区', 'B区', 'C区', 'D区', '总装', '质检'];
 
   const state = {
     search: '',
     area: '',
-    team: '',
-    skill: '',
+    source: '',
     dateRange: 7,
     sortKey: 'score',
     sortDir: 'desc'
@@ -629,13 +624,6 @@
   const EFFICIENCY_DATA = (function () {
     const people = MockData.data.personnel;
     const tasks = MockData.data.tasks;
-
-    const teamMap = {};
-    people.forEach(function (p) {
-      const team = p.skillGroup + '组';
-      if (!teamMap[team]) teamMap[team] = [];
-      teamMap[team].push(p.id);
-    });
 
     return people.map(function (p, idx) {
       const personTasks = tasks.filter(function (t) { return t.assignee === p.name; });
@@ -653,10 +641,14 @@
       score = Math.min(100, score + Math.floor(completionRate / 20));
       score = Math.max(40, score - reworkRate);
 
+      const assemblyAreaIds = ASSEMBLY_AREAS.map(a => a.toLowerCase());
+      const isAssembly = assemblyAreaIds.some(id => (p.position || '').toLowerCase().indexOf(id) !== -1);
+      const source = isAssembly ? SOURCES[idx % SOURCES.length] : null;
+
       return {
         ...p,
         avatarColor: AVATAR_COLORS[idx % AVATAR_COLORS.length],
-        team: p.skillGroup + '组',
+        source: source,
         todayHours: todayHours,
         totalHours: totalHours,
         completed: completed,
@@ -682,8 +674,13 @@
         }
       }
       if (state.area && p.position !== state.area) return false;
-      if (state.team && p.team !== state.team) return false;
-      if (state.skill && p.skillGroup !== state.skill) return false;
+      if (state.source) {
+        if (state.source === 'non-assembly') {
+          if (p.source !== null) return false;
+        } else {
+          if (p.source !== state.source) return false;
+        }
+      }
       return true;
     });
   }
@@ -787,28 +784,42 @@
     });
   }
 
-  function renderSkillFilters() {
-    const container = document.getElementById('skillFilters');
+  function renderSourceFilters() {
+    const container = document.getElementById('sourceFilters');
     const counts = {};
     EFFICIENCY_DATA.forEach(function (p) {
-      counts[p.skillGroup] = (counts[p.skillGroup] || 0) + 1;
+      const key = p.source || 'non-assembly';
+      counts[key] = (counts[key] || 0) + 1;
     });
 
+    const sourceColors = {
+      '商用车': '#1677FF', '乘用车': '#52C41A', '柳汽': '#FAAD14',
+      '中智': '#722ED1', '外协': '#EB2F96', '内调': '#13C2C2', 'non-assembly': '#8B95A8'
+    };
+
     let html = '';
-    SKILL_GROUPS.forEach(function (skill) {
-      const count = counts[skill] || 0;
-      if (count === 0) return;
-      const active = state.skill === skill ? 'active' : '';
-      html += '<div class="filter-item ' + active + '" data-skill="' + skill + '">' +
-        '<span class="filter-dot" style="background:#13C2C2;"></span>' +
-        '<span>' + skill + '</span>' +
+    SOURCES.forEach(function (src) {
+      const count = counts[src] || 0;
+      const active = state.source === src ? 'active' : '';
+      html += '<div class="filter-item ' + active + '" data-source="' + src + '">' +
+        '<span class="filter-dot" style="background:' + sourceColors[src] + ';"></span>' +
+        '<span>' + src + '</span>' +
         '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + count + '</span>' +
       '</div>';
     });
+    html += '<div class="filter-item ' + (state.source === 'non-assembly' ? 'active' : '') + '" data-source="non-assembly">' +
+      '<span class="filter-dot" style="background:#8B95A8;"></span>' +
+      '<span>非装配区</span>' +
+      '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + (counts['non-assembly'] || 0) + '</span>' +
+    '</div>';
+    html += '<div class="filter-item ' + (state.source === '' ? 'active' : '') + '" data-source="">' +
+      '<span>全部</span>' +
+      '<span style="margin-left:auto;color:var(--text-muted);font-size:12px;">' + EFFICIENCY_DATA.length + '</span>' +
+    '</div>';
     container.innerHTML = html;
     container.querySelectorAll('.filter-item').forEach(function (el) {
       el.addEventListener('click', function () {
-        state.skill = el.dataset.skill;
+        state.source = el.dataset.source;
         renderAll();
       });
     });
@@ -869,7 +880,7 @@
           '</div>' +
         '</td>' +
         '<td style="font-family:monospace;color:var(--brand-light);">' + p.id + '</td>' +
-        '<td>' + p.team + '</td>' +
+        '<td>' + (p.source ? '<span style="color:var(--brand-light);font-weight:600;">' + p.source + '</span>' : '<span style="color:var(--text-muted);">非装配区</span>') + '</td>' +
         '<td>' + p.position + '</td>' +
         '<td>' + p.todayHours + 'h</td>' +
         '<td>' + p.completed + '</td>' +
@@ -923,16 +934,17 @@
 
   function renderHoursChart() {
     const filtered = getFilteredData();
-    const teams = {};
+    const sources = {};
     filtered.forEach(function (p) {
-      if (!teams[p.team]) teams[p.team] = {};
-      if (!teams[p.team][p.position]) teams[p.team][p.position] = 0;
-      teams[p.team][p.position] += p.todayHours;
+      const src = p.source || '非装配区';
+      if (!sources[src]) sources[src] = {};
+      if (!sources[src][p.position]) sources[src][p.position] = 0;
+      sources[src][p.position] += p.todayHours;
     });
 
-    const teamNames = Object.keys(teams);
+    const sourceNames = Object.keys(sources);
     const areas = new Set();
-    teamNames.forEach(function (t) { Object.keys(teams[t]).forEach(function (a) { areas.add(a); }); });
+    sourceNames.forEach(function (s) { Object.keys(sources[s]).forEach(function (a) { areas.add(a); }); });
     const areaNames = Array.from(areas);
 
     const series = areaNames.map(function (area, idx) {
@@ -941,7 +953,7 @@
         name: area,
         type: 'bar',
         stack: 'total',
-        data: teamNames.map(function (t) { return teams[t][area] || 0; }),
+        data: sourceNames.map(function (s) { return sources[s][area] || 0; }),
         itemStyle: { color: colors[idx % colors.length], borderRadius: idx === areaNames.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0] }
       };
     });
@@ -965,9 +977,9 @@
       grid: { left: 50, right: 20, top: 20, bottom: 40 },
       xAxis: {
         type: 'category',
-        data: teamNames,
+        data: sourceNames,
         axisLine: { lineStyle: { color: '#1E2A3E' } },
-        axisLabel: { color: '#8B95A8', fontSize: 12 }
+        axisLabel: { color: '#8B95A8', fontSize: 12, rotate: 15 }
       },
       yAxis: {
         type: 'value',
@@ -1075,26 +1087,27 @@
 
   function renderTeamChart() {
     const filtered = getFilteredData();
-    const teamStats = {};
+    const sourceStats = {};
 
     filtered.forEach(function (p) {
-      if (!teamStats[p.team]) {
-        teamStats[p.team] = { hours: 0, completed: 0, inProgress: 0, score: 0, count: 0 };
+      const src = p.source || '非装配区';
+      if (!sourceStats[src]) {
+        sourceStats[src] = { hours: 0, completed: 0, inProgress: 0, score: 0, count: 0 };
       }
-      teamStats[p.team].hours += p.todayHours;
-      teamStats[p.team].completed += p.completed;
-      teamStats[p.team].inProgress += p.inProgress;
-      teamStats[p.team].score += p.score;
-      teamStats[p.team].count += 1;
+      sourceStats[src].hours += p.todayHours;
+      sourceStats[src].completed += p.completed;
+      sourceStats[src].inProgress += p.inProgress;
+      sourceStats[src].score += p.score;
+      sourceStats[src].count += 1;
     });
 
-    const teamNames = Object.keys(teamStats);
-    const avgScores = teamNames.map(function (t) { return Math.round(teamStats[t].score / teamStats[t].count); });
-    const completionRates = teamNames.map(function (t) {
-      const total = teamStats[t].completed + teamStats[t].inProgress;
-      return total > 0 ? Math.round((teamStats[t].completed / total) * 100) : 0;
+    const sourceNames = Object.keys(sourceStats);
+    const avgScores = sourceNames.map(function (s) { return Math.round(sourceStats[s].score / sourceStats[s].count); });
+    const completionRates = sourceNames.map(function (s) {
+      const total = sourceStats[s].completed + sourceStats[s].inProgress;
+      return total > 0 ? Math.round((sourceStats[s].completed / total) * 100) : 0;
     });
-    const totalHours = teamNames.map(function (t) { return teamStats[t].hours; });
+    const totalHours = sourceNames.map(function (s) { return sourceStats[s].hours; });
 
     teamChart.setOption({
       backgroundColor: 'transparent',
@@ -1121,7 +1134,7 @@
       },
       yAxis: {
         type: 'category',
-        data: teamNames,
+        data: sourceNames,
         axisLine: { lineStyle: { color: '#1E2A3E' } },
         axisLabel: { color: '#8B95A8', fontSize: 12 }
       },
@@ -1211,7 +1224,7 @@
         '</div>' +
         '<div style="flex:1;">' +
           '<div style="font-size:18px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">' + p.name + '</div>' +
-          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">' + p.id + ' · ' + p.team + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">' + p.id + ' · ' + p.position + (p.source ? ' · 来源：' + p.source : '') + '</div>' +
           '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
             '<span class="score-badge ' + scoreCls + '">' + scoreLabel + '</span>' +
             '<span class="rank-badge ' + rankCls + '">#' + rank + '</span>' +
@@ -1258,9 +1271,9 @@
       '<div class="detail-section-title"><i data-lucide="user"></i>基本信息</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
         '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">工号</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.id + '</div></div>' +
-        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">所属团队</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.team + '</div></div>' +
         '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">所在区域</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.position + '</div></div>' +
-        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">技能分组</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.skillGroup + '</div></div>' +
+        (p.source ? '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">人员来源（装配区）</div><div style="font-size:13px;color:var(--brand-light);font-weight:600;margin-top:2px;">' + p.source + '</div></div>' : '') +
+        '<div style="padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);"><div style="font-size:12px;color:var(--text-muted);">技能工种</div><div style="font-size:13px;color:var(--text-primary);font-weight:500;margin-top:2px;">' + p.skillGroup + '</div></div>' +
       '</div>' +
     '</div>';
 
@@ -1277,8 +1290,7 @@
 
   function renderAll() {
     renderAreaFilters();
-    renderTeamFilters();
-    renderSkillFilters();
+    renderSourceFilters();
     renderDateRange();
     renderKPIs();
     renderHoursChart();

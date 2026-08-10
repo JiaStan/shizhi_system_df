@@ -120,6 +120,14 @@ html, body {
   color: var(--text-secondary);
   font-size: 14px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-item .nav-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .nav-item:hover {
@@ -1516,4 +1524,68 @@ html, body {
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 600;
+}
+
+/* Workshop layout edit mode */
+.workshop-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-outline:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-light);
+  background: rgba(22, 119, 255, 0.08);
+}
+
+.zone-card.edit-mode {
+  cursor: grab;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.zone-card.edit-mode:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.2);
+}
+
+.zone-card.edit-mode::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-light));
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.workshop-grid.edit-mode {
+  min-height: 200px;
+}
+
+/* Campus map diagram edit mode */
+.diagram-node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diagram-node:hover {
+  filter: brightness(1.2);
+}
+
+.diagram-node.selected {
+  filter: drop-shadow(0 0 6px var(--brand-primary));
 }

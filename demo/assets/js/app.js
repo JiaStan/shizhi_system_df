@@ -2,6 +2,43 @@ window.App = (function () {
   const toastStack = [];
   let toastSeq = 0;
 
+  const NAV_MODULES = [
+    { key: 'dashboard', name: '综合驾驶舱', icon: 'layout-dashboard', url: 'dashboard.html' },
+    { key: 'devices', name: '设备台账', icon: 'cpu', url: 'equipment.html' },
+    { key: 'resource', name: '资源占用看板', icon: 'bar-chart-3', url: 'resource-board.html' },
+    { key: 'gantt', name: '甘特图排程', icon: 'gantt', url: 'gantt.html' },
+    { key: 'tasks', name: '任务管理', icon: 'list-checks', url: 'tasks.html' },
+    { key: 'personnel', name: '人员看板', icon: 'users', url: 'personnel.html' },
+    { key: 'efficiency', name: '人效分析', icon: 'trending-up', url: 'efficiency.html' },
+    { key: 'campus', name: '园区地图', icon: 'map', url: 'campus-map.html' },
+    { key: 'alerts', name: '异常预警中心', icon: 'alert-triangle', url: 'alerts.html' }
+  ];
+
+  function renderNav(activePage) {
+    const navContainer = document.querySelector('.nav-menu');
+    if (!navContainer) return;
+
+    const activeKey = activePage || (document.querySelector('[data-page].active')?.dataset.page);
+
+    navContainer.innerHTML = NAV_MODULES.map(mod => {
+      const isActive = mod.key === activeKey;
+      return `<li class="nav-item ${isActive ? 'active' : ''}" data-page="${mod.key}" data-url="${mod.url}">
+        <i data-lucide="${mod.icon}" class="nav-icon"></i>
+        <span>${mod.name}</span>
+      </li>`;
+    }).join('');
+
+    navContainer.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = item.dataset.url;
+        if (url) window.location.href = url;
+      });
+    });
+
+    if (window.lucide) window.lucide.createIcons({ attrs: { class: ['lucide'] } });
+  }
+
   function toast(message, type = 'success', title) {
     const container = getToastContainer();
     const icons = {
@@ -150,5 +187,15 @@ window.App = (function () {
     mask.addEventListener('click', (e) => { if (e.target === mask) close(); });
   }
 
-  return { toast, openModal, closeModal, closeAllModals, initSelect, initAllSelects, openConfirm };
+  const api = { toast, openModal, closeModal, closeAllModals, initSelect, initAllSelects, openConfirm, renderNav, NAV_MODULES };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNav();
+    });
+  } else {
+    renderNav();
+  }
+
+  return api;
 })();
