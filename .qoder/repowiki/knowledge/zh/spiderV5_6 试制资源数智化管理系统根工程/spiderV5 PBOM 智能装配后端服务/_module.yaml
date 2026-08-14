@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: backend_api
+title: spiderV5 PBOM 智能装配后端服务
+scope:
+    - backend/
+source_files: []
+depends_on: []
+related_to:
+    - path: demo_pages
+    - path: webui_ref
+    - path: windows_setup

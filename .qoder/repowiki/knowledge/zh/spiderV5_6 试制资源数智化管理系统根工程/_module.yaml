@@ -1,0 +1,26 @@
+schema_version: 1
+module_path: ""
+title: spiderV5/6 试制资源数智化管理系统根工程
+scope:
+    - README.md
+    - PBOM智能装配路线图_合订版v2.md
+    - frontend-reproduction-spec.md
+    - 需求文档.md
+    - 需求文档_V2_综合版.md
+    - 需求文档_V3_BFWS_CPSAT.md
+    - 需求文档_V4_综合设计.md
+    - 需求文档_V6_试制资源数智化管理系统.md
+    - .gitignore
+    - index.html
+    - start_server.py
+    - stop_server.bat
+    - insert_credentials.py
+    - build_windows_package.sh
+    - spiderV5_后端设计概要.md
+    - webUI_design.zip
+    - 到货管控-2026-07-16_141746-dump.sql
+    - 开发计划_V6.md
+    - 需求文档_V5_综合设计.md
+source_files: []
+depends_on: []
+related_to: []

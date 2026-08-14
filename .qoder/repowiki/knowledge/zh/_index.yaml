@@ -1,0 +1,94 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: main
+nodes_managed: true
+exported_at: "2026-08-13T06:06:50Z"
+modules:
+    "":
+        dir_name: spiderV5_6 试制资源数智化管理系统根工程
+        title: spiderV5/6 试制资源数智化管理系统根工程
+        scope:
+            - README.md
+            - PBOM智能装配路线图_合订版v2.md
+            - frontend-reproduction-spec.md
+            - 需求文档.md
+            - 需求文档_V2_综合版.md
+            - 需求文档_V3_BFWS_CPSAT.md
+            - 需求文档_V4_综合设计.md
+            - 需求文档_V6_试制资源数智化管理系统.md
+            - .gitignore
+            - index.html
+            - start_server.py
+            - stop_server.bat
+            - insert_credentials.py
+            - build_windows_package.sh
+            - spiderV5_后端设计概要.md
+            - webUI_design.zip
+            - 到货管控-2026-07-16_141746-dump.sql
+            - 开发计划_V6.md
+            - 需求文档_V5_综合设计.md
+        source_files: []
+        children:
+            - backend_api
+            - demo_pages
+            - webui_ref
+            - windows_setup
+        depends_on: []
+        related_to: []
+    backend_api:
+        dir_name: spiderV5 PBOM 智能装配后端服务
+        title: spiderV5 PBOM 智能装配后端服务
+        scope:
+            - backend/
+        source_files: []
+        children:
+            - backend_api/core_and_config
+        depends_on: []
+        related_to:
+            - path: demo_pages
+            - path: webui_ref
+            - path: windows_setup
+    backend_api/core_and_config:
+        dir_name: 后端核心配置、数据库与日志基础设施
+        title: 后端核心配置、数据库与日志基础设施
+        scope:
+            - backend/config.py
+            - backend/database.py
+            - backend/logger.py
+            - backend/main.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    demo_pages:
+        dir_name: 试制资源数智化管理系统 Demo 前端页面集
+        title: 试制资源数智化管理系统 Demo 前端页面集
+        scope:
+            - demo/
+            - static/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend_api
+    webui_ref:
+        dir_name: Web UI 全栈参考实现（NestJS + React_Vite）
+        title: Web UI 全栈参考实现（NestJS + React/Vite）
+        scope:
+            - webui_ref/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend_api
+    windows_setup:
+        dir_name: Windows 一键部署脚本集
+        title: Windows 一键部署脚本集
+        scope:
+            - windows_setup/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: backend_api
