@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-08-13T06:06:50Z"
+exported_at: "2026-08-17T00:34:25Z"
 modules:
     "":
-        dir_name: spiderV5_6 试制资源数智化管理系统根工程
-        title: spiderV5/6 试制资源数智化管理系统根工程
+        dir_name: PBOM 智能装配与试制资源数智化系统根工程
+        title: PBOM 智能装配与试制资源数智化系统根工程
         scope:
             - README.md
             - PBOM智能装配路线图_合订版v2.md
@@ -37,8 +37,8 @@ modules:
         depends_on: []
         related_to: []
     backend_api:
-        dir_name: spiderV5 PBOM 智能装配后端服务
-        title: spiderV5 PBOM 智能装配后端服务
+        dir_name: spiderV5 后端 API 聚合层
+        title: spiderV5 后端 API 聚合层
         scope:
             - backend/
         source_files: []
@@ -46,7 +46,6 @@ modules:
             - backend_api/core_and_config
         depends_on: []
         related_to:
-            - path: demo_pages
             - path: webui_ref
             - path: windows_setup
     backend_api/core_and_config:
@@ -62,19 +61,18 @@ modules:
         depends_on: []
         related_to: []
     demo_pages:
-        dir_name: 试制资源数智化管理系统 Demo 前端页面集
-        title: 试制资源数智化管理系统 Demo 前端页面集
+        dir_name: 试制资源数智化系统演示页面集
+        title: 试制资源数智化系统演示页面集
         scope:
             - demo/
             - static/
         source_files: []
         children: []
         depends_on: []
-        related_to:
-            - path: backend_api
+        related_to: []
     webui_ref:
-        dir_name: Web UI 全栈参考实现（NestJS + React_Vite）
-        title: Web UI 全栈参考实现（NestJS + React/Vite）
+        dir_name: WebUI 全栈参考工程（NestJS + React_Vite）
+        title: WebUI 全栈参考工程（NestJS + React/Vite）
         scope:
             - webui_ref/
         source_files: []

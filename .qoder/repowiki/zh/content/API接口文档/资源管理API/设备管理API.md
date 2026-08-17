@@ -8,6 +8,13 @@
 - [webui_ref/client/src/api/resource/equipment.ts](file://webui_ref/client/src/api/resource/equipment.ts)
 </cite>
 
+## 更新摘要
+**变更内容**
+- 新增设备统计端点 `/api/resource/equipment/stats` 的完整文档说明
+- 更新架构总览图以包含新的统计功能
+- 增强详细接口说明部分，添加设备统计数据接口的详细说明
+- 更新依赖关系分析以反映新的统计功能
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -21,7 +28,7 @@
 10. [附录：业务约束与枚举](#附录：业务约束与枚举)
 
 ## 简介
-本文件为“设备管理模块”的完整API接口文档，覆盖设备CRUD（增删改查）、设备状态管理、维护记录管理等核心能力。所有接口统一前缀 /api/resource，采用REST风格，返回统一格式 {code, message, data}。支持分页、筛选、搜索；提供设备统计看板数据；维护记录支持创建、查询与状态更新。
+本文件为"设备管理模块"的完整API接口文档，覆盖设备CRUD（增删改查）、设备状态管理、维护记录管理等核心能力。所有接口统一前缀 /api/resource，采用REST风格，返回统一格式 {code, message, data}。支持分页、筛选、搜索；提供设备统计看板数据；维护记录支持创建、查询与状态更新。
 
 ## 项目结构
 设备管理相关代码位于后端资源模块中，路由定义在 router.py，服务层逻辑在 equipment_service.py，数据库表结构在 resource_schema.sql，前端调用封装在 equipment.ts。
@@ -31,18 +38,20 @@ graph TB
 FE["前端调用<br/>equipment.ts"] --> API["FastAPI路由<br/>router.py"]
 API --> SVC["设备服务层<br/>equipment_service.py"]
 SVC --> DB["数据库<br/>resource_schema.sql"]
+API --> STATS["设备统计端点<br/>/equipment/stats"]
+STATS --> SVC
 ```
 
 图表来源
-- [backend/modules/resource/router.py:58-302](file://backend/modules/resource/router.py#L58-L302)
-- [backend/modules/resource/services/equipment_service.py:11-495](file://backend/modules/resource/services/equipment_service.py#L11-L495)
-- [backend/sql/resource_schema.sql:13-199](file://backend/sql/resource_schema.sql#L13-L199)
+- [backend/modules/resource/router.py:58-103](file://backend/modules/resource/router.py#L58-L103)
+- [backend/modules/resource/services/equipment_service.py:304-335](file://backend/modules/resource/services/equipment_service.py#L304-L335)
+- [backend/sql/resource_schema.sql:13-28](file://backend/sql/resource_schema.sql#L13-L28)
 
 章节来源
-- [backend/modules/resource/router.py:1-302](file://backend/modules/resource/router.py#L1-L302)
-- [backend/modules/resource/services/equipment_service.py:1-495](file://backend/modules/resource/services/equipment_service.py#L1-L495)
-- [backend/sql/resource_schema.sql:1-199](file://backend/sql/resource_schema.sql#L1-L199)
-- [webui_ref/client/src/api/resource/equipment.ts:1-254](file://webui_ref/client/src/api/resource/equipment.ts#L1-L254)
+- [backend/modules/resource/router.py:1-103](file://backend/modules/resource/router.py#L1-L103)
+- [backend/modules/resource/services/equipment_service.py:1-335](file://backend/modules/resource/services/equipment_service.py#L1-L335)
+- [backend/sql/resource_schema.sql:1-28](file://backend/sql/resource_schema.sql#L1-L28)
+- [webui_ref/client/src/api/resource/equipment.ts:1-178](file://webui_ref/client/src/api/resource/equipment.ts#L1-L178)
 
 ## 核心组件
 - 路由层：定义HTTP端点、参数校验、异常处理与统一响应包装。
@@ -52,12 +61,12 @@ SVC --> DB["数据库<br/>resource_schema.sql"]
 
 章节来源
 - [backend/modules/resource/router.py:17-45](file://backend/modules/resource/router.py#L17-L45)
-- [backend/modules/resource/services/equipment_service.py:11-495](file://backend/modules/resource/services/equipment_service.py#L11-L495)
-- [backend/sql/resource_schema.sql:13-199](file://backend/sql/resource_schema.sql#L13-L199)
-- [webui_ref/client/src/api/resource/equipment.ts:8-114](file://webui_ref/client/src/api/resource/equipment.ts#L8-L114)
+- [backend/modules/resource/services/equipment_service.py:11-335](file://backend/modules/resource/services/equipment_service.py#L11-L335)
+- [backend/sql/resource_schema.sql:13-28](file://backend/sql/resource_schema.sql#L13-L28)
+- [webui_ref/client/src/api/resource/equipment.ts:8-178](file://webui_ref/client/src/api/resource/equipment.ts#L8-L178)
 
 ## 架构总览
-设备管理API遵循分层架构：请求进入FastAPI路由，路由将参数传递给服务层，服务层进行业务校验并执行SQL操作，最终返回统一JSON响应。
+设备管理API遵循分层架构：请求进入FastAPI路由，路由将参数传递给服务层，服务层进行业务校验并执行SQL操作，最终返回统一JSON响应。新增的设备统计端点专门用于驾驶舱数据展示。
 
 ```mermaid
 sequenceDiagram
@@ -65,18 +74,22 @@ participant C as "客户端"
 participant R as "路由层(router.py)"
 participant S as "服务层(equipment_service.py)"
 participant D as "数据库(resource_schema.sql)"
-C->>R : HTTP请求(设备列表/详情/状态/维护记录)
+C->>R : HTTP请求(设备列表/详情/状态/维护记录/统计)
 R->>S : 调用对应服务方法
+alt 普通设备操作
 S->>D : 执行查询/插入/更新/删除
+else 设备统计操作
+S->>D : 执行聚合统计查询
+end
 D-->>S : 返回数据或影响行数
 S-->>R : 业务结果(含时间字段格式化)
 R-->>C : 统一响应{code,message,data}
 ```
 
 图表来源
-- [backend/modules/resource/router.py:58-302](file://backend/modules/resource/router.py#L58-L302)
-- [backend/modules/resource/services/equipment_service.py:11-495](file://backend/modules/resource/services/equipment_service.py#L11-L495)
-- [backend/sql/resource_schema.sql:13-199](file://backend/sql/resource_schema.sql#L13-L199)
+- [backend/modules/resource/router.py:58-103](file://backend/modules/resource/router.py#L58-L103)
+- [backend/modules/resource/services/equipment_service.py:304-335](file://backend/modules/resource/services/equipment_service.py#L304-L335)
+- [backend/sql/resource_schema.sql:13-28](file://backend/sql/resource_schema.sql#L13-L28)
 
 ## 详细接口说明
 
@@ -88,7 +101,7 @@ R-->>C : 统一响应{code,message,data}
 - 时间字段：服务端统一返回字符串格式 "YYYY-MM-DD HH:MM:SS"
 
 章节来源
-- [backend/modules/resource/router.py:58-302](file://backend/modules/resource/router.py#L58-L302)
+- [backend/modules/resource/router.py:58-103](file://backend/modules/resource/router.py#L58-L103)
 - [backend/modules/resource/services/equipment_service.py:89-97](file://backend/modules/resource/services/equipment_service.py#L89-L97)
 
 ### 设备列表查询
@@ -129,7 +142,7 @@ R-->>C : 统一响应{code,message,data}
   - data: {...}
 
 章节来源
-- [backend/modules/resource/router.py:89-109](file://backend/modules/resource/router.py#L89-L109)
+- [backend/modules/resource/router.py:106-126](file://backend/modules/resource/router.py#L106-L126)
 - [backend/modules/resource/services/equipment_service.py:106-137](file://backend/modules/resource/services/equipment_service.py#L106-L137)
 
 ### 新增设备
@@ -151,7 +164,7 @@ R-->>C : 统一响应{code,message,data}
   - data: {...}
 
 章节来源
-- [backend/modules/resource/router.py:112-129](file://backend/modules/resource/router.py#L112-L129)
+- [backend/modules/resource/router.py:129-146](file://backend/modules/resource/router.py#L129-L146)
 - [backend/modules/resource/services/equipment_service.py:140-178](file://backend/modules/resource/services/equipment_service.py#L140-L178)
 - [backend/sql/resource_schema.sql:13-28](file://backend/sql/resource_schema.sql#L13-L28)
 
@@ -173,7 +186,7 @@ R-->>C : 统一响应{code,message,data}
   - data: {...}
 
 章节来源
-- [backend/modules/resource/router.py:132-154](file://backend/modules/resource/router.py#L132-L154)
+- [backend/modules/resource/router.py:149-171](file://backend/modules/resource/router.py#L149-L171)
 - [backend/modules/resource/services/equipment_service.py:181-228](file://backend/modules/resource/services/equipment_service.py#L181-L228)
 
 ### 删除设备
@@ -189,7 +202,7 @@ R-->>C : 统一响应{code,message,data}
   - data: null
 
 章节来源
-- [backend/modules/resource/router.py:157-175](file://backend/modules/resource/router.py#L157-L175)
+- [backend/modules/resource/router.py:174-192](file://backend/modules/resource/router.py#L174-L192)
 - [backend/modules/resource/services/equipment_service.py:231-259](file://backend/modules/resource/services/equipment_service.py#L231-L259)
 
 ### 设备状态切换
@@ -209,24 +222,32 @@ R-->>C : 统一响应{code,message,data}
   - data: {...}
 
 章节来源
-- [backend/modules/resource/router.py:178-201](file://backend/modules/resource/router.py#L178-L201)
+- [backend/modules/resource/router.py:195-218](file://backend/modules/resource/router.py#L195-L218)
 - [backend/modules/resource/services/equipment_service.py:262-301](file://backend/modules/resource/services/equipment_service.py#L262-L301)
 
 ### 设备统计数据（驾驶舱）
 - 方法：GET
 - URL：/api/resource/equipment/stats
+- 描述：获取设备统计数据，用于驾驶舱和仪表盘展示
 - 响应 data：
-  - total: int
-  - idle/busy/error/maintenance: int
-  - status_distribution: Array<{status, count}>
+  - total: int - 设备总数
+  - idle: int - 空闲设备数量
+  - busy: int - 占用设备数量
+  - error: int - 故障设备数量
+  - maintenance: int - 维护中设备数量
+  - status_distribution: Array<{status: string, count: number}> - 各状态分布详情
+- 示例请求：GET /api/resource/equipment/stats
 - 示例响应：
   - code: 200
   - message: "获取成功"
-  - data: {total: 120, idle: 40, busy: 60, error: 5, maintenance: 15, status_distribution: [...]}
+  - data: {total: 120, idle: 40, busy: 60, error: 5, maintenance: 15, status_distribution: [{status: "idle", count: 40}, {status: "busy", count: 60}, {status: "error", count: 5}, {status: "maintenance", count: 15}]}
+
+**更新** 新增设备统计端点，专门用于驾驶舱数据展示，提供设备状态的实时统计信息。
 
 章节来源
-- [backend/modules/resource/router.py:204-218](file://backend/modules/resource/router.py#L204-L218)
+- [backend/modules/resource/router.py:89-103](file://backend/modules/resource/router.py#L89-L103)
 - [backend/modules/resource/services/equipment_service.py:304-335](file://backend/modules/resource/services/equipment_service.py#L304-L335)
+- [webui_ref/client/src/api/resource/equipment.ts:35-49](file://webui_ref/client/src/api/resource/equipment.ts#L35-L49)
 
 ### 设备维护记录列表
 - 方法：GET
@@ -302,29 +323,30 @@ R-->>C : 统一响应{code,message,data}
 - 服务到数据库：使用统一的数据库访问函数（query_all/query_one/execute/execute_last_id）执行SQL，避免硬编码连接。
 - 数据模型一致性：前端 TypeScript 类型与后端Pydantic模型保持一致，减少前后端契约不一致风险。
 - 外键与索引：equipment.zone_code 引用 zones.zone_code；equipment.status、equipment_type、equipment_maintenance.status 等字段建立索引以提升查询性能。
+- 统计功能：新增的设备统计端点通过聚合查询提供驾驶舱所需的数据。
 
 ```mermaid
 classDiagram
 class Router {
 +list_equipment()
++get_equipment_stats()
 +get_equipment()
 +create_equipment()
 +update_equipment()
 +delete_equipment()
 +update_equipment_status()
-+get_equipment_stats()
 +list_maintenance()
 +create_maintenance()
 +update_maintenance_status()
 }
 class EquipmentService {
 +get_equipment_list()
++get_equipment_stats()
 +get_equipment_by_code()
 +create_equipment()
 +update_equipment()
 +delete_equipment()
 +update_equipment_status()
-+get_equipment_stats()
 +get_maintenance_list()
 +create_maintenance_record()
 +update_maintenance_status()
@@ -345,10 +367,12 @@ Router --> EquipmentService : "调用"
 - 分页与限制：列表接口通过 LIMIT/OFFSET 控制返回量，page_size 上限100，避免大结果集拖慢网络与渲染。
 - 索引优化：equipment.status、equipment.zone_code、equipment.equipment_type、equipment_maintenance.status 等字段已建索引，提升筛选与排序效率。
 - 时间字段格式化：在服务层统一将datetime转为字符串，减少前端解析成本。
+- 统计查询优化：设备统计端点使用 GROUP BY 聚合查询，避免全表扫描。
 - 建议：
   - 对高频查询可引入缓存（如Redis）以减轻数据库压力。
   - 对复杂筛选条件可考虑全文索引或搜索引擎（如Elasticsearch）。
   - 批量操作建议使用事务确保一致性。
+  - 对驾驶舱数据可考虑定时刷新策略。
 
 [本节为通用指导，不直接分析具体文件]
 
@@ -360,13 +384,14 @@ Router --> EquipmentService : "调用"
   - 状态值非法：设备状态必须为 idle/busy/error/maintenance；维护状态必须为 in_progress/completed/cancelled。
   - 区域编码不存在：新增或更新设备时，zone_code 必须在 zones 表中存在。
   - 时间格式错误：start_time/end_time 应为 "YYYY-MM-DD HH:MM:SS"。
+  - 统计数据为空：检查设备表是否有数据，确认数据库连接正常。
 
 章节来源
-- [backend/modules/resource/router.py:112-302](file://backend/modules/resource/router.py#L112-L302)
+- [backend/modules/resource/router.py:89-302](file://backend/modules/resource/router.py#L89-L302)
 - [backend/modules/resource/services/equipment_service.py:140-495](file://backend/modules/resource/services/equipment_service.py#L140-L495)
 
 ## 结论
-设备管理API提供了完整的设备生命周期管理与维护记录管理能力，接口设计清晰、参数校验严格、响应格式统一。结合数据库索引与服务层逻辑，能够满足日常设备台账、状态监控与维护跟踪的业务需求。建议在后续迭代中补充权限控制、审计日志与缓存策略，进一步提升安全性与性能。
+设备管理API提供了完整的设备生命周期管理与维护记录管理能力，接口设计清晰、参数校验严格、响应格式统一。新增的设备统计端点为驾驶舱提供了实时数据支持。结合数据库索引与服务层逻辑，能够满足日常设备台账、状态监控、维护跟踪及数据可视化的业务需求。建议在后续迭代中补充权限控制、审计日志与缓存策略，进一步提升安全性与性能。
 
 [本节为总结性内容，不直接分析具体文件]
 

@@ -4,8 +4,18 @@
 **本文引用的文件**
 - [backend/modules/resource/router.py](file://backend/modules/resource/router.py)
 - [backend/modules/resource/services/task_service.py](file://backend/modules/resource/services/task_service.py)
+- [backend/modules/resource/services/gantt_service.py](file://backend/modules/resource/services/gantt_service.py)
 - [backend/sql/resource_schema.sql](file://backend/sql/resource_schema.sql)
 </cite>
+
+## 更新摘要
+**所做更改**
+- 新增任务状态分布分析接口（饼图数据）
+- 新增任务类型与进度对比接口（柱状图数据）
+- 新增月度任务趋势接口（时间序列分析）
+- 新增甘特图排程数据检索接口
+- 完善统计看板功能，支持多维度数据分析
+- 增强任务管理的可视化分析能力
 
 ## 目录
 1. [简介](#简介)
@@ -20,40 +30,44 @@
 10. [附录：业务枚举与状态流转](#附录：业务枚举与状态流转)
 
 ## 简介
-本模块提供“任务管理”的完整API，覆盖任务全生命周期（创建、查询、更新、删除）、状态变更、进度计算、统计看板等能力。支持按任务类型、试制类别、状态、优先级、区域/装配场地筛选与关键词搜索；提供任务列表分页、详情获取、批量统计（KPI、状态分布、类型与进度对比、月度趋势）等接口。
+本模块提供"任务管理"的完整API，覆盖任务全生命周期（创建、查询、更新、删除）、状态变更、进度计算、统计看板等能力。支持按任务类型、试制类别、状态、优先级、区域/装配场地筛选与关键词搜索；提供任务列表分页、详情获取、批量统计（KPI、状态分布、类型与进度对比、月度趋势、甘特图数据）等接口。
 
 ## 项目结构
 - 路由层：FastAPI 路由定义在资源模块下，统一前缀 /api/resource
-- 服务层：任务相关的业务逻辑集中在 task_service.py
-- 数据层：数据库表结构定义在 resource_schema.sql，任务主表为 tasks
+- 服务层：任务相关的业务逻辑集中在 task_service.py，甘特图逻辑在 gantt_service.py
+- 数据层：数据库表结构定义在 resource_schema.sql，任务主表为 tasks，甘特排程表为 gantt_schedules
 
 ```mermaid
 graph TB
 Client["客户端"] --> Router["FastAPI 路由<br/>/api/resource/tasks/*"]
-Router --> Service["任务服务<br/>task_service.py"]
-Service --> DB["数据库<br/>tasks 表"]
-Service --> Utils["时间/数值格式化<br/>日期与Decimal处理"]
+Router --> TaskService["任务服务<br/>task_service.py"]
+Router --> GanttService["甘特服务<br/>gantt_service.py"]
+TaskService --> DB["数据库<br/>tasks 表"]
+GanttService --> GanttDB["甘特数据库<br/>gantt_schedules 表"]
+TaskService --> Utils["时间/数值格式化<br/>日期与Decimal处理"]
 ```
 
-图表来源
+**图表来源**
 - [backend/modules/resource/router.py:646-831](file://backend/modules/resource/router.py#L646-L831)
 - [backend/modules/resource/services/task_service.py:48-432](file://backend/modules/resource/services/task_service.py#L48-L432)
+- [backend/modules/resource/services/gantt_service.py:176-200](file://backend/modules/resource/services/gantt_service.py#L176-L200)
 - [backend/sql/resource_schema.sql:69-109](file://backend/sql/resource_schema.sql#L69-L109)
 
-章节来源
+**章节来源**
 - [backend/modules/resource/router.py:646-831](file://backend/modules/resource/router.py#L646-L831)
 - [backend/modules/resource/services/task_service.py:48-432](file://backend/modules/resource/services/task_service.py#L48-L432)
 - [backend/sql/resource_schema.sql:69-109](file://backend/sql/resource_schema.sql#L69-L109)
 
 ## 核心组件
 - 路由层：提供 RESTful 端点，负责参数校验、异常封装与响应包装
-- 服务层：实现任务CRUD、筛选查询、进度自动计算、统计聚合
+- 服务层：实现任务CRUD、筛选查询、进度自动计算、统计聚合、甘特图排程
 - 数据模型：Pydantic 请求/响应模型用于输入校验与输出结构约束
-- 数据库：tasks 表承载任务主数据，包含类型、状态、优先级、工时、进度等字段
+- 数据库：tasks 表承载任务主数据，gantt_schedules 表承载甘特排程数据
 
-章节来源
+**章节来源**
 - [backend/modules/resource/router.py:583-831](file://backend/modules/resource/router.py#L583-L831)
 - [backend/modules/resource/services/task_service.py:13-432](file://backend/modules/resource/services/task_service.py#L13-L432)
+- [backend/modules/resource/services/gantt_service.py:15-200](file://backend/modules/resource/services/gantt_service.py#L15-L200)
 - [backend/sql/resource_schema.sql:69-109](file://backend/sql/resource_schema.sql#L69-L109)
 
 ## 架构总览
@@ -72,7 +86,7 @@ S-->>R : {total, page, page_size, data}
 R-->>C : {code : 200, message : "获取成功", data}
 ```
 
-图表来源
+**图表来源**
 - [backend/modules/resource/router.py:646-678](file://backend/modules/resource/router.py#L646-L678)
 - [backend/modules/resource/services/task_service.py:48-146](file://backend/modules/resource/services/task_service.py#L48-L146)
 - [backend/sql/resource_schema.sql:69-109](file://backend/sql/resource_schema.sql#L69-L109)
@@ -105,7 +119,7 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - GET /api/resource/tasks?task_type=A&status=in_progress&priority=high&page=1&page_size=20
 
-章节来源
+**章节来源**
 - [backend/modules/resource/router.py:646-678](file://backend/modules/resource/router.py#L646-L678)
 - [backend/modules/resource/services/task_service.py:48-146](file://backend/modules/resource/services/task_service.py#L48-L146)
 
@@ -118,8 +132,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - GET /api/resource/tasks/123
 
-章节来源
-- [backend/modules/resource/router.py:681-699](file://backend/modules/resource/router.py#L681-L699)
+**章节来源**
+- [backend/modules/resource/router.py:767-785](file://backend/modules/resource/router.py#L767-L785)
 - [backend/modules/resource/services/task_service.py:149-174](file://backend/modules/resource/services/task_service.py#L149-L174)
 
 ### 新增任务
@@ -151,8 +165,8 @@ R-->>C : {code : 200, message : "获取成功", data}
   - POST /api/resource/tasks
   - 请求体包含上述字段
 
-章节来源
-- [backend/modules/resource/router.py:702-722](file://backend/modules/resource/router.py#L702-L722)
+**章节来源**
+- [backend/modules/resource/router.py:788-808](file://backend/modules/resource/router.py#L788-L808)
 - [backend/modules/resource/services/task_service.py:177-237](file://backend/modules/resource/services/task_service.py#L177-L237)
 - [backend/modules/resource/services/task_service.py:21-45](file://backend/modules/resource/services/task_service.py#L21-L45)
 
@@ -170,8 +184,8 @@ R-->>C : {code : 200, message : "获取成功", data}
   - PUT /api/resource/tasks/123
   - 请求体例如 { "status": "in_progress", "progress": 30.5 }
 
-章节来源
-- [backend/modules/resource/router.py:725-752](file://backend/modules/resource/router.py#L725-L752)
+**章节来源**
+- [backend/modules/resource/router.py:811-838](file://backend/modules/resource/router.py#L811-L838)
 - [backend/modules/resource/services/task_service.py:240-277](file://backend/modules/resource/services/task_service.py#L240-L277)
 
 ### 删除任务
@@ -183,8 +197,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - DELETE /api/resource/tasks/123
 
-章节来源
-- [backend/modules/resource/router.py:755-771](file://backend/modules/resource/router.py#L755-L771)
+**章节来源**
+- [backend/modules/resource/router.py:841-857](file://backend/modules/resource/router.py#L841-L857)
 - [backend/modules/resource/services/task_service.py:280-287](file://backend/modules/resource/services/task_service.py#L280-L287)
 
 ### 任务看板KPI统计
@@ -200,8 +214,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - GET /api/resource/tasks/stats
 
-章节来源
-- [backend/modules/resource/router.py:774-786](file://backend/modules/resource/router.py#L774-L786)
+**章节来源**
+- [backend/modules/resource/router.py:686-698](file://backend/modules/resource/router.py#L686-L698)
 - [backend/modules/resource/services/task_service.py:290-332](file://backend/modules/resource/services/task_service.py#L290-L332)
 
 ### 任务状态分布（饼图）
@@ -211,8 +225,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - GET /api/resource/tasks/status-distribution
 
-章节来源
-- [backend/modules/resource/router.py:789-800](file://backend/modules/resource/router.py#L789-L800)
+**章节来源**
+- [backend/modules/resource/router.py:701-713](file://backend/modules/resource/router.py#L701-L713)
 - [backend/modules/resource/services/task_service.py:335-353](file://backend/modules/resource/services/task_service.py#L335-L353)
 
 ### 任务类型与进度对比（柱状图）
@@ -222,8 +236,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - GET /api/resource/tasks/type-progress
 
-章节来源
-- [backend/modules/resource/router.py:804-816](file://backend/modules/resource/router.py#L804-L816)
+**章节来源**
+- [backend/modules/resource/router.py:716-728](file://backend/modules/resource/router.py#L716-L728)
 - [backend/modules/resource/services/task_service.py:356-395](file://backend/modules/resource/services/task_service.py#L356-L395)
 
 ### 月度任务趋势
@@ -237,31 +251,84 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例
   - GET /api/resource/tasks/monthly-trend?year=2026
 
-章节来源
-- [backend/modules/resource/router.py:819-831](file://backend/modules/resource/router.py#L819-L831)
+**章节来源**
+- [backend/modules/resource/router.py:731-743](file://backend/modules/resource/router.py#L731-L743)
 - [backend/modules/resource/services/task_service.py:412-431](file://backend/modules/resource/services/task_service.py#L412-L431)
 
+### 甘特图排程数据
+- 方法：GET
+- 路径：/api/resource/tasks/gantt
+- 查询参数
+  - start_date: 开始日期
+  - end_date: 结束日期
+  - task_type: 任务类型筛选
+- 响应 data
+  - tasks: 甘特图任务数据
+  - time_range: 时间范围
+  - message: 接口状态信息
+- 示例
+  - GET /api/resource/tasks/gantt?start_date=2026-01-01&end_date=2026-12-31
+
+**章节来源**
+- [backend/modules/resource/router.py:746-764](file://backend/modules/resource/router.py#L746-L764)
+
+### 甘特图排程数据列表
+- 方法：GET
+- 路径：/api/resource/gantt/data
+- 查询参数
+  - page: 页码，默认1
+  - page_size: 每页数量，默认200，最大2000
+  - task_type: 任务类型筛选
+  - status: 状态筛选
+  - priority: 优先级筛选
+  - assembly_site: 装配场地筛选
+  - keyword: 关键词搜索
+  - only_critical: 仅关键路径任务
+  - only_conflict: 仅冲突任务
+  - date_from/date_to: 日期区间筛选
+- 响应 data: 甘特图排程数据列表
+- 示例
+  - GET /api/resource/gantt/data?task_type=A&status=in_progress&page=1&page_size=100
+
+**章节来源**
+- [backend/modules/resource/router.py:1195-1222](file://backend/modules/resource/router.py#L1195-L1222)
+- [backend/modules/resource/services/gantt_service.py:176-200](file://backend/modules/resource/services/gantt_service.py#L176-L200)
+
+### 甘特图KPI统计
+- 方法：GET
+- 路径：/api/resource/gantt/stats
+- 响应 data: 甘特图统计数据，包括KPI指标、分布图和近8周趋势
+- 示例
+  - GET /api/resource/gantt/stats
+
+**章节来源**
+- [backend/modules/resource/router.py:1224-1233](file://backend/modules/resource/router.py#L1224-L1233)
+
 ## 依赖关系分析
-- 路由层依赖服务层：每个任务端点调用 task_service 对应函数
+- 路由层依赖服务层：每个任务端点调用 task_service 对应函数，甘特图端点调用 gantt_service
 - 服务层依赖数据库：通过 query_all/query_one/execute 执行SQL
 - 数据模型：Pydantic 模型用于请求体校验与响应结构约束
 - 外部关联：任务列表查询 JOIN zones/equipment 以补充区域名称与设备名称
 
 ```mermaid
 graph LR
-Router["router.py"] --> Service["task_service.py"]
-Service --> DB["resource_schema.sql (tasks/zones/equipment)"]
+Router["router.py"] --> TaskService["task_service.py"]
+Router --> GanttService["gantt_service.py"]
+TaskService --> DB["resource_schema.sql (tasks/zones/equipment)"]
+GanttService --> GanttDB["resource_schema.sql (gantt_schedules)"]
 Router --> Pydantic["Pydantic 模型"]
 ```
 
-图表来源
+**图表来源**
 - [backend/modules/resource/router.py:646-831](file://backend/modules/resource/router.py#L646-L831)
 - [backend/modules/resource/services/task_service.py:48-432](file://backend/modules/resource/services/task_service.py#L48-L432)
+- [backend/modules/resource/services/gantt_service.py:176-200](file://backend/modules/resource/services/gantt_service.py#L176-L200)
 - [backend/sql/resource_schema.sql:69-109](file://backend/sql/resource_schema.sql#L69-L109)
 
-章节来源
+**章节来源**
 - [backend/modules/resource/router.py:646-831](file://backend/modules/resource/router.py#L646-L831)
 - [backend/modules/resource/services/task_service.py:48-432](file://backend/modules/resource/services/task_service.py#L48-L432)
+- [backend/modules/resource/services/gantt_service.py:176-200](file://backend/modules/resource/services/gantt_service.py#L176-L200)
 - [backend/sql/resource_schema.sql:69-109](file://backend/sql/resource_schema.sql#L69-L109)
 
 ## 性能与扩展性
@@ -275,8 +342,7 @@ Router --> Pydantic["Pydantic 模型"]
 - 可扩展点
   - 可在服务层增加缓存（如Redis）以提升高频统计接口性能
   - 可增加异步任务处理大批量统计或报表导出
-
-[本节为通用指导，不直接分析具体文件]
+  - 甘特图排程支持复杂的时间区间查询和资源冲突检测
 
 ## 故障排查指南
 - 常见错误
@@ -289,14 +355,12 @@ Router --> Pydantic["Pydantic 模型"]
   - 查看后端日志中的 ValueError/HTTPException 堆栈
   - 核对数据库连接与SQL执行是否正常
 
-章节来源
-- [backend/modules/resource/router.py:702-771](file://backend/modules/resource/router.py#L702-L771)
+**章节来源**
+- [backend/modules/resource/router.py:788-857](file://backend/modules/resource/router.py#L788-L857)
 - [backend/modules/resource/services/task_service.py:177-287](file://backend/modules/resource/services/task_service.py#L177-L287)
 
 ## 结论
-本API提供了完整的任务管理能力，涵盖CRUD、筛选、进度计算与多维统计。通过清晰的枚举约束与自动进度计算，既保证了数据一致性，又提升了使用便捷性。建议在生产环境结合监控与日志完善问题定位，并根据业务增长考虑缓存与异步优化。
-
-[本节为总结，不直接分析具体文件]
+本API提供了完整的任务管理能力，涵盖CRUD、筛选、进度计算与多维统计分析。通过新增的状态分布、类型-进度对比、月度趋势和甘特图数据检索接口，大幅增强了任务的可视化分析能力。通过清晰的枚举约束与自动进度计算，既保证了数据一致性，又提升了使用便捷性。建议在生产环境结合监控与日志完善问题定位，并根据业务增长考虑缓存与异步优化。
 
 ## 附录：业务枚举与状态流转
 
@@ -308,7 +372,7 @@ Router --> Pydantic["Pydantic 模型"]
 - 任务状态：pending、in_progress、completed、overdue
 - 数据来源：operation、manual、mes
 
-章节来源
+**章节来源**
 - [backend/modules/resource/services/task_service.py:13-18](file://backend/modules/resource/services/task_service.py#L13-L18)
 - [backend/sql/resource_schema.sql:71-109](file://backend/sql/resource_schema.sql#L71-L109)
 
@@ -319,7 +383,7 @@ Router --> Pydantic["Pydantic 模型"]
 - 逾期：overdue（超过计划结束时间仍未完成）
 - 说明：当前服务层未强制限制状态转换顺序，建议在业务层或前端进行状态机控制，确保流程合规
 
-章节来源
+**章节来源**
 - [backend/modules/resource/services/task_service.py:14](file://backend/modules/resource/services/task_service.py#L14)
 - [backend/sql/resource_schema.sql:82](file://backend/sql/resource_schema.sql#L82)
 
@@ -340,8 +404,8 @@ SetDefault --> End
 Calc --> End
 ```
 
-图表来源
+**图表来源**
 - [backend/modules/resource/services/task_service.py:21-45](file://backend/modules/resource/services/task_service.py#L21-L45)
 
-章节来源
+**章节来源**
 - [backend/modules/resource/services/task_service.py:21-45](file://backend/modules/resource/services/task_service.py#L21-L45)

@@ -1,10 +1,9 @@
 schema_version: 1
 module_path: demo_pages
-title: 试制资源数智化管理系统 Demo 前端页面集
+title: 试制资源数智化系统演示页面集
 scope:
     - demo/
     - static/
 source_files: []
 depends_on: []
-related_to:
-    - path: backend_api
+related_to: []

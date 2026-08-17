@@ -505,9 +505,14 @@ input, select { font-family: inherit; outline: none; }
   grid-template-columns: 1fr 1.4fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
+  align-items: stretch;
 }
-.dashboard-grid-3col .dash-col { display: flex; flex-direction: column; gap: 16px; }
+.dashboard-grid-3col .dash-col { display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
 .dashboard-grid-3col .card { margin-bottom: 0; }
+/* 中列唯一的卡片需拉伸填满整列高度 */
+.dashboard-grid-3col .dash-col > .card:only-child { flex: 1; display: flex; flex-direction: column; }
+.dashboard-grid-3col .dash-col > .card:only-child > .card-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.dashboard-grid-3col .dash-col > .card:only-child > .card-body > .dash-task-list { flex: 1; }
 @media (max-width: 1280px) {
   .dashboard-grid-3col { grid-template-columns: 1fr 1fr; }
   .dashboard-grid-3col .dash-col:last-child { grid-column: 1 / -1; }
@@ -532,8 +537,8 @@ input, select { font-family: inherit; outline: none; }
   font-weight: 600;
 }
 
-/* 进行中任务列表 */
-.dash-task-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; max-height: 540px; overflow-y: auto; padding-right: 4px; }
+/* 进行中任务列表 - 高度与左列总高对齐（设备状态334 + gap16 + 人员状态314 = 664，减去header54+body padding40 = 570） */
+.dash-task-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; max-height: 570px; overflow-y: auto; padding-right: 4px; }
 .dash-task-list::-webkit-scrollbar { width: 6px; }
 .dash-task-list::-webkit-scrollbar-track { background: transparent; }
 .dash-task-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -583,8 +588,12 @@ input, select { font-family: inherit; outline: none; }
   font-size: 12px;
 }
 
-/* 告警列表 */
-.dash-alert-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+/* 告警列表 - 固定高度与设备状态分布卡片对齐（总卡片高度 334px = 头54 + 体内边距40 + 列表240） */
+.dash-alert-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; height: 240px; overflow-y: auto; box-sizing: border-box; }
+.dash-alert-list::-webkit-scrollbar { width: 6px; }
+.dash-alert-list::-webkit-scrollbar-track { background: transparent; }
+.dash-alert-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.dash-alert-list::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 .dash-alert-list .alert-item {
   padding: 10px 12px;
   border: 1px solid var(--border);
@@ -3162,7 +3171,7 @@ textarea.input-field { line-height: 1.6; }
                 <div class="card-title">周度占用率趋势</div>
                 <div class="card-action"><a href="javascript:switchPage('resource-board', { focus: 'utilization' })">查看详情 →</a></div>
               </div>
-              <div class="card-body"><div id="rdUtilChart" style="height:200px;"></div></div>
+              <div class="card-body"><div id="rdUtilChart" style="height:220px;"></div></div>
             </div>
           </div>
         </div>

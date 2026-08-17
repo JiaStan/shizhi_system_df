@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: webui_ref
-title: Web UI 全栈参考实现（NestJS + React/Vite）
+title: WebUI 全栈参考工程（NestJS + React/Vite）
 scope:
     - webui_ref/
 source_files: []

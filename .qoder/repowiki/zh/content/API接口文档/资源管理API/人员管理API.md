@@ -8,6 +8,14 @@
 - [backend/sql/resource_schema.sql](file://backend/sql/resource_schema.sql)
 </cite>
 
+## 更新摘要
+**变更内容**
+- 新增人员位置映射接口 `/api/resource/personnel/map` 用于园区地图覆盖层展示
+- 新增人员统计看板接口 `/api/resource/personnel/stats` 提供KPI统计数据
+- 新增来源分布分析接口 `/api/resource/personnel/source-distribution` 支持装配区与非装配区分组统计
+- 新增人效分析接口 `/api/resource/personnel/efficiency` 提供人员效率分析数据（当前为占位实现）
+- 增强了人员管理的统计分析能力，支持更丰富的可视化展示需求
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -21,7 +29,7 @@
 10. [附录：业务规则与枚举](#附录：业务规则与枚举)
 
 ## 简介
-本模块提供“人员管理”的完整API能力，覆盖人员信息管理、状态跟踪、位置定位、统计分析等场景。支持人员列表查询（按状态、区域、部门筛选）、人员详情获取、人员信息更新、状态快速切换、看板KPI统计、来源分布分析、园区地图覆盖层数据等。适用于试制资源数智化管理系统中的人员调度与可视化展示。
+本模块提供"人员管理"的完整API能力，覆盖人员信息管理、状态跟踪、位置定位、统计分析等场景。支持人员列表查询（按状态、区域、部门筛选）、人员详情获取、人员信息更新、状态快速切换、看板KPI统计、来源分布分析、园区地图覆盖层数据、人效分析等高级功能。适用于试制资源数智化管理系统中的人员调度与可视化展示。
 
 ## 项目结构
 - 路由层：FastAPI Router 定义REST端点，统一返回格式 {code, message, data}
@@ -37,24 +45,24 @@ Service --> DB["数据库<br/>MySQL/MariaDB"]
 DB --> Tables["表: personnel/zones/tasks"]
 ```
 
-图表来源
-- [backend/modules/resource/router.py:333-557](file://backend/modules/resource/router.py#L333-L557)
+**图表来源**
+- [backend/modules/resource/router.py:337-584](file://backend/modules/resource/router.py#L337-L584)
 - [backend/modules/resource/services/personnel_service.py:24-475](file://backend/modules/resource/services/personnel_service.py#L24-L475)
 - [backend/sql/resource_schema.sql:47-109](file://backend/sql/resource_schema.sql#L47-L109)
 
-章节来源
-- [backend/modules/resource/router.py:333-557](file://backend/modules/resource/router.py#L333-L557)
+**章节来源**
+- [backend/modules/resource/router.py:337-584](file://backend/modules/resource/router.py#L337-L584)
 - [backend/modules/resource/services/personnel_service.py:24-475](file://backend/modules/resource/services/personnel_service.py#L24-L475)
 - [backend/sql/resource_schema.sql:47-109](file://backend/sql/resource_schema.sql#L47-L109)
 
 ## 核心组件
 - 路由层：定义 /api/resource/personnel 系列接口，参数校验、异常处理、统一响应封装
-- 服务层：实现人员分页查询、详情、新增、更新、删除、状态切换、看板统计、来源分布、地图数据
+- 服务层：实现人员分页查询、详情、新增、更新、删除、状态切换、看板统计、来源分布、地图数据、人效分析
 - 数据访问：通过数据库工具函数执行SQL，关联 zones、tasks 表进行数据组装
 - 业务规则：装配区判定、有效来源集合、状态枚举校验、工时计算策略
 
-章节来源
-- [backend/modules/resource/router.py:333-557](file://backend/modules/resource/router.py#L333-L557)
+**章节来源**
+- [backend/modules/resource/router.py:337-584](file://backend/modules/resource/router.py#L337-L584)
 - [backend/modules/resource/services/personnel_service.py:12-17](file://backend/modules/resource/services/personnel_service.py#L12-L17)
 - [backend/modules/resource/services/personnel_service.py:286-323](file://backend/modules/resource/services/personnel_service.py#L286-L323)
 
@@ -78,8 +86,8 @@ S-->>R : {total, page, page_size, data}
 R-->>C : {code : 200, message : "获取成功", data}
 ```
 
-图表来源
-- [backend/modules/resource/router.py:356-385](file://backend/modules/resource/router.py#L356-L385)
+**图表来源**
+- [backend/modules/resource/router.py:360-389](file://backend/modules/resource/router.py#L360-L389)
 - [backend/modules/resource/services/personnel_service.py:24-124](file://backend/modules/resource/services/personnel_service.py#L24-L124)
 
 ## 详细接口说明
@@ -114,9 +122,91 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例响应：
   - { code: 200, message: "获取成功", data: { total: 120, page: 1, page_size: 20, data: [...] } }
 
-章节来源
-- [backend/modules/resource/router.py:356-385](file://backend/modules/resource/router.py#L356-L385)
+**章节来源**
+- [backend/modules/resource/router.py:360-389](file://backend/modules/resource/router.py#L360-L389)
 - [backend/modules/resource/services/personnel_service.py:24-124](file://backend/modules/resource/services/personnel_service.py#L24-L124)
+
+### 人员位置映射（新增）
+- 方法：GET
+- 路径：/api/resource/personnel/map
+- 功能：返回各区域人员数量及明细，用于园区地图覆盖层展示
+- 返回字段：
+  - zone_summary: 区域汇总 [{zone_code, zone_name, total_count, working_count, idle_count}]
+  - personnel_positions: 人员明细列表 [{personnel_code, name, avatar_text, department, status, current_zone}]
+- 业务规则：
+  - 仅返回有当前位置的人员数据
+  - 按区域分组统计工作状态
+- 示例请求：
+  - GET /api/resource/personnel/map
+- 示例响应：
+  - { code: 200, message: "获取成功", data: { zone_summary: [...], personnel_positions: [...] } }
+
+**章节来源**
+- [backend/modules/resource/router.py:392-407](file://backend/modules/resource/router.py#L392-L407)
+- [backend/modules/resource/services/personnel_service.py:434-474](file://backend/modules/resource/services/personnel_service.py#L434-L474)
+
+### 人员统计看板（新增）
+- 方法：GET
+- 路径：/api/resource/personnel/stats
+- 功能：返回看板关键指标，支持人员管理驾驶舱展示
+- 返回字段：
+  - total: 总人数
+  - on_duty: 在岗人数（working + idle）
+  - working: 工作中人数
+  - idle: 空闲人数
+  - offline: 离线人数
+  - idle_available: 空闲可调配人数（等于idle）
+  - today_abnormal: 今日异常（简化为offline人数）
+  - status_distribution: 按状态分组统计 [{status, count}]
+  - zone_distribution: 按区域分组统计 [{zone_code, zone_name, count}]
+- 示例请求：
+  - GET /api/resource/personnel/stats
+- 示例响应：
+  - { code: 200, message: "获取成功", data: { total: 120, on_duty: 90, working: 60, idle: 30, offline: 30, ... } }
+
+**章节来源**
+- [backend/modules/resource/router.py:410-424](file://backend/modules/resource/router.py#L410-L424)
+- [backend/modules/resource/services/personnel_service.py:325-379](file://backend/modules/resource/services/personnel_service.py#L325-L379)
+
+### 来源分布分析（新增）
+- 方法：GET
+- 路径：/api/resource/personnel/source-distribution
+- 功能：返回装配区与非装配区的来源分布数据，供饼图与柱状图使用
+- 返回字段：
+  - assembly_source_pie: 装配区来源分布 [{source, count, working_count}]
+  - assembly_source_bar: 装配区来源+平均工时 [{source, personnel_count, avg_hours}]
+  - non_assembly_distribution: 非装配区分布 [{zone, count}]
+- 业务规则：
+  - 装配区：SZA/SZB/SZC/LH
+  - 来源类型：自有/商用车/乘用车/柳汽/中智/外协/内调
+- 示例请求：
+  - GET /api/resource/personnel/source-distribution
+- 示例响应：
+  - { code: 200, message: "获取成功", data: { assembly_source_pie: [...], assembly_source_bar: [...], non_assembly_distribution: [...] } }
+
+**章节来源**
+- [backend/modules/resource/router.py:427-444](file://backend/modules/resource/router.py#L427-L444)
+- [backend/modules/resource/services/personnel_service.py:382-431](file://backend/modules/resource/services/personnel_service.py#L382-L431)
+
+### 人效分析（新增）
+- 方法：GET
+- 路径：/api/resource/personnel/efficiency
+- 功能：人员效率分析数据（当前为占位实现）
+- 查询参数：
+  - start_date: 开始日期（可选）
+  - end_date: 结束日期（可选）
+  - department: 部门筛选（可选）
+- 返回字段：
+  - summary: 总体统计 {total_personnel, total_work_hours, avg_efficiency}
+  - details: 详细数据列表
+  - message: 提示信息
+- 示例请求：
+  - GET /api/resource/personnel/efficiency?start_date=2024-01-01&end_date=2024-01-31
+- 示例响应：
+  - { code: 200, message: "获取成功", data: { summary: {...}, details: [], message: "人效分析接口占位实现" } }
+
+**章节来源**
+- [backend/modules/resource/router.py:447-466](file://backend/modules/resource/router.py#L447-L466)
 
 ### 人员详情获取
 - 方法：GET
@@ -130,8 +220,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例响应：
   - { code: 200, message: "获取成功", data: { ... } }
 
-章节来源
-- [backend/modules/resource/router.py:388-408](file://backend/modules/resource/router.py#L388-L408)
+**章节来源**
+- [backend/modules/resource/router.py:469-489](file://backend/modules/resource/router.py#L469-L489)
 - [backend/modules/resource/services/personnel_service.py:127-167](file://backend/modules/resource/services/personnel_service.py#L127-L167)
 
 ### 新增人员
@@ -152,8 +242,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例响应：
   - { code: 200, message: "创建人员成功", data: { ... } }
 
-章节来源
-- [backend/modules/resource/router.py:411-428](file://backend/modules/resource/router.py#L411-L428)
+**章节来源**
+- [backend/modules/resource/router.py:492-509](file://backend/modules/resource/router.py#L492-L509)
 - [backend/modules/resource/services/personnel_service.py:170-212](file://backend/modules/resource/services/personnel_service.py#L170-L212)
 
 ### 更新人员信息
@@ -173,8 +263,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例响应：
   - { code: 200, message: "更新成功", data: { ... } }
 
-章节来源
-- [backend/modules/resource/router.py:431-455](file://backend/modules/resource/router.py#L431-L455)
+**章节来源**
+- [backend/modules/resource/router.py:512-536](file://backend/modules/resource/router.py#L512-L536)
 - [backend/modules/resource/services/personnel_service.py:215-260](file://backend/modules/resource/services/personnel_service.py#L215-L260)
 
 ### 删除人员
@@ -187,8 +277,8 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例请求：
   - DELETE /api/resource/personnel/P001
 
-章节来源
-- [backend/modules/resource/router.py:458-476](file://backend/modules/resource/router.py#L458-L476)
+**章节来源**
+- [backend/modules/resource/router.py:539-557](file://backend/modules/resource/router.py#L539-L557)
 - [backend/modules/resource/services/personnel_service.py:263-283](file://backend/modules/resource/services/personnel_service.py#L263-L283)
 
 ### 状态快速切换
@@ -207,62 +297,9 @@ R-->>C : {code : 200, message : "获取成功", data}
 - 示例响应：
   - { code: 200, message: "状态更新成功", data: { ... } }
 
-章节来源
-- [backend/modules/resource/router.py:479-502](file://backend/modules/resource/router.py#L479-L502)
+**章节来源**
+- [backend/modules/resource/router.py:560-583](file://backend/modules/resource/router.py#L560-L583)
 - [backend/modules/resource/services/personnel_service.py:286-323](file://backend/modules/resource/services/personnel_service.py#L286-L323)
-
-### 人员看板KPI统计
-- 方法：GET
-- 路径：/api/resource/personnel/stats
-- 功能：返回看板关键指标
-- 返回字段：
-  - total: 总人数
-  - on_duty: 在岗人数（working + idle）
-  - working: 工作中人数
-  - idle: 空闲人数
-  - offline: 离线人数
-  - idle_available: 空闲可调配人数（等于idle）
-  - today_abnormal: 今日异常（简化为offline人数）
-  - status_distribution: 按状态分组统计 [{status, count}]
-  - zone_distribution: 按区域分组统计 [{zone_code, zone_name, count}]
-- 示例响应：
-  - { code: 200, message: "获取成功", data: { total: 120, on_duty: 90, working: 60, idle: 30, offline: 30, ... } }
-
-章节来源
-- [backend/modules/resource/router.py:505-519](file://backend/modules/resource/router.py#L505-L519)
-- [backend/modules/resource/services/personnel_service.py:325-379](file://backend/modules/resource/services/personnel_service.py#L325-L379)
-
-### 来源分布分析
-- 方法：GET
-- 路径：/api/resource/personnel/source-distribution
-- 功能：返回装配区与非装配区的来源分布数据，供饼图与柱状图使用
-- 返回字段：
-  - assembly_source_pie: 装配区来源分布 [{source, count, working_count}]
-  - assembly_source_bar: 装配区来源+平均工时 [{source, personnel_count, avg_hours}]
-  - non_assembly_distribution: 非装配区分布 [{zone, count}]
-- 业务规则：
-  - 装配区：SZA/SZB/SZC/LH
-  - 来源类型：自有/商用车/乘用车/柳汽/中智/外协/内调
-- 示例响应：
-  - { code: 200, message: "获取成功", data: { assembly_source_pie: [...], assembly_source_bar: [...], non_assembly_distribution: [...] } }
-
-章节来源
-- [backend/modules/resource/router.py:522-539](file://backend/modules/resource/router.py#L522-L539)
-- [backend/modules/resource/services/personnel_service.py:382-431](file://backend/modules/resource/services/personnel_service.py#L382-L431)
-
-### 园区地图覆盖层数据
-- 方法：GET
-- 路径：/api/resource/personnel/map
-- 功能：返回各区域人员数量及明细，用于地图覆盖层展示
-- 返回字段：
-  - zone_summary: 区域汇总 [{zone_code, zone_name, total_count, working_count, idle_count}]
-  - personnel_positions: 人员明细列表 [{personnel_code, name, avatar_text, department, status, current_zone}]
-- 示例响应：
-  - { code: 200, message: "获取成功", data: { zone_summary: [...], personnel_positions: [...] } }
-
-章节来源
-- [backend/modules/resource/router.py:542-556](file://backend/modules/resource/router.py#L542-L556)
-- [backend/modules/resource/services/personnel_service.py:434-474](file://backend/modules/resource/services/personnel_service.py#L434-L474)
 
 ## 依赖关系分析
 - 路由层依赖服务层：每个人员相关端点均调用 personnel_service 对应函数
@@ -277,13 +314,13 @@ Service --> DB["database.py (query_all/query_one/execute)"]
 Service --> Tables["personnel/zones/tasks"]
 ```
 
-图表来源
-- [backend/modules/resource/router.py:333-557](file://backend/modules/resource/router.py#L333-L557)
+**图表来源**
+- [backend/modules/resource/router.py:337-584](file://backend/modules/resource/router.py#L337-L584)
 - [backend/modules/resource/services/personnel_service.py:8-9](file://backend/modules/resource/services/personnel_service.py#L8-L9)
 - [backend/sql/resource_schema.sql:47-109](file://backend/sql/resource_schema.sql#L47-L109)
 
-章节来源
-- [backend/modules/resource/router.py:333-557](file://backend/modules/resource/router.py#L333-L557)
+**章节来源**
+- [backend/modules/resource/router.py:337-584](file://backend/modules/resource/router.py#L337-L584)
 - [backend/modules/resource/services/personnel_service.py:8-9](file://backend/modules/resource/services/personnel_service.py#L8-L9)
 - [backend/sql/resource_schema.sql:47-109](file://backend/sql/resource_schema.sql#L47-L109)
 
@@ -292,12 +329,15 @@ Service --> Tables["personnel/zones/tasks"]
 - 索引优化：personnel 表对 status、current_zone、department 建立索引，提升筛选性能
 - 关联查询：LEFT JOIN zones 与 tasks，减少多次往返
 - 简化计算：today_work_hours 基于状态简单估算，降低复杂计算开销
+- 新增功能优化：
+  - 地图数据接口直接查询有位置的人员，减少无效数据
+  - 统计接口使用GROUP BY优化聚合查询
+  - 来源分布接口针对装配区和非装配区分别优化查询
 - 建议：
   - 对高频筛选条件增加复合索引（如 status + current_zone）
   - 对大数据量场景考虑缓存热点统计（如 stats、source-distribution）
   - 对地图数据可考虑增量更新或定时刷新
-
-[本节为通用指导，不直接分析具体文件]
+  - 人效分析接口待完善实际业务逻辑
 
 ## 故障排查指南
 - 400 参数或业务校验失败：
@@ -310,19 +350,19 @@ Service --> Tables["personnel/zones/tasks"]
   - 检查数据库连接与SQL执行
   - 查看日志输出（logger.info/error）
 - 常见问题：
-  - 新增人员时报“工号已存在”：确保 personnel_code 唯一
-  - 更新状态时报“无效的状态值”：确认 status 合法
+  - 新增人员时报"工号已存在"：确保 personnel_code 唯一
+  - 更新状态时报"无效的状态值"：确认 status 合法
   - 列表为空：检查筛选条件是否过严或数据未初始化
+  - 地图数据为空：检查人员是否有有效的 current_zone
+  - 统计结果为0：确认数据库中有人员数据
 
-章节来源
+**章节来源**
 - [backend/modules/resource/services/personnel_service.py:180-188](file://backend/modules/resource/services/personnel_service.py#L180-L188)
 - [backend/modules/resource/services/personnel_service.py:226-239](file://backend/modules/resource/services/personnel_service.py#L226-L239)
 - [backend/modules/resource/services/personnel_service.py:298-304](file://backend/modules/resource/services/personnel_service.py#L298-L304)
 
 ## 结论
-人员管理API提供了完整的CRUD、状态切换、统计分析与地图数据能力，满足试制资源管理中的人员调度与可视化需求。通过清晰的分层架构与严格的业务规则校验，保证了接口的稳定性与可维护性。后续可结合缓存与索引优化进一步提升性能。
-
-[本节为总结，不直接分析具体文件]
+人员管理API提供了完整的CRUD、状态切换、统计分析与地图数据能力，满足试制资源管理中的人员调度与可视化需求。通过清晰的分层架构与严格的业务规则校验，保证了接口的稳定性与可维护性。新增的位置映射、统计看板、来源分布和人效分析功能进一步增强了系统的可视化和管理能力。后续可结合缓存与索引优化进一步提升性能，并完善人效分析接口的实际业务逻辑。
 
 ## 附录：业务规则与枚举
 - 人员状态：
@@ -342,6 +382,6 @@ Service --> Tables["personnel/zones/tasks"]
 - 优先级：
   - high/medium/low
 
-章节来源
+**章节来源**
 - [backend/modules/resource/services/personnel_service.py:12-17](file://backend/modules/resource/services/personnel_service.py#L12-L17)
 - [backend/sql/resource_schema.sql:47-109](file://backend/sql/resource_schema.sql#L47-L109)

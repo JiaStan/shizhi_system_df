@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: spiderV5/6 试制资源数智化管理系统根工程
+title: PBOM 智能装配与试制资源数智化系统根工程
 scope:
     - README.md
     - PBOM智能装配路线图_合订版v2.md
