@@ -112,7 +112,7 @@ def get_task_list(
             t.project_code, t.vehicle_code, t.vehicle_model, t.priority, t.status,
             t.zone_code, t.assembly_site, t.lift_count, t.equipment_code,
             t.planner, t.pm_name, t.cve_name, t.trial_supervisor, t.process_supervisor,
-            t.assembly_supervisor, t.plan_start_time, t.plan_end_time,
+            t.assembly_supervisor, t.debug_supervisor, t.plan_start_time, t.plan_end_time,
             t.plan_work_hours, t.actual_work_hours, t.progress, t.progress_manual_override,
             t.summer_target_count, t.summer_target_date, t.source, t.created_at, t.updated_at,
             z.zone_name, e.equipment_name
@@ -196,11 +196,11 @@ def create_task(data: Dict[str, Any]) -> Dict[str, Any]:
         (task_code, task_name, task_type, trial_type, project_group, project_code,
          vehicle_code, vehicle_model, priority, status, zone_code, assembly_site,
          lift_count, equipment_code, planner, pm_name, cve_name, trial_supervisor,
-         process_supervisor, assembly_supervisor, plan_start_time, plan_end_time,
+         process_supervisor, assembly_supervisor, debug_supervisor, plan_start_time, plan_end_time,
          plan_work_hours, actual_work_hours, progress, progress_manual_override,
          summer_target_count, summer_target_date, source)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     new_id = execute_last_id(insert_sql, (
         data['task_code'], data['task_name'],
@@ -222,6 +222,7 @@ def create_task(data: Dict[str, Any]) -> Dict[str, Any]:
         data.get('trial_supervisor'),
         data.get('process_supervisor'),
         data.get('assembly_supervisor'),
+        data.get('debug_supervisor'),
         data.get('plan_start_time'),
         data.get('plan_end_time'),
         data.get('plan_work_hours'),
@@ -257,6 +258,7 @@ def update_task(task_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
         'vehicle_code', 'vehicle_model', 'priority', 'status', 'zone_code',
         'assembly_site', 'lift_count', 'equipment_code', 'planner', 'pm_name',
         'cve_name', 'trial_supervisor', 'process_supervisor', 'assembly_supervisor',
+        'debug_supervisor',
         'plan_start_time', 'plan_end_time', 'plan_work_hours', 'actual_work_hours',
         'progress', 'progress_manual_override', 'summer_target_count', 'summer_target_date', 'source'
     ]

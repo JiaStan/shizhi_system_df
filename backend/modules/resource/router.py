@@ -4,7 +4,7 @@
 API 前缀: /api/resource
 """
 
-from fastapi import APIRouter, HTTPException, Query, Path
+from fastapi import APIRouter, HTTPException, Query, Path, Request
 from typing import Optional
 from datetime import date
 from pydantic import BaseModel
@@ -606,6 +606,7 @@ class TaskCreateRequest(BaseModel):
     trial_supervisor: Optional[str] = None
     process_supervisor: Optional[str] = None
     assembly_supervisor: Optional[str] = None
+    debug_supervisor: Optional[str] = None
     plan_start_time: Optional[datetime] = None
     plan_end_time: Optional[datetime] = None
     plan_work_hours: Optional[float] = None
@@ -637,6 +638,7 @@ class TaskUpdateRequest(BaseModel):
     trial_supervisor: Optional[str] = None
     process_supervisor: Optional[str] = None
     assembly_supervisor: Optional[str] = None
+    debug_supervisor: Optional[str] = None
     plan_start_time: Optional[datetime] = None
     plan_end_time: Optional[datetime] = None
     plan_work_hours: Optional[float] = None
@@ -651,7 +653,7 @@ class TaskUpdateRequest(BaseModel):
 @router.get("/tasks")
 def list_tasks(
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    page_size: int = Query(20, ge=1, le=1000, description="每页数量"),
     task_type: Optional[str] = Query(None, description="任务类型: A/B/C/sporadic"),
     trial_type: Optional[str] = Query(None, description="试制类别筛选: 骡子车/ET0/ET/软模车/FT0/MT*"),
     status: Optional[str] = Query(None, description="任务状态: pending/in_progress/completed/overdue"),
@@ -1560,5 +1562,94 @@ def get_dashboard_recent():
                 "utilization_trend": utilization,
             }
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== 扫码占用（现场作业） ====================
+
+class ScanStartRequest(BaseModel):
+    task_id: Optional[int] = None
+    task_name: str
+    task_category: Optional[str] = None  # A类/B类/C类/零星
+    personnel_codes: List[str] = []
+
+
+@router.get("/scan/sessions/active")
+def scan_active_sessions():
+    """全部进行中作业会话（园区地图/资源占用同步用）"""
+    try:
+        from backend.modules.resource.services import scan_service
+        return {"code": 200, "message": "获取成功", "data": scan_service.list_active_sessions()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/scan/{equipment_code}/state")
+def scan_state(equipment_code: str = Path(..., description="设备编号")):
+    """扫码页状态：设备信息 + 当前进行中作业（若有）"""
+    from backend.modules.resource.services import scan_service
+    try:
+        return {"code": 200, "message": "获取成功", "data": scan_service.get_scan_state(equipment_code)}
+    except scan_service.ScanError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/scan/{equipment_code}/options")
+def scan_options(equipment_code: str = Path(..., description="设备编号")):
+    """扫码页可选数据：零星任务 / ABC类任务 / 作业人员"""
+    from backend.modules.resource.services import scan_service
+    try:
+        return {"code": 200, "message": "获取成功", "data": scan_service.get_scan_options()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scan/{equipment_code}/start")
+def scan_start(equipment_code: str = Path(..., description="设备编号"), request: ScanStartRequest = ...):
+    """开始作业：写入作业记录，联动设备/人员/任务状态"""
+    from backend.modules.resource.services import scan_service
+    try:
+        data = scan_service.start_work(
+            equipment_code,
+            task_id=request.task_id,
+            task_name=request.task_name,
+            task_category=request.task_category,
+            personnel_codes=request.personnel_codes,
+        )
+        return {"code": 200, "message": "作业已开始", "data": data}
+    except scan_service.ScanError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scan/{equipment_code}/end")
+def scan_end(equipment_code: str = Path(..., description="设备编号")):
+    """结束作业：关闭会话，设备/人员重置为空闲"""
+    from backend.modules.resource.services import scan_service
+    try:
+        data = scan_service.end_work(equipment_code)
+        return {"code": 200, "message": "作业已结束", "data": data}
+    except scan_service.ScanError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/equipment/{equipment_code}/qr")
+def equipment_qr(equipment_code: str = Path(..., description="设备编号"), request: Request = None):
+    """设备扫码占用页二维码 PNG"""
+    from fastapi.responses import Response
+    from backend.modules.resource.services import scan_service
+    try:
+        base_url = str(request.base_url) if request else "http://localhost:8000"
+        png = scan_service.generate_qr_png(equipment_code, base_url)
+        return Response(content=png, media_type="image/png",
+                        headers={"Cache-Control": "no-cache, no-store"})
+    except scan_service.ScanError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

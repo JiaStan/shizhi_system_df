@@ -3258,7 +3258,6 @@ textarea.input-field { line-height: 1.6; }
               <option value="">全部类型</option>
               <option value="lift">举升机</option>
               <option value="island">试制岛</option>
-              <option value="station">工位</option>
             </select>
           </span>
           <span class="filter-label">状态</span>
@@ -3304,14 +3303,7 @@ textarea.input-field { line-height: 1.6; }
         </div>
 
         <!-- 分页 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-          <span style="color:var(--text-secondary);" id="eqPageInfo">共 0 条</span>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" id="eqPrevPage" onclick="changeEquipmentPage(-1)">上一页</button>
-            <span id="eqPageNum" style="padding:8px 12px;">1</span>
-            <button class="btn" id="eqNextPage" onclick="changeEquipmentPage(1)">下一页</button>
-          </div>
-        </div>
+        <div id="eqPagination" class="pagination" style="margin-top:16px;"></div>
       </section>
 
       <!-- ========== 页面: 园区地图 ========== -->
@@ -3811,14 +3803,7 @@ textarea.input-field { line-height: 1.6; }
         <div id="pbCardView" style="display:none;margin-top:16px;"></div>
 
         <!-- 分页 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-          <span style="color:var(--text-secondary);" id="pbPageInfo">共 0 条</span>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" id="pbPrevPage" onclick="pbChangePage(-1)">上一页</button>
-            <span id="pbPageNum" style="padding:8px 12px;">1</span>
-            <button class="btn" id="pbNextPage" onclick="pbChangePage(1)">下一页</button>
-          </div>
-        </div>
+        <div id="pbPagination" class="pagination" style="margin-top:16px;"></div>
       </section>
 
       <!-- ========== 页面: 甘特排程 ========== -->
@@ -3974,9 +3959,10 @@ textarea.input-field { line-height: 1.6; }
         /* 甘特图全屏模式 */
         .gs-fullscreen { position:fixed; inset:0; z-index:2000; background:#f1f5f9; display:flex; flex-direction:column; padding:10px 14px; }
         .gs-fs-bar { display:flex; justify-content:space-between; align-items:center; padding:0 2px 10px; }
-        #gsFsBody { flex:1; min-height:0; position:relative; background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        #gsFsBody { flex:1; min-height:0; position:relative; background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; }
         .g-wrap.gs-fs { height:100% !important; min-height:0; }
-        #gsFsBody > #gsGanttFloat { height:100%; }
+        #gsFsBody > #gsGanttFloat { flex:1; min-height:0; height:auto; }
+        #gsFsBody > #gsTaskLibCard { flex:none; }
         /* 甘特图右上角悬浮按钮（全屏） */
         .gs-float-btns { position:absolute; top:8px; right:14px; z-index:12; display:flex; gap:8px; align-items:center; }
         .gs-float-btn { width:28px; height:28px; border-radius:8px; border:1px solid #e2e8f0; background:rgba(255,255,255,.94); box-shadow:0 2px 6px rgba(15,23,42,.14); cursor:pointer; display:flex; align-items:center; justify-content:center; color:#475569; font-size:14px; line-height:1; padding:0; transition:border-color .15s, color .15s, background .15s; }
@@ -4091,12 +4077,28 @@ textarea.input-field { line-height: 1.6; }
               <button class="btn btn-sm" onclick="gs_nextPeriod()">下一周 &gt;</button>
             </div>
           </div>
-          <div class="card" style="margin-bottom:12px;padding:12px 16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="card" id="gsTaskLibCard" style="margin-bottom:12px;padding:12px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap;">
               <div style="font-size:13px;font-weight:600;color:#334155;">📦 待排程任务库 <span style="font-size:11px;color:#94a3b8;font-weight:400;">（拖拽任务到下方甘特图日期列即可创建排程）</span></div>
-              <button class="btn btn-sm" onclick="gs_refreshTaskLibrary()">刷新</button>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <div class="search-box">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-line="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input class="input-field" id="gsLibSearch" placeholder="搜索项目名称/任务/车号" style="min-width:180px;">
+                </div>
+                <span class="select-wrap">
+                  <select id="gsLibType">
+                    <option value="">全部类别</option>
+                    <option value="A">A类</option>
+                    <option value="B">B类</option>
+                    <option value="C">C类</option>
+                    <option value="sporadic">零星</option>
+                  </select>
+                </span>
+                <span id="gsLibCount" style="font-size:11px;color:#94a3b8;white-space:nowrap;"></span>
+                <button class="btn btn-sm" onclick="gs_refreshTaskLibrary()">刷新</button>
+              </div>
             </div>
-            <div id="gsTaskLibrary" style="display:flex;gap:8px;flex-wrap:wrap;min-height:48px;"></div>
+            <div id="gsTaskLibrary" style="display:flex;gap:8px;flex-wrap:wrap;min-height:48px;max-height:168px;overflow-y:auto;padding-right:4px;"></div>
           </div>
           <div class="card" style="padding:0;position:relative;">
             <div id="gsGanttFloat" style="position:relative;">
@@ -4410,14 +4412,7 @@ textarea.input-field { line-height: 1.6; }
         </div>
 
         <!-- 分页 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-          <span style="color:var(--text-secondary);" id="acPageInfo">共 0 条</span>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" id="acPrevPage" onclick="acChangePage(-1)">上一页</button>
-            <span id="acPageNum" style="padding:8px 12px;">1</span>
-            <button class="btn" id="acNextPage" onclick="acChangePage(1)">下一页</button>
-          </div>
-        </div>
+        <div id="acPagination" class="pagination" style="margin-top:16px;"></div>
       </section>
 
       <!-- ========== 页面: 任务管理 ========== -->
@@ -4495,7 +4490,7 @@ textarea.input-field { line-height: 1.6; }
 
         <!-- 筛选栏 -->
         <div class="filter-bar" style="margin-top:20px;">
-          <input type="text" id="tmSearchInput" class="input-field" placeholder="搜索任务编号/名称/项目/车号..." oninput="applyTaskFilter()" style="min-width:220px;" />
+          <input type="text" id="tmSearchInput" class="input-field" placeholder="搜索项目编号/名称/车号..." oninput="applyTaskFilter()" style="min-width:220px;" />
           <span class="filter-label">任务类型</span>
           <span class="select-wrap">
             <select id="tmTypeFilter" onchange="applyTaskFilter()">
@@ -4590,18 +4585,18 @@ textarea.input-field { line-height: 1.6; }
               <table id="taskTable" style="width:100%;border-collapse:separate;border-spacing:0;font-family:'HarmonyOS Sans SC','HarmonyOS Sans',-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;">
                 <thead>
                   <tr>
-                    <th style="width:52px;text-align:center;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">序号</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">任务编号</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">任务名称</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">A/B/C类</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">试制</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">项目群/项目</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">装配场地</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">负责人/主管</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">优先级</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">状态</th>
-                    <th style="padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">进度</th>
-                    <th style="width:140px;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">操作</th>
+                    <th style="width:52px;text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">序号</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">项目编号</th>
+                    <th style="white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">任务名称</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">A/B/C类</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">试制</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">装配场地</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">工艺主管</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">装配主管</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">优先级</th>
+                    <th style="text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">状态</th>
+                    <th style="white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">进度</th>
+                    <th style="width:140px;text-align:center;white-space:nowrap;padding:12px 16px;background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">操作</th>
                   </tr>
                 </thead>
                 <tbody id="taskTableBody">
@@ -4613,14 +4608,7 @@ textarea.input-field { line-height: 1.6; }
         </div>
 
         <!-- 分页 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-          <span style="color:var(--text-secondary);" id="tmPageInfo">共 0 条</span>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" id="tmPrevPage" onclick="tmChangePage(-1)">上一页</button>
-            <span id="tmPageNum" style="padding:8px 12px;">1</span>
-            <button class="btn" id="tmNextPage" onclick="tmChangePage(1)">下一页</button>
-          </div>
-        </div>
+        <div id="tmPagination" class="pagination" style="margin-top:16px;"></div>
       </section>
 
     </main>
@@ -8114,6 +8102,7 @@ async function loadZoneOptions() {
     if (!res._error) {
       const select = document.getElementById('eqZoneFilter');
       if (select && res.data) {
+        window._eqZonesCache = res.data;
         res.data.forEach(zone => {
           const opt = document.createElement('option');
           opt.value = zone.zone_code;
@@ -8125,6 +8114,11 @@ async function loadZoneOptions() {
   } catch (e) {
     console.warn('加载区域列表失败，使用默认数据');
   }
+}
+
+async function ensureEqZones() {
+  if (!window._eqZonesCache) await loadZoneOptions();
+  return window._eqZonesCache || [];
 }
 
 async function loadEquipmentStats() {
@@ -8217,6 +8211,7 @@ function renderEquipmentTable(data) {
       <td style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(eq.current_operator || '-')}</td>
       <td style="padding:12px 16px;color:var(--text-tertiary);font-size:12px;">${escapeHtml(eq.last_update_time || '-')}</td>
       <td style="padding:12px 16px;">
+        <button onclick="showEquipmentQrModal('${eq.equipment_code}')" style="color:var(--blue-600);margin-right:8px;">二维码</button>
         <button onclick="viewEquipmentDetail('${eq.equipment_code}')" style="color:var(--blue-600);margin-right:8px;">详情</button>
         <button onclick="editEquipment('${eq.equipment_code}')" style="color:var(--blue-600);margin-right:8px;">编辑</button>
         <button onclick="deleteEquipment('${eq.equipment_code}')" style="color:var(--danger);">删除</button>
@@ -8242,14 +8237,12 @@ function renderEquipmentTableMock() {
 }
 
 function updatePagination() {
-  const totalPages = Math.ceil(eqTotalCount / eqPageSize) || 1;
-  document.getElementById('eqPageInfo').textContent = `共 ${eqTotalCount} 条`;
-  document.getElementById('eqPageNum').textContent = `${eqCurrentPage} / ${totalPages}`;
+  document.getElementById('eqPagination').innerHTML = buildPagination(eqCurrentPage, eqPageSize, eqTotalCount, 'eqGoPage');
 }
 
-function changeEquipmentPage(delta) {
+function eqGoPage(p) {
   const totalPages = Math.ceil(eqTotalCount / eqPageSize) || 1;
-  eqCurrentPage = Math.max(1, Math.min(totalPages, eqCurrentPage + delta));
+  eqCurrentPage = Math.max(1, Math.min(totalPages, p));
   loadEquipmentList();
 }
 
@@ -8675,7 +8668,7 @@ let eqEditingCode = null;
 
 function openEquipmentDialog() {
   eqEditingCode = null;
-  showEquipmentFormModal(null);
+  ensureEqZones().then(() => showEquipmentFormModal(null));
 }
 
 function editEquipment(code) {
@@ -8693,12 +8686,18 @@ function editEquipment(code) {
       current_operator: row.dataset.operator
     };
   }
-  showEquipmentFormModal(eqData);
+  ensureEqZones().then(() => showEquipmentFormModal(eqData));
 }
 
 function showEquipmentFormModal(eqData) {
   const isEdit = !!eqData;
   const title = isEdit ? '编辑设备' : '新增设备';
+
+  // 场地选项与园区地图同源（zones 表）
+  const zones = window._eqZonesCache || [];
+  const zoneOptions = zones.map(z =>
+    `<option value="${escapeHtml(z.zone_code)}" ${eqData?.zone_code === z.zone_code ? 'selected' : ''}>${escapeHtml(z.zone_name)}（${escapeHtml(z.zone_code)}）</option>`
+  ).join('');
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
@@ -8724,37 +8723,20 @@ function showEquipmentFormModal(eqData) {
               <select id="eqFormType">
                 <option value="lift" ${eqData?.equipment_type === 'lift' ? 'selected' : ''}>举升机</option>
                 <option value="island" ${eqData?.equipment_type === 'island' ? 'selected' : ''}>试制岛</option>
-                <option value="station" ${eqData?.equipment_type === 'station' ? 'selected' : ''}>工位</option>
               </select>
             </span>
           </div>
           <div class="form-group">
-            <label>所属区域</label>
+            <label>场地 <span class="required">*</span></label>
             <span class="select-wrap">
               <select id="eqFormZone">
-                <option value="">请选择区域</option>
-                <option value="ZONE-A" ${eqData?.zone_code === 'ZONE-A' ? 'selected' : ''}>A区 - 外委畅行车间</option>
-                <option value="ZONE-B" ${eqData?.zone_code === 'ZONE-B' ? 'selected' : ''}>B区 - 外委交自行车间</option>
-                <option value="ZONE-C" ${eqData?.zone_code === 'ZONE-C' ? 'selected' : ''}>C区 - 内部调试车间</option>
+                <option value="">请选择场地</option>
+                ${zoneOptions}
               </select>
             </span>
-          </div>
-          <div class="form-group">
-            <label>状态</label>
-            <span class="select-wrap">
-              <select id="eqFormStatus">
-                <option value="idle" ${(!eqData || eqData?.status === 'idle') ? 'selected' : ''}>空闲</option>
-                <option value="busy" ${eqData?.status === 'busy' ? 'selected' : ''}>占用</option>
-                <option value="error" ${eqData?.status === 'error' ? 'selected' : ''}>故障</option>
-                <option value="maintenance" ${eqData?.status === 'maintenance' ? 'selected' : ''}>维护中</option>
-              </select>
-            </span>
-          </div>
-          <div class="form-group">
-            <label>当前操作员</label>
-            <input type="text" id="eqFormOperator" class="input-field" placeholder="操作员姓名" value="${escapeHtml(eqData?.current_operator || '')}" />
           </div>
         </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-tertiary);">设备状态与作业人员由现场扫码占用自动更新，无需手工填写。</div>
       </div>
       <div class="modal-footer">
         <button class="btn" onclick="this.closest('.modal-overlay').remove()">取消</button>
@@ -8781,21 +8763,21 @@ function showEquipmentFormModal(eqData) {
       const name = overlay.querySelector('#eqFormName').value.trim();
       const type = overlay.querySelector('#eqFormType').value;
       const zone = overlay.querySelector('#eqFormZone').value;
-      const status = overlay.querySelector('#eqFormStatus').value;
-      const operator = overlay.querySelector('#eqFormOperator').value.trim();
-      
+
       if (!code || !name) {
         alert('请填写设备编号和设备名称');
         return;
       }
-      
+      if (!zone) {
+        alert('请选择场地');
+        return;
+      }
+
       const payload = {
         equipment_code: code,
         equipment_name: name,
         equipment_type: type,
-        zone_code: zone,
-        status: status,
-        current_operator: operator || null
+        zone_code: zone
       };
       
       const apiUrl = isEdit ? '/resource/equipment/' + eqEditingCode : '/resource/equipment';
@@ -8869,6 +8851,60 @@ function deleteEquipment(code) {
   }, 50);
   
   document.body.appendChild(overlay);
+}
+
+/* =========================
+ * 设备扫码占用二维码弹窗
+ * ========================= */
+function showEquipmentQrModal(code) {
+  const link = location.origin + '/scan-occupy.html?eq=' + encodeURIComponent(code);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">扫码占用 · ${escapeHtml(code)}</div>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:20px;">
+        <img src="/api/resource/equipment/${encodeURIComponent(code)}/qr" alt="${escapeHtml(code)} 扫码占用二维码" style="width:220px;height:220px;border:1px solid var(--border);border-radius:8px;background:#fff;" />
+        <div style="margin-top:12px;font-size:12px;color:var(--text-tertiary);">现场人员扫码进入该设备的占用界面</div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;background:var(--surface-2, #f5f7fa);border:1px solid var(--border);border-radius:6px;padding:8px 10px;">
+          <span style="flex:1;text-align:left;font-size:12px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(link)}</span>
+          <button class="btn btn-sm" id="eqQrCopyBtn">复制链接</button>
+        </div>
+        <div style="margin-top:10px;"><a href="${escapeHtml(link)}" target="_blank" style="font-size:12px;color:var(--blue-600);">在浏览器中打开扫码页 →</a></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+      </div>
+    </div>
+  `;
+  overlay.onclick = function() { overlay.remove(); };
+  document.body.appendChild(overlay);
+
+  setTimeout(() => {
+    const btn = overlay.querySelector('#eqQrCopyBtn');
+    if (btn) btn.addEventListener('click', function() {
+      const done = () => { btn.textContent = '已复制'; setTimeout(() => { btn.textContent = '复制链接'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done).catch(() => _fallbackCopy(link, done));
+      } else {
+        _fallbackCopy(link, done);
+      }
+    });
+  }, 30);
+}
+
+function _fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done && done(); } catch (e) { alert('复制失败，请手动复制'); }
+  document.body.removeChild(ta);
 }
 
 /* =========================
@@ -9630,15 +9666,11 @@ function renderPersonnelCards(rows) {
 function updatePbPagination(total) {
   const totalPages = Math.max(1, Math.ceil(total / pbPageSize));
   if (pbPage > totalPages) pbPage = totalPages;
-  document.getElementById('pbPageInfo').textContent = `共 ${total} 条`;
-  document.getElementById('pbPageNum').textContent = pbPage;
-  document.getElementById('pbPrevPage').disabled = pbPage <= 1;
-  document.getElementById('pbNextPage').disabled = pbPage >= totalPages;
+  document.getElementById('pbPagination').innerHTML = buildPagination(pbPage, pbPageSize, total, 'pbGoPage');
 }
 
-function pbChangePage(delta) {
-  pbPage += delta;
-  if (pbPage < 1) pbPage = 1;
+function pbGoPage(p) {
+  pbPage = Math.max(1, p);
   loadPersonnelList();
 }
 
@@ -10132,9 +10164,8 @@ function resetTaskFilters() {
   loadTaskList();
 }
 
-function tmChangePage(delta) {
-  tmPage += delta;
-  if (tmPage < 1) tmPage = 1;
+function tmGoPage(p) {
+  tmPage = Math.max(1, p);
   loadTaskList();
 }
 
@@ -10190,10 +10221,7 @@ function renderTaskTable(rows, total) {
   const totalPages = Math.max(1, Math.ceil(total / tmPageSize));
   if (tmPage > totalPages) tmPage = totalPages;
 
-  document.getElementById('tmPageInfo').textContent = `共 ${total} 条，第 ${tmPage}/${totalPages} 页`;
-  document.getElementById('tmPageNum').textContent = tmPage;
-  document.getElementById('tmPrevPage').disabled = tmPage <= 1;
-  document.getElementById('tmNextPage').disabled = tmPage >= totalPages;
+  document.getElementById('tmPagination').innerHTML = buildPagination(tmPage, tmPageSize, total, 'tmGoPage');
 
   if (!rows || rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-tertiary);">暂无任务数据</td></tr>`;
@@ -10208,41 +10236,34 @@ function renderTaskTable(rows, total) {
     const progress = +(r.progress || 0).toFixed(0);
     const progressColor = r.status === 'completed' ? '#10b981' : (progress > 60 ? '#3b82f6' : '#f59e0b');
     const trialLabel = r.trial_type ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(99,102,241,0.1);color:#6366f1;">${escapeHtml(r.trial_type)}</span>` : '—';
-    const projGroupLine = r.project_group ? `<div style="font-size:11px;color:var(--text-secondary);">${escapeHtml(r.project_group)}</div>` : '';
-    const projLine = r.project_code ? `<div style="font-size:12px;">${escapeHtml(r.project_code)}</div>` : '';
+    // 项目群作为备注附在任务名称下方
+    const projGroupNote = r.project_group ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">项目群：${escapeHtml(r.project_group)}</div>` : '';
     const asSite = r.assembly_site ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(14,165,233,0.12);color:#0ea5e9;">${escapeHtml(r.assembly_site)}</span>` : '—';
     const asLift = r.lift_count ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">举升机 ${r.lift_count} 台</div>` : '';
-    const pmLine = r.pm_name ? `<div style="font-size:12px;">PM：${escapeHtml(r.pm_name)}</div>` : '';
-    const supervisorLine = r.trial_supervisor || r.process_supervisor ? `<div style="font-size:11px;color:var(--text-secondary);">主管：${escapeHtml(r.trial_supervisor || r.process_supervisor || '')}</div>` : '';
     const zoneLabel = r.zone_name || (TASK_ZONES.find(z => z[0] === r.zone_code) || [])[1] || r.zone_code || '';
 
     return `<tr style="transition:background 0.15s;">
       <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-secondary);vertical-align:middle;">${startIdx + i}</td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;font-family:'HarmonyOS Sans SC',monospace;">${escapeHtml(r.task_code)}</td>
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;font-family:'HarmonyOS Sans SC',monospace;">${escapeHtml(r.project_code || '—')}</td>
       <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">
         <div style="font-weight:500;">${escapeHtml(r.task_name)}</div>
+        ${projGroupNote}
         ${r.plan_start_time ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">计划：${escapeHtml(String(r.plan_start_time).slice(0,16).replace('T',' '))}</div>` : ''}
       </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
         <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${typeMeta.color}1a;color:${typeMeta.color};">${typeMeta.text}</span>
       </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">${trialLabel}</td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">
-        ${projGroupLine}
-        ${projLine}
-      </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">${trialLabel}</td>
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
         ${asSite}
         ${asLift}
       </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">
-        ${pmLine}
-        ${supervisorLine}
-      </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">${escapeHtml(r.process_supervisor || '—')}</td>
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;line-height:1.5;">${escapeHtml(r.assembly_supervisor || '—')}</td>
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
         <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${priorityMeta.color}1a;color:${priorityMeta.color};">${priorityMeta.text}</span>
       </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+      <td style="text-align:center;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
         <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${statusMeta.color}1a;color:${statusMeta.color};">${statusMeta.text}</span>
       </td>
       <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
@@ -10254,7 +10275,7 @@ function renderTaskTable(rows, total) {
         </div>
         ${(r.plan_work_hours != null || r.actual_work_hours != null) ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;font-family:'HarmonyOS Sans SC',monospace;">${r.actual_work_hours != null ? (+r.actual_work_hours).toFixed(1) : '0'}/${r.plan_work_hours != null ? (+r.plan_work_hours).toFixed(1) : '?'} h</div>` : ''}
       </td>
-      <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
+      <td style="text-align:center;white-space:nowrap;padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;line-height:1.5;">
         <button class="btn btn-sm" onclick="viewTaskDetail(${r.id})">详情</button>
         <button class="btn btn-sm" onclick="editTask(${r.id})">编辑</button>
       </td>
@@ -10304,7 +10325,7 @@ async function viewTaskDetail(id) {
             <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:${statusMeta.color}1a;color:${statusMeta.color};">${statusMeta.text}</span>
             <span style="display:inline-block;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:500;background:${priorityMeta.color}1a;color:${priorityMeta.color};">优先级：${priorityMeta.text}</span>
           </div>
-          <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);font-family:'HarmonyOS Sans SC',monospace;">任务编号：${escapeHtml(data.task_code || '-')}</div>
+          <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);font-family:'HarmonyOS Sans SC',monospace;">项目编号：${escapeHtml(data.project_code || '-')}</div>
           ${progress >= 0 ? `
           <div style="margin-top:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -10329,7 +10350,7 @@ async function viewTaskDetail(id) {
           <div class="detail-row"><div class="detail-label">试制主管</div><div class="detail-value">${escapeHtml(data.trial_supervisor) || '—'}</div></div>
           <div class="detail-row"><div class="detail-label">工艺主管</div><div class="detail-value">${escapeHtml(data.process_supervisor) || '—'}</div></div>
           <div class="detail-row"><div class="detail-label">装配主管</div><div class="detail-value">${escapeHtml(data.assembly_supervisor) || '—'}</div></div>
-          <div class="detail-row"><div class="detail-label">计划员（负责人）</div><div class="detail-value">${escapeHtml(data.planner) || '—'}</div></div>
+          <div class="detail-row"><div class="detail-label">下线调试主管</div><div class="detail-value">${escapeHtml(data.debug_supervisor) || '—'}</div></div>
           <div class="detail-row"><div class="detail-label">车号 / 车型</div><div class="detail-value">${escapeHtml(data.vehicle_code) || '—'} ${data.vehicle_model ? '(' + escapeHtml(data.vehicle_model) + ')' : ''}</div></div>
           <div class="detail-row"><div class="detail-label">夏标车数量</div><div class="detail-value">${data.summer_target_count != null ? data.summer_target_count + ' 台' : '—'}</div></div>
           <div class="detail-row"><div class="detail-label">夏标车交付</div><div class="detail-value">${escapeHtml(String(data.summer_target_date || '-').slice(0,10))}</div></div>
@@ -10377,8 +10398,8 @@ function showTaskFormModal(initData) {
       <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
           <div class="form-group">
-            <label>任务编号 ${!isEdit ? '<span class="required">*</span>' : ''}</label>
-            <input type="text" id="tfCode" class="input-field" value="${escapeHtml(data.task_code || '')}" ${isEdit ? 'readonly style="background:var(--bg-hover);cursor:not-allowed;"' : ''} placeholder="如：T-A2026-001"/>
+            <label>项目编号</label>
+            <input type="text" id="tfProject" class="input-field" value="${escapeHtml(data.project_code || '')}" placeholder="如：K1224V087/Y12240001"/>
           </div>
           <div class="form-group">
             <label>任务名称 <span class="required">*</span></label>
@@ -10460,10 +10481,6 @@ function showTaskFormModal(initData) {
             <input type="number" step="1" min="0" id="tfLiftCount" class="input-field" value="${data.lift_count != null ? data.lift_count : ''}" placeholder="如：2"/>
           </div>
           <div class="form-group">
-            <label>项目编号</label>
-            <input type="text" id="tfProject" class="input-field" value="${escapeHtml(data.project_code || '')}" placeholder="如：S33/DH-3/S595b"/>
-          </div>
-          <div class="form-group">
             <label>车号 / 车型</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
               <input type="text" id="tfVehicleCode" class="input-field" value="${escapeHtml(data.vehicle_code || '')}" placeholder="车号"/>
@@ -10491,8 +10508,11 @@ function showTaskFormModal(initData) {
             <input type="text" id="tfAssemblySupervisor" class="input-field" value="${escapeHtml(data.assembly_supervisor || '')}" placeholder="装配主管"/>
           </div>
           <div class="form-group">
-            <label>计划员（负责人）</label>
-            <input type="text" id="tfPlanner" class="input-field" value="${escapeHtml(data.planner || '')}" placeholder="负责人姓名"/>
+            <label>下线调试主管</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <input type="text" id="tfDebugSup1" class="input-field" value="${escapeHtml((data.debug_supervisor || '').split('/')[0] || '')}" placeholder="调试主管1"/>
+              <input type="text" id="tfDebugSup2" class="input-field" value="${escapeHtml((data.debug_supervisor || '').split('/')[1] || '')}" placeholder="调试主管2"/>
+            </div>
           </div>
           <div class="form-group">
             <label>标车类型</label>
@@ -10590,7 +10610,6 @@ function showTaskFormModal(initData) {
 
   const submit = overlay.querySelector('#tfSubmitBtn');
   submit.addEventListener('click', async () => {
-    const code = document.getElementById('tfCode').value.trim();
     const name = document.getElementById('tfName').value.trim();
     const task_type = document.getElementById('tfType').value;
     const trial_type = document.getElementById('tfTrialType').value || null;
@@ -10607,7 +10626,10 @@ function showTaskFormModal(initData) {
     const trial_supervisor = document.getElementById('tfTrialSupervisor').value.trim() || null;
     const process_supervisor = document.getElementById('tfProcessSupervisor').value.trim() || null;
     const assembly_supervisor = document.getElementById('tfAssemblySupervisor').value.trim() || null;
-    const planner = document.getElementById('tfPlanner').value.trim() || null;
+    // 下线调试主管：两个输入框拼接为 "张三/李四" 格式
+    const debug_sup1 = document.getElementById('tfDebugSup1').value.trim();
+    const debug_sup2 = document.getElementById('tfDebugSup2').value.trim();
+    const debug_supervisor = [debug_sup1, debug_sup2].filter(Boolean).join('/') || null;
     const target_type = document.getElementById('tfTargetType').value;
     const target_date = document.getElementById('tfTargetDate').value || null;
     const plan_start_time = document.getElementById('tfPlanStart').value || null;
@@ -10617,16 +10639,20 @@ function showTaskFormModal(initData) {
     const progress_manual_override = document.getElementById('tfManualOverride').checked ? 1 : 0;
     const progress = parseFloat(document.getElementById('tfProgress').value) || 0;
 
-    if (!code || !name) { alert('请填写任务编号和名称'); return; }
+    if (!name) { alert('请填写任务名称'); return; }
     if (!task_type) { alert('请选择任务类型'); return; }
 
     const payload = {
-      task_code: code, task_name: name, task_type, trial_type, project_group,
+      task_name: name, task_type, trial_type, project_group,
       priority, status, assembly_site,
       project_code, vehicle_code, vehicle_model,
       pm_name, cve_name, trial_supervisor, process_supervisor, assembly_supervisor,
-      planner, progress, progress_manual_override
+      debug_supervisor, progress, progress_manual_override
     };
+    if (!isEdit) {
+      // 后端要求 task_code 唯一，前端自动生成（不再让用户填写）
+      payload.task_code = 'T-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(Math.random() * 1000);
+    }
     if (plan_start_time) payload.plan_start_time = plan_start_time.replace('T', ' ') + ':00';
     if (plan_end_time) payload.plan_end_time = plan_end_time.replace('T', ' ') + ':00';
     if (plan_work_hours_raw !== '') payload.plan_work_hours = parseFloat(plan_work_hours_raw);
@@ -11052,9 +11078,8 @@ function resetAlertFilters() {
   acPage = 1;
   loadAlertList();
 }
-function acChangePage(delta) {
-  acPage += delta;
-  if (acPage < 1) acPage = 1;
+function acGoPage(p) {
+  acPage = Math.max(1, p);
   loadAlertList();
 }
 async function loadAlertList() {
@@ -11117,10 +11142,7 @@ function renderAlertTable(rows, total) {
   const tbody = document.getElementById('alertTableBody');
   const totalPages = Math.max(1, Math.ceil(total / acPageSize));
   if (acPage > totalPages) acPage = totalPages;
-  document.getElementById('acPageInfo').textContent = `共 ${total} 条，第 ${acPage}/${totalPages} 页`;
-  document.getElementById('acPageNum').textContent = acPage;
-  document.getElementById('acPrevPage').disabled = acPage <= 1;
-  document.getElementById('acNextPage').disabled = acPage >= totalPages;
+  document.getElementById('acPagination').innerHTML = buildPagination(acPage, acPageSize, total, 'acGoPage');
 
   if (!rows || rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-tertiary);">暂无预警数据</td></tr>`;
@@ -11730,7 +11752,8 @@ const gState = {
   showCols: { type:true, site:true, status:true },
   view: { v0: -1, v1: -1 },
   stats: { total:0, progress:0, overdue:0, weekStart:0, conflict:0 },
-  dragLocked: {}
+  dragLocked: {},
+  lib: { search:'', type:'', page:1, filtered:[] }
 };
 
 function gs_dateToString(d) {
@@ -12187,7 +12210,7 @@ async function gs_loadAll() {
   // 1) 任务库：直接取自任务管理
   let tasks = null;
   try {
-    const tRes = await apiGet('/resource/tasks?page=1&page_size=100');
+    const tRes = await apiGet('/resource/tasks?page=1&page_size=1000');
     if (tRes && tRes.code === 200 && tRes.data && Array.isArray(tRes.data.data) && tRes.data.data.length) {
       tasks = tRes.data.data;
       gState.apiConnected = true;
@@ -12295,21 +12318,36 @@ function gs_toggleFullscreen() {
   const body = document.getElementById('gsFsBody');
   const float = document.getElementById('gsGanttFloat');
   const wrap = document.getElementById('gsGanttWrap');
+  const libCard = document.getElementById('gsTaskLibCard');
   if (!fs || !body || !float || !wrap) return;
   if (!float._gsOrigParent) {
     float._gsOrigParent = float.parentNode;
     float._gsOrigNext = float.nextSibling;
+  }
+  if (libCard && !libCard._gsOrigParent) {
+    libCard._gsOrigParent = libCard.parentNode;
+    libCard._gsOrigNext = libCard.nextSibling;
   }
   const btnFs = document.getElementById('gsBtnFullscreen');
   const inFs = fs.style.display !== 'none';
   if (inFs) {
     if (float._gsOrigNext) float._gsOrigParent.insertBefore(float, float._gsOrigNext);
     else float._gsOrigParent.appendChild(float);
+    if (libCard) {
+      libCard.setAttribute('style', libCard._gsOrigStyle || '');
+      if (libCard._gsOrigNext) libCard._gsOrigParent.insertBefore(libCard, libCard._gsOrigNext);
+      else libCard._gsOrigParent.appendChild(libCard);
+    }
     wrap.classList.remove('gs-fs');
     fs.style.display = 'none';
     if (btnFs) btnFs.title = '全屏';
   } else {
     const sl = wrap.scrollLeft;
+    if (libCard) {
+      libCard._gsOrigStyle = libCard.getAttribute('style') || '';
+      libCard.style.cssText = 'margin:0;border:none;border-bottom:1px solid #e2e8f0;border-radius:0;box-shadow:none;padding:10px 14px;flex:none;background:#fff;';
+      body.appendChild(libCard);
+    }
     body.appendChild(float);
     wrap.classList.add('gs-fs');
     fs.style.display = 'flex';
@@ -12349,6 +12387,10 @@ function gs_bindFilterListeners() {
     };
     el.addEventListener(evt, handler);
   });
+  const libSearch = document.getElementById('gsLibSearch');
+  if (libSearch && !libSearch._gsBound) { libSearch._gsBound = true; libSearch.addEventListener('input', () => { gState.lib.search = libSearch.value; gs_refreshTaskLibrary(); }); }
+  const libType = document.getElementById('gsLibType');
+  if (libType && !libType._gsBound) { libType._gsBound = true; libType.addEventListener('change', () => { gState.lib.type = libType.value; gs_refreshTaskLibrary(); }); }
   const cbC = document.getElementById('gsFilterCritical');
   const cbF = document.getElementById('gsFilterConflict');
   if (cbC && !cbC._gsBound) { cbC._gsBound = true; cbC.addEventListener('change', () => { gState.filter.critical = cbC.checked; if (gState.tab === 'gantt') renderGanttTable(); else renderGanttCalendar(); }); }
@@ -12636,35 +12678,45 @@ function gs_bindPan() {
   window.addEventListener('mouseleave', stop);
 }
 
-function gs_refreshTaskLibrary() {
-  const container = document.getElementById('gsTaskLibrary');
-  if (!container) return;
-  // 任务直接取自任务管理（gState.tasks 来自 /resource/tasks，后端不可用时回退 MOCK_TASKS）
-  // 已排程的：从库中隐藏（避免重复拖拽）
-  // 已删除的：仍然显示（用户期望“删除后回到待排程库”）
+const GS_LIB_PAGE_SIZE = 40;
+
+/* 待排程任务过滤：未排程 + 状态为待开始/进行中，再叠加搜索/类别筛选 */
+function gs_libFiltered() {
   const scheduledKeys = new Set();
   gState.schedules.forEach(s => {
     if (s.task_code) scheduledKeys.add('c:' + s.task_code);
     if (s.task_name) scheduledKeys.add('n:' + s.task_name);
   });
-  const pendingTasks = (gState.tasks || []).filter(t =>
+  let list = (gState.tasks || []).filter(t =>
     (t.status === 'pending' || t.status === 'in_progress') &&
     !scheduledKeys.has('c:' + (t.task_code || '')) &&
     !scheduledKeys.has('n:' + (t.task_name || ''))
   );
-  container.innerHTML = pendingTasks.length ? pendingTasks.map((t, idx) => {
-    const typeConf = GANTT_TYPE_MAP[t.task_type] || GANTT_TYPE_MAP.C;
-    const qty = gs_taskQty(t);
-    const meta = [gs_taskProjLabel(t), qty ? qty + '台' : ''].filter(Boolean).join(' · ');
-    return `<div class="g-task-chip" draggable="true" data-idx="${idx}" style="border-left:3px solid ${typeConf.color};" title="${gs_escapeHtml(t.task_name || '')}">
-      <span style="display:inline-block;padding:1px 5px;border-radius:4px;color:#fff;font-weight:600;font-size:10px;background:${typeConf.color};">${typeConf.text}</span>
-      <strong style="color:#1e293b;">${gs_escapeHtml(t.task_name || '')}</strong>
-      ${meta ? `<span style="color:#94a3b8;font-size:11px;">${meta}</span>` : ''}
-    </div>`;
-  }).join('') : '<div style="color:#94a3b8;font-size:12px;padding:8px;">暂无待排程任务</div>';
-  container.querySelectorAll('.g-task-chip').forEach(chip => {
+  const q = (gState.lib.search || '').trim().toLowerCase();
+  if (q) {
+    list = list.filter(t => `${t.task_name || ''} ${t.project_group || ''} ${t.project_code || ''} ${t.vehicle_model || ''} ${t.vehicle_code || ''}`.toLowerCase().indexOf(q) !== -1);
+  }
+  if (gState.lib.type) list = list.filter(t => (t.task_type || 'C') === gState.lib.type);
+  return list;
+}
+
+function gs_libChipHtml(t, idx) {
+  const typeConf = GANTT_TYPE_MAP[t.task_type] || GANTT_TYPE_MAP.C;
+  const qty = gs_taskQty(t);
+  const meta = [gs_taskProjLabel(t), qty ? qty + '台' : ''].filter(Boolean).join(' · ');
+  return `<div class="g-task-chip" draggable="true" data-idx="${idx}" style="border-left:3px solid ${typeConf.color};" title="${gs_escapeHtml(t.task_name || '')}">
+    <span style="display:inline-block;padding:1px 5px;border-radius:4px;color:#fff;font-weight:600;font-size:10px;background:${typeConf.color};">${typeConf.text}</span>
+    <strong style="color:#1e293b;">${gs_escapeHtml(t.task_name || '')}</strong>
+    ${meta ? `<span style="color:#94a3b8;font-size:11px;">${meta}</span>` : ''}
+  </div>`;
+}
+
+function gs_bindLibChips(container) {
+  container.querySelectorAll('.g-task-chip:not([data-bound])').forEach(chip => {
+    chip.setAttribute('data-bound', '1');
     chip.addEventListener('dragstart', e => {
-      const t = pendingTasks[parseInt(chip.dataset.idx, 10)];
+      const t = (gState.lib.filtered || [])[parseInt(chip.dataset.idx, 10)];
+      if (!t) return;
       const data = {
         task_id: t.id || null,
         task_code: t.task_code || '',
@@ -12690,6 +12742,49 @@ function gs_refreshTaskLibrary() {
       e.dataTransfer.setData('application/json', JSON.stringify(data));
     });
   });
+}
+
+/* 追加当前页的卡片（滚动翻页时保持已渲染内容） */
+function gs_libAppendPage() {
+  const container = document.getElementById('gsTaskLibrary');
+  if (!container) return;
+  const filtered = gState.lib.filtered || [];
+  const start = (gState.lib.page - 1) * GS_LIB_PAGE_SIZE;
+  const slice = filtered.slice(start, start + GS_LIB_PAGE_SIZE);
+  if (!filtered.length) {
+    container.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:8px;">暂无待排程任务（可调整搜索关键词或类别筛选）</div>';
+  } else if (slice.length) {
+    container.insertAdjacentHTML('beforeend', slice.map((t, i) => gs_libChipHtml(t, start + i)).join(''));
+  }
+  gs_bindLibChips(container);
+  const shown = Math.min(gState.lib.page * GS_LIB_PAGE_SIZE, filtered.length);
+  const cnt = document.getElementById('gsLibCount');
+  if (cnt) cnt.textContent = `共 ${filtered.length} 条 · 已显示 ${shown} 条` + (shown < filtered.length ? '（滚动加载更多）' : '');
+}
+
+function gs_refreshTaskLibrary() {
+  const container = document.getElementById('gsTaskLibrary');
+  if (!container) return;
+  // 任务直接取自任务管理（gState.tasks 来自 /resource/tasks，后端不可用时回退 MOCK_TASKS）
+  // 已排程的：从库中隐藏（避免重复拖拽）
+  // 已删除的：仍然显示（用户期望“删除后回到待排程库”）
+  gState.lib.page = 1;
+  gState.lib.filtered = gs_libFiltered();
+  container.innerHTML = '';
+  container.scrollTop = 0;
+  gs_libAppendPage();
+  // 滚动翻页：触底自动加载下一页
+  if (!container._libScrollBound) {
+    container._libScrollBound = true;
+    container.addEventListener('scroll', () => {
+      const filtered = gState.lib.filtered || [];
+      if (gState.lib.page * GS_LIB_PAGE_SIZE >= filtered.length) return;
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 24) {
+        gState.lib.page++;
+        gs_libAppendPage();
+      }
+    });
+  }
   gs_bindGanttDrop();
 }
 
@@ -12904,13 +12999,7 @@ function gs_renderConflictPanel() {
       </div>
     </div>`;
   });
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);">
-    <span style="font-size:12px;color:#64748b;">共 ${filtered.length} 条 · 第 ${page}/${totalPages} 页</span>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btn-sm" ${page <= 1 ? 'disabled' : ''} onclick="gs_conflictPage(${page - 1})">上一页</button>
-      <button class="btn btn-sm" ${page >= totalPages ? 'disabled' : ''} onclick="gs_conflictPage(${page + 1})">下一页</button>
-    </div>
-  </div>`;
+  html += `<div class="pagination" style="border-top:1px solid var(--border);padding:10px 16px;">${buildPagination(page, PAGE, filtered.length, 'gs_conflictPage')}</div>`;
   list.innerHTML = html;
 }
 /* 冲突归属场地：优先取关联排程的装配场地，其次从资源名称解析场地代码 */
@@ -13319,6 +13408,21 @@ async function cm_loadAll() {
       cmState.apiPeople = pRes.data.personnel_positions.length > 0;
     }
   } catch (e) {}
+
+  // 扫码占用进行中会话（设备图/占用清单同步展示）
+  cmState.sessions = [];
+  cmState.sessionByTask = {};
+  cmState.sessionByEquip = {};
+  try {
+    const sRes = await apiGet('/resource/scan/sessions/active');
+    if (sRes && sRes.code === 200 && Array.isArray(sRes.data)) {
+      cmState.sessions = sRes.data;
+      sRes.data.forEach(s => {
+        if (s.task_id != null) cmState.sessionByTask[s.task_id] = s;
+        if (s.equipment_code) cmState.sessionByEquip[s.equipment_code] = s;
+      });
+    }
+  } catch (e) {}
 }
 
 /* --- 数据组装：举升机占用推导 + 人员汇总 --- */
@@ -13348,14 +13452,31 @@ function cm_buildData() {
     for (let i = 1; i <= z.liftCount; i++) lifts.push({ no: i, task: null });
     let remaining = z.liftCount;
     const taskLifts = new Map();
+    const keyOf = t => (t.id != null ? t.id : t.task_code);
+    // 扫码占用任务优先按 equipment_code 精确匹配举升机编号（如 SZB-05 → 5号）
+    const prefTasks = [], otherTasks = [];
     tasks.forEach(t => {
+      const m = String(t.equipment_code || '').match(/^([A-Za-z0-9]+)-(\d+)$/);
+      if (m && m[1].toUpperCase() === z.code) {
+        const no = parseInt(m[2], 10);
+        if (no >= 1 && no <= z.liftCount) { prefTasks.push(t); return; }
+      }
+      otherTasks.push(t);
+    });
+    const assign = (t, preferNo) => {
       const need = Math.max(1, Math.min(parseInt(t.lift_count, 10) || 1, Math.max(0, remaining)));
       const nos = [];
+      if (preferNo) {
+        const l = lifts[preferNo - 1];
+        if (l && !l.task) { l.task = t; nos.push(l.no); remaining--; }
+      }
       for (let i = 0; i < lifts.length && nos.length < need; i++) {
         if (!lifts[i].task) { lifts[i].task = t; nos.push(lifts[i].no); remaining--; }
       }
-      taskLifts.set(t.id != null ? t.id : t.task_code, nos);
-    });
+      taskLifts.set(keyOf(t), nos);
+    };
+    prefTasks.forEach(t => assign(t, parseInt(String(t.equipment_code).match(/-(\d+)$/)[1], 10)));
+    otherTasks.forEach(t => assign(t, null));
     const used = lifts.filter(l => l.task).length;
     zones[z.code] = {
       info: z,
@@ -13641,13 +13762,17 @@ function cm_renderFloor() {
       const t = l.task;
       const left = cm_daysLeft(t.plan_end_time);
       const leftText = left == null ? '' : (left >= 0 ? `预计占用至 ${cm_dateStr(t.plan_end_time)}（余${left}天）` : `已超期 ${-left} 天`);
+      const sess = (t.id != null && cmState.sessionByTask) ? cmState.sessionByTask[t.id] : null;
+      const infoHtml = sess
+        ? `作业人员：${cm_esc((sess.personnel_names || []).join('、')) || '—'}<br>⏱ 开始于 ${cm_esc(sess.start_time || '—')}`
+        : `负责人：${cm_esc(cm_supervisorOf(t))}<br>${leftText ? '⏱ ' + leftText : ''}`;
       return `<div class="cm-lift occupied">
         <div class="cm-lift-top">
           <span class="cm-lift-no"><span class="cm-lift-icon">🛠</span>${z.code}-${l.no}号举升机</span>
           <span class="cm-lift-status used">占用</span>
         </div>
         <div class="cm-lift-proj" title="${cm_esc(t.task_name)}">${cm_esc(t.task_name)}</div>
-        <div class="cm-lift-info">负责人：${cm_esc(cm_supervisorOf(t))}<br>${leftText ? '⏱ ' + leftText : ''}</div>
+        <div class="cm-lift-info">${infoHtml}</div>
       </div>`;
     }).join('');
   }
@@ -13678,10 +13803,16 @@ function cm_renderFloor() {
         const left = cm_daysLeft(t.plan_end_time);
         const leftHtml = left == null ? '<span class="cm-occ-left ok">时间待定</span>'
           : (left >= 0 ? `<span class="cm-occ-left ok">剩余 ${left} 天</span>` : `<span class="cm-occ-left">超期 ${-left} 天</span>`);
+        const sess = (t.id != null && cmState.sessionByTask) ? cmState.sessionByTask[t.id] : null;
+        const sessHtml = sess
+          ? `<div class="cm-occ-row"><span class="lbl">作业人员</span><span>${cm_esc((sess.personnel_names || []).join('、')) || '—'}（${sess.personnel_count || 0}人）</span></div>
+          <div class="cm-occ-row"><span class="lbl">开始时间</span><span>${cm_esc(sess.start_time || '—')}</span></div>`
+          : '';
         return `<div class="cm-occ-item">
           <div class="cm-occ-proj">${cm_esc(t.task_name)}</div>
           <div class="cm-occ-row"><span class="lbl">占用举升机</span><span>${liftText}</span></div>
           <div class="cm-occ-row"><span class="lbl">负责人</span><span>${cm_esc(cm_supervisorOf(t))}</span></div>
+          ${sessHtml}
           <div class="cm-occ-row"><span class="lbl">计划占用</span><span>${cm_dateStr(t.plan_start_time)} ~ ${cm_dateStr(t.plan_end_time)}</span></div>
           <div class="cm-occ-row"><span class="lbl">预计占用时间</span>${leftHtml}</div>
         </div>`;

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>整车试制资源可视化</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #eef1f6; color: #1f2937; font-size: 15px;
+    max-width: 520px; margin: 0 auto; min-height: 100%;
+    box-shadow: 0 0 24px rgba(0,0,0,0.06);
+    display: flex; flex-direction: column;
+  }
+  /* ===== 顶栏 ===== */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; height: 52px; padding: 0 14px;
+    background: #fbfcfe; border-bottom: 1px solid #e8ebf0;
+  }
+  .topbar .back { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; background: none; }
+  .topbar .title { flex: 1; text-align: center; font-size: 17px; font-weight: 700; color: #111827; }
+  .topbar .more { width: 32px; text-align: center; color: #111827; font-weight: 700; letter-spacing: 2px; }
+  .page { flex: 1; padding: 14px 14px 96px; }
+  .page.busy-mode { padding-bottom: 24px; }
+
+  /* ===== 卡片通用 ===== */
+  .card { background: #fbfcfe; border: 1px solid #e5e8ee; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+
+  /* ===== 设备信息卡 ===== */
+  .eq-head { display: flex; align-items: center; gap: 8px; }
+  .eq-code { font-family: ui-monospace, Consolas, monospace; font-size: 16px; font-weight: 600; color: #111827; letter-spacing: 1px; }
+  .eq-status { margin-left: auto; font-size: 13px; padding: 4px 14px; border-radius: 16px; }
+  .eq-status.idle { background: #e8f7ee; color: #16a34a; border: 1px solid #bbe5c8; }
+  .eq-status.busy { background: #fef3e2; color: #d97706; border: 1px solid #f3d8ac; }
+  .eq-name { margin-top: 12px; font-size: 20px; font-weight: 800; color: #111827; }
+  .eq-zone { margin-top: 10px; display: flex; align-items: center; gap: 6px; color: #6b7280; font-size: 14px; }
+
+  /* ===== Tab ===== */
+  .tabs { display: flex; border-bottom: 1px solid #e5e8ee; margin-bottom: 14px; background: transparent; }
+  .tab { flex: 1; text-align: center; padding: 12px 0; font-size: 16px; color: #6b7280; cursor: pointer; border: none; background: none; position: relative; }
+  .tab.active { color: #1d4ed8; font-weight: 700; }
+  .tab.active::after { content: ''; position: absolute; left: 20%; right: 20%; bottom: -1px; height: 3px; background: #1d4ed8; border-radius: 2px; }
+
+  /* ===== 搜索框 ===== */
+  .search { display: flex; align-items: center; gap: 8px; background: #f3f5f9; border: 1px solid #e5e8ee; border-radius: 8px; padding: 12px 12px; margin-bottom: 14px; }
+  .search input { flex: 1; border: none; outline: none; background: transparent; font-size: 15px; color: #111827; }
+  .search input::placeholder { color: #9ca3af; }
+
+  /* ===== 分类卡片 ===== */
+  .cat-label { color: #4b5563; font-size: 14px; margin: 4px 0 10px; }
+  .cat-card { display: flex; align-items: center; border-radius: 8px; padding: 18px 16px; margin-bottom: 14px; cursor: pointer; border: 1.5px solid; }
+  .cat-card .cat-name { font-size: 20px; font-weight: 800; margin-right: 14px; }
+  .cat-card .cat-desc { font-size: 15px; }
+  .cat-card .arrow { margin-left: auto; color: inherit; font-size: 18px; }
+  .cat-A { border-color: #b91c1c; background: #fdf1f0; color: #b91c1c; }
+  .cat-B { border-color: #d97706; background: #fdf6ec; color: #b45309; }
+  .cat-C { border-color: #1d4ed8; background: #eef4ff; color: #1d4ed8; }
+
+  /* ===== 任务列表 ===== */
+  .list-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .back-cat { display: flex; align-items: center; gap: 4px; color: #1d4ed8; font-size: 15px; cursor: pointer; border: none; background: none; padding: 0; }
+  .cat-chip { font-size: 13px; color: #374151; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 14px; padding: 4px 12px; }
+  .task-item { background: #f7f8fb; border: 1px solid #e8ebf0; border-radius: 8px; padding: 15px 14px; margin-bottom: 10px; cursor: pointer; font-size: 16px; color: #111827; }
+  .task-item.selected { border-color: #1d4ed8; background: #eef4ff; box-shadow: 0 0 0 1px #1d4ed8 inset; }
+  .manual-entry { display: flex; align-items: center; justify-content: center; gap: 6px; color: #4b5563; font-size: 15px; padding: 12px 0; cursor: pointer; border: none; background: none; width: 100%; }
+  .manual-box { display: none; margin-bottom: 12px; }
+  .manual-box.show { display: block; }
+  .manual-box .row { display: flex; gap: 8px; }
+  .manual-box input { flex: 1; border: 1px solid #d1d5db; border-radius: 8px; padding: 11px 12px; font-size: 15px; outline: none; background: #fff; }
+  .manual-box input:focus { border-color: #1d4ed8; }
+  .manual-box button { border: none; border-radius: 8px; background: #1d4ed8; color: #fff; padding: 0 16px; font-size: 14px; cursor: pointer; }
+
+  /* ===== 作业人员 ===== */
+  .pp-head { display: flex; align-items: center; gap: 8px; margin: 18px 0 10px; }
+  .pp-head .t { font-size: 16px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 6px; }
+  .pp-head .hint { color: #dc2626; font-size: 14px; font-weight: 600; }
+  .pp-head .cnt { margin-left: auto; color: #6b7280; font-size: 14px; }
+  .pp-item { display: flex; align-items: center; gap: 10px; background: #f7f8fb; border: 1px solid #e8ebf0; border-radius: 8px; padding: 13px 14px; margin-bottom: 8px; cursor: pointer; }
+  .pp-item input { width: 18px; height: 18px; accent-color: #1d4ed8; }
+  .pp-item .name { font-size: 16px; color: #111827; }
+  .pp-item .code { color: #9ca3af; font-size: 12px; margin-left: 6px; }
+  .pp-item .st { margin-left: auto; font-size: 13px; padding: 3px 12px; border-radius: 14px; }
+  .st.idle { background: #e8f7ee; color: #16a34a; }
+  .st.working { background: #fef3e2; color: #d97706; }
+  .st.offline { background: #f3f4f6; color: #9ca3af; }
+  .empty { text-align: center; color: #9ca3af; padding: 24px 0; font-size: 14px; }
+
+  /* ===== 底部按钮 ===== */
+  .bottom-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 520px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #fbfcfe; border-top: 1px solid #e8ebf0; z-index: 40; }
+  .btn-start { width: 100%; border: none; border-radius: 6px; padding: 16px 0; font-size: 17px; font-weight: 700; color: #fff; background: #f2c896; cursor: not-allowed; }
+  .btn-start.enabled { background: #ef8f3c; cursor: pointer; }
+  .btn-start.enabled:active { background: #e07f2c; }
+
+  /* ===== 进行中作业视图 ===== */
+  .busy-title { display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; color: #111827; margin: 4px 0 14px; }
+  .busy-card .bc-head { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 800; color: #111827; }
+  .busy-card .zone-chip { margin-left: auto; font-size: 13px; padding: 5px 14px; border-radius: 16px; background: #e8f7ee; color: #16a34a; border: 1px solid #bbe5c8; }
+  .bc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; margin-top: 16px; }
+  .bc-label { color: #9ca3af; font-size: 13px; margin-bottom: 6px; }
+  .bc-value { font-size: 17px; font-weight: 700; color: #111827; font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.5px; }
+  .bc-value.normal { font-family: inherit; }
+  .bc-divider { border-top: 1px solid #e8ebf0; margin: 16px 0; }
+  .bc-task { font-size: 19px; font-weight: 800; color: #111827; margin-top: 6px; }
+  .bc-time { display: flex; align-items: center; gap: 6px; color: #6b7280; font-size: 15px; margin-top: 14px; }
+  .duration-card { display: flex; align-items: center; gap: 12px; background: #e9eef8; border: 1px solid #c6d3ec; border-radius: 10px; padding: 18px 16px; margin-bottom: 14px; }
+  .duration-card .lab { display: flex; align-items: center; gap: 8px; color: #4b5563; font-size: 16px; }
+  .duration-card .val { margin-left: auto; color: #1d4ed8; font-size: 26px; font-weight: 800; }
+  .summary-box { background: #eef1f6; border-radius: 8px; padding: 14px 16px; }
+  .summary-box .s-title { color: #6b7280; font-size: 14px; margin-bottom: 10px; }
+  .summary-box .s-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 15px; }
+  .summary-box .s-row .k { color: #6b7280; }
+  .summary-box .s-row .v { color: #111827; font-weight: 600; text-align: right; }
+  .btn-end { width: 100%; border: none; border-radius: 6px; padding: 16px 0; font-size: 17px; font-weight: 700; color: #fff; background: #d92b1c; margin-top: 16px; cursor: pointer; }
+  .btn-end:active { background: #b91c1c; }
+  .btn-back-board { width: 100%; border: 1px solid #e5e8ee; border-radius: 6px; padding: 14px 0; font-size: 16px; color: #111827; background: #fbfcfe; margin-top: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+  /* ===== Toast ===== */
+  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(17,24,39,0.88); color: #fff; font-size: 14px; padding: 10px 18px; border-radius: 20px; z-index: 99; display: none; max-width: 86%; text-align: center; }
+  .toast.show { display: block; }
+  .icon { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .icon.blue { color: #1d4ed8; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back" onclick="goBack()" aria-label="返回">
+    <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+  <div class="title">整车试制资源可视化</div>
+  <div class="more">•••</div>
+</div>
+
+<!-- ============ 空闲视图：选择任务/人员 ============ -->
+<div class="page" id="viewIdle" style="display:none;">
+  <div class="card">
+    <div class="eq-head">
+      <svg class="icon blue" viewBox="0 0 24 24" style="width:24px;height:24px;"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      <span class="eq-code" id="eqCode">--</span>
+      <span class="eq-status idle" id="eqStatus">空闲</span>
+    </div>
+    <div class="eq-name" id="eqName">--</div>
+    <div class="eq-zone">
+      <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;color:#6b7280;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      <span id="eqZone">--</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" id="tabSporadic" onclick="switchTab('sporadic')">零星任务</button>
+    <button class="tab active" id="tabAbc" onclick="switchTab('abc')">ABC类任务</button>
+  </div>
+
+  <!-- ABC类任务 -->
+  <div id="paneAbc">
+    <div id="abcCatStage">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" style="color:#9ca3af;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="abcCatSearch" placeholder="搜索ABC类项目名称或编号" oninput="renderAbcCats()">
+      </div>
+      <div class="cat-label">请选择项目分类</div>
+      <div class="cat-card cat-A" onclick="openAbcList('A')"><span class="cat-name">A类</span><span class="cat-desc">平台首款，从白车身装起</span><span class="arrow">›</span></div>
+      <div class="cat-card cat-B" onclick="openAbcList('B')"><span class="cat-name">B类</span><span class="cat-desc">平台次款，从白车身装起</span><span class="arrow">›</span></div>
+      <div class="cat-card cat-C" onclick="openAbcList('C')"><span class="cat-name">C类</span><span class="cat-desc">基础车换装</span><span class="arrow">›</span></div>
+    </div>
+    <div id="abcListStage" style="display:none;">
+      <div class="list-head">
+        <button class="back-cat" onclick="backToCats()">‹ 返回分类</button>
+        <span class="cat-chip" id="abcCatChip">A类项目</span>
+      </div>
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" style="color:#9ca3af;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="abcListSearch" placeholder="搜索任务名称或编号" oninput="renderAbcTasks()">
+      </div>
+      <div id="abcTaskList"></div>
+      <button class="manual-entry" onclick="showManualEntry()">
+        <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        列表无此任务，手工录入
+      </button>
+    </div>
+  </div>
+
+  <!-- 零星任务 -->
+  <div id="paneSporadic" style="display:none;">
+    <div class="search">
+      <svg class="icon" viewBox="0 0 24 24" style="color:#9ca3af;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="spSearch" placeholder="搜索零星任务名称或编号" oninput="renderSporadicTasks()">
+    </div>
+    <div id="spTaskList"></div>
+    <button class="manual-entry" onclick="showManualEntry()">
+      <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+      列表无此任务，手工录入
+    </button>
+  </div>
+
+  <!-- 手工录入 -->
+  <div class="manual-box" id="manualBox">
+    <div class="row">
+      <input type="text" id="manualInput" placeholder="请输入任务名称">
+      <button onclick="confirmManualEntry()">确定</button>
+    </div>
+  </div>
+
+  <!-- 作业人员 -->
+  <div class="pp-head">
+    <span class="t">
+      <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      作业人员
+    </span>
+    <span class="hint">（请至少选择 1 人）</span>
+    <span class="cnt" id="ppCnt">已选 0 人</span>
+  </div>
+  <div class="search">
+    <svg class="icon" viewBox="0 0 24 24" style="color:#9ca3af;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" id="ppSearch" placeholder="搜索姓名或工号" oninput="renderPersonnel()">
+  </div>
+  <div id="ppList"></div>
+
+  <div class="bottom-bar">
+    <button class="btn-start" id="btnStart" onclick="startWork()">开始作业</button>
+  </div>
+</div>
+
+<!-- ============ 进行中视图：结束作业 ============ -->
+<div class="page busy-mode" id="viewBusy" style="display:none;">
+  <div class="busy-title">
+    <svg class="icon blue" viewBox="0 0 24 24" style="width:24px;height:24px;"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    结束作业
+  </div>
+
+  <div class="card busy-card">
+    <div class="bc-head">
+      <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;color:#374151;"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      设备信息
+      <span class="zone-chip" id="bZoneChip">--</span>
+    </div>
+    <div class="bc-grid">
+      <div><div class="bc-label">设备编号</div><div class="bc-value" id="bEqCode">--</div></div>
+      <div><div class="bc-label">设备名称</div><div class="bc-value normal" id="bEqName">--</div></div>
+    </div>
+    <div class="bc-divider"></div>
+    <div class="bc-label">当前任务</div>
+    <div class="bc-task" id="bTaskName">--</div>
+    <div class="bc-time">
+      <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+      开始时间：<span id="bStartTime">--</span>
+    </div>
+  </div>
+
+  <div class="duration-card">
+    <span class="lab">
+      <svg class="icon blue" viewBox="0 0 24 24" style="width:22px;height:22px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      已持续
+    </span>
+    <span class="val" id="bDuration">--</span>
+  </div>
+
+  <div class="card">
+    <div class="summary-box">
+      <div class="s-title">任务摘要</div>
+      <div class="s-row"><span class="k">设备</span><span class="v" id="sEq">--</span></div>
+      <div class="s-row"><span class="k">任务</span><span class="v" id="sTask">--</span></div>
+      <div class="s-row"><span class="k">参与人员</span><span class="v" id="sPeople">--</span></div>
+    </div>
+    <button class="btn-end" onclick="endWork()">结束作业</button>
+    <button class="btn-back-board" onclick="location.href='/'">
+      <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      返回看板
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var EQ = new URLSearchParams(location.search).get('eq') || '';
+  var state = {
+    equipment: null,
+    session: null,
+    options: null,
+    tab: 'abc',            // abc | sporadic
+    abcStage: 'cat',       // cat | list
+    abcCat: 'A',
+    selTask: null,         // {id, name, category}
+    selPeople: {},         // code -> name
+    timer: null
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function api(path, opts) {
+    return fetch('/api/resource' + path, opts).then(function (r) {
+      return r.json().then(function (body) {
+        if (!r.ok) throw new Error(body.detail || ('HTTP ' + r.status));
+        return body;
+      });
+    });
+  }
+
+  window.goBack = function () {
+    if (history.length > 1) history.back();
+    else location.href = '/';
+  };
+
+  /* ============ 状态加载 ============ */
+  function loadState() {
+    if (!EQ) { toast('缺少设备编号参数（?eq=设备编号）'); return; }
+    api('/scan/' + encodeURIComponent(EQ) + '/state').then(function (res) {
+      state.equipment = res.data.equipment;
+      state.session = res.data.session;
+      if (state.session) renderBusy();
+      else {
+        renderIdleHead();
+        loadOptions();
+      }
+    }).catch(function (e) { toast(e.message || '加载设备信息失败'); });
+  }
+
+  function loadOptions() {
+    api('/scan/' + encodeURIComponent(EQ) + '/options').then(function (res) {
+      state.options = res.data;
+      renderAbcCats();
+      renderSporadicTasks();
+      renderPersonnel();
+    }).catch(function (e) { toast(e.message || '加载选项数据失败'); });
+  }
+
+  /* ============ 空闲视图 ============ */
+  function renderIdleHead() {
+    $('viewBusy').style.display = 'none';
+    $('viewIdle').style.display = '';
+    document.querySelector('.page.busy-mode') && clearInterval(state.timer);
+    var eq = state.equipment || {};
+    $('eqCode').textContent = eq.equipment_code || EQ;
+    $('eqName').textContent = (eq.zone_name ? eq.zone_name + '-' : '') + (eq.equipment_name || '');
+    $('eqZone').textContent = eq.zone_name || eq.zone_code || '--';
+    var st = $('eqStatus');
+    st.textContent = '空闲';
+    st.className = 'eq-status idle';
+    switchTab(state.tab);
+  }
+
+  window.switchTab = function (tab) {
+    state.tab = tab;
+    $('tabAbc').classList.toggle('active', tab === 'abc');
+    $('tabSporadic').classList.toggle('active', tab === 'sporadic');
+    $('paneAbc').style.display = tab === 'abc' ? '' : 'none';
+    $('paneSporadic').style.display = tab === 'sporadic' ? '' : 'none';
+  };
+
+  window.openAbcList = function (cat) {
+    state.abcStage = 'list';
+    state.abcCat = cat;
+    $('abcCatStage').style.display = 'none';
+    $('abcListStage').style.display = '';
+    $('abcCatChip').textContent = cat + '类项目';
+    $('abcListSearch').value = '';
+    renderAbcTasks();
+  };
+  window.backToCats = function () {
+    state.abcStage = 'cat';
+    $('abcListStage').style.display = 'none';
+    $('abcCatStage').style.display = '';
+  };
+
+  window.renderAbcCats = function () {
+    // 分类页搜索：跨 A/B/C 模糊匹配项目，命中则直接展示混合列表
+    var kw = ($('abcCatSearch').value || '').trim().toLowerCase();
+    if (!kw) {
+      if (state.abcStage === 'cat') { $('abcListStage').style.display = 'none'; $('abcCatStage').style.display = ''; }
+      return;
+    }
+    var all = [];
+    var abc = (state.options && state.options.abc_tasks) || {};
+    ['A', 'B', 'C'].forEach(function (c) { (abc[c] || []).forEach(function (t) { all.push({ t: t, cat: c }); }); });
+    var hit = all.filter(function (x) {
+      return (x.t.task_name || '').toLowerCase().indexOf(kw) > -1 || (x.t.task_code || '').toLowerCase().indexOf(kw) > -1;
+    });
+    if (hit.length) {
+      state.abcStage = 'list';
+      state.abcCat = '';
+      $('abcCatStage').style.display = 'none';
+      $('abcListStage').style.display = '';
+      $('abcCatChip').textContent = '搜索结果';
+      renderTaskList($('abcTaskList'), hit.map(function (x) { return { id: x.t.id, name: x.t.task_name, category: x.cat + '类' }; }));
+    }
+  };
+
+  window.renderAbcTasks = function () {
+    var kw = ($('abcListSearch').value || '').trim().toLowerCase();
+    var list = ((state.options && state.options.abc_tasks) || {})[state.abcCat] || [];
+    var items = list.filter(function (t) {
+      return !kw || (t.task_name || '').toLowerCase().indexOf(kw) > -1 || (t.task_code || '').toLowerCase().indexOf(kw) > -1;
+    }).map(function (t) { return { id: t.id, name: t.task_name, category: state.abcCat + '类' }; });
+    renderTaskList($('abcTaskList'), items);
+  };
+
+  window.renderSporadicTasks = function () {
+    var kw = ($('spSearch').value || '').trim().toLowerCase();
+    var list = (state.options && state.options.sporadic_tasks) || [];
+    var items = list.filter(function (t) {
+      return !kw || (t.task_name || '').toLowerCase().indexOf(kw) > -1 || (t.task_code || '').toLowerCase().indexOf(kw) > -1;
+    }).map(function (t) { return { id: t.id, name: t.task_name, category: '零星' }; });
+    renderTaskList($('spTaskList'), items);
+  };
+
+  function renderTaskList(container, items) {
+    if (!container) return;
+    if (!items.length) {
+      container.innerHTML = '<div class="empty">暂无匹配任务，可手工录入</div>';
+      return;
+    }
+    container.innerHTML = items.map(function (it) {
+      var sel = state.selTask && state.selTask.id === it.id ? ' selected' : '';
+      return '<div class="task-item' + sel + '" onclick="selectTask(' + it.id + ',\'' + esc(it.name).replace(/'/g, '&#39;') + '\',\'' + esc(it.category) + '\')">' + esc(it.name) + '</div>';
+    }).join('');
+  }
+
+  window.selectTask = function (id, name, category) {
+    state.selTask = { id: id, name: name, category: category };
+    $('manualBox').classList.remove('show');
+    refreshTaskSelection();
+    refreshStartBtn();
+  };
+
+  function refreshTaskSelection() {
+    document.querySelectorAll('.task-item').forEach(function (el) {
+      el.classList.remove('selected');
+    });
+    if (state.selTask && state.selTask.id != null) {
+      document.querySelectorAll('.task-item').forEach(function (el) {
+        if (el.textContent === state.selTask.name) el.classList.add('selected');
+      });
+    }
+  }
+
+  window.showManualEntry = function () {
+    $('manualBox').classList.add('show');
+    $('manualInput').value = state.selTask && state.selTask.id == null ? state.selTask.name : '';
+    $('manualInput').focus();
+  };
+  window.confirmManualEntry = function () {
+    var name = $('manualInput').value.trim();
+    if (!name) { toast('请输入任务名称'); return; }
+    state.selTask = { id: null, name: name, category: state.tab === 'abc' ? (state.abcCat ? state.abcCat + '类' : '零星') : '零星' };
+    $('manualBox').classList.remove('show');
+    refreshTaskSelection();
+    refreshStartBtn();
+    toast('已录入任务：' + name);
+  };
+
+  /* ============ 人员选择 ============ */
+  window.renderPersonnel = function () {
+    var kw = ($('ppSearch').value || '').trim().toLowerCase();
+    var list = (state.options && state.options.personnel) || [];
+    var items = list.filter(function (p) {
+      return !kw || (p.name || '').toLowerCase().indexOf(kw) > -1 || (p.personnel_code || '').toLowerCase().indexOf(kw) > -1;
+    });
+    var stMap = { idle: ['空闲', 'idle'], working: ['工作中', 'working'], offline: ['离线', 'offline'] };
+    $('ppList').innerHTML = items.length ? items.map(function (p) {
+      var st = stMap[p.status] || stMap.offline;
+      var checked = state.selPeople[p.personnel_code] ? ' checked' : '';
+      return '<label class="pp-item"><input type="checkbox"' + checked + ' onchange="togglePerson(\'' + esc(p.personnel_code) + '\',\'' + esc(p.name).replace(/'/g, '&#39;') + '\', this.checked)">' +
+        '<span class="name">' + esc(p.name) + '</span><span class="code">' + esc(p.personnel_code) + '</span>' +
+        '<span class="st ' + st[1] + '">' + st[0] + '</span></label>';
+    }).join('') : '<div class="empty">暂无人员数据</div>';
+  };
+
+  window.togglePerson = function (code, name, on) {
+    if (on) state.selPeople[code] = name;
+    else delete state.selPeople[code];
+    var n = Object.keys(state.selPeople).length;
+    $('ppCnt').textContent = '已选 ' + n + ' 人';
+    refreshStartBtn();
+  };
+
+  function refreshStartBtn() {
+    var ok = state.selTask && Object.keys(state.selPeople).length > 0;
+    $('btnStart').classList.toggle('enabled', !!ok);
+  }
+
+  /* ============ 开始作业 ============ */
+  window.startWork = function () {
+    if (!state.selTask) { toast('请先选择或录入任务'); return; }
+    var codes = Object.keys(state.selPeople);
+    if (!codes.length) { toast('请至少选择 1 名作业人员'); return; }
+    var btn = $('btnStart');
+    btn.disabled = true;
+    api('/scan/' + encodeURIComponent(EQ) + '/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task_id: state.selTask.id,
+        task_name: state.selTask.name,
+        task_category: state.selTask.category,
+        personnel_codes: codes
+      })
+    }).then(function () {
+      toast('作业已开始');
+      loadState();
+    }).catch(function (e) {
+      toast(e.message || '开始作业失败');
+      btn.disabled = false;
+    });
+  };
+
+  /* ============ 进行中视图 ============ */
+  function renderBusy() {
+    $('viewIdle').style.display = 'none';
+    $('viewBusy').style.display = '';
+    var eq = state.equipment || {};
+    var s = state.session || {};
+    $('bZoneChip').textContent = eq.zone_name || eq.zone_code || '--';
+    $('bEqCode').textContent = eq.equipment_code || EQ;
+    $('bEqName').textContent = (eq.zone_name ? eq.zone_name + '-' : '') + (eq.equipment_name || '');
+    $('bTaskName').textContent = s.task_name || '--';
+    $('bStartTime').textContent = s.start_time || '--';
+    $('sEq').textContent = (eq.zone_name ? eq.zone_name + '-' : '') + (eq.equipment_name || '');
+    $('sTask').textContent = s.task_name || '--';
+    $('sPeople').textContent = (s.personnel_count || 0) + ' 人';
+    tickDuration();
+    clearInterval(state.timer);
+    state.timer = setInterval(tickDuration, 1000);
+  }
+
+  function tickDuration() {
+    var s = state.session;
+    if (!s || !s.start_time) return;
+    var start = new Date(String(s.start_time).replace(' ', 'T'));
+    var diff = Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000));
+    var h = Math.floor(diff / 3600);
+    var m = Math.floor((diff % 3600) / 60);
+    var text;
+    if (h > 0) text = h + '小时' + m + '分钟';
+    else if (m > 0) text = m + '分钟';
+    else text = Math.floor(diff % 60) + '秒';
+    $('bDuration').textContent = text;
+  }
+
+  /* ============ 结束作业 ============ */
+  window.endWork = function () {
+    if (!confirm('确认结束当前作业？结束后设备与人员将重置为空闲。')) return;
+    api('/scan/' + encodeURIComponent(EQ) + '/end', { method: 'POST' }).then(function () {
+      toast('作业已结束，设备与人员已重置为空闲');
+      state.selTask = null;
+      state.selPeople = {};
+      setTimeout(loadState, 600);
+    }).catch(function (e) { toast(e.message || '结束作业失败'); });
+  };
+
+  loadState();
+})();
+</script>
+</body>
+</html>

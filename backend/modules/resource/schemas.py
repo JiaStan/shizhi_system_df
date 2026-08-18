@@ -201,6 +201,15 @@ class AlertListResponse(BaseModel):
     data: List[AlertResponse] = []
 
 
+# ==================== 扫码占用相关 ====================
+
+class ScanStartRequest(BaseModel):
+    task_id: Optional[int] = None
+    task_name: str
+    task_category: Optional[str] = None  # A类/B类/C类/零星
+    personnel_codes: List[str] = []
+
+
 # ==================== 驾驶舱相关 ====================
 
 class DashboardKPI(BaseModel):
